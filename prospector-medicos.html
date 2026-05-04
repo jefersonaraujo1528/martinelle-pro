@@ -807,6 +807,12 @@ tr.sel-on td{background:rgba(108,99,255,.07)}
   <div class="config-section">
     <h3>💾 Dados &amp; Sincronização</h3>
     <div class="desc">Use o <strong>HTML com dados</strong> para abrir no celular ou outro computador com todos os seus médicos já carregados. Basta enviar o arquivo pelo WhatsApp ou e-mail e abrir no outro dispositivo.</div>
+    <div style="background:linear-gradient(135deg,#6c63ff22,#43d9ad11);border:1px solid var(--accent);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-weight:800;font-size:13px;margin-bottom:6px">🤖 Sincronizar com o Bot do Telegram</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Exporta seus médicos atuais para o bot poder responder perguntas com dados reais.</div>
+      <button class="btn btn-primary" onclick="syncToBot()" style="background:linear-gradient(135deg,#6c63ff,#43d9ad)">🔄 Sincronizar com Bot</button>
+      <span id="syncStatus" style="margin-left:10px;font-size:12px;color:var(--muted)"></span>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
       <button class="btn btn-primary" onclick="exportHTMLWithData()" title="Baixa o HTML com todos os dados embutidos — abra em qualquer dispositivo">📱 Salvar HTML com dados</button>
       <button class="btn btn-ghost" onclick="exportJSON()" title="Backup JSON para segurança">⬇ Backup JSON</button>
@@ -3467,6 +3473,27 @@ Object.keys(CLOSERS).forEach(id => {
   });
 });
 document.addEventListener('keydown', e => { if(e.key==='Escape'){ Object.values(CLOSERS).forEach(fn => fn()); } });
+
+// =============================================================
+// SYNC COM BOT TELEGRAM
+// =============================================================
+function syncToBot(){
+  const status = document.getElementById('syncStatus');
+  const data = JSON.stringify(doctors, null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'doctors-data.json';
+  a.click();
+  if(status){
+    status.textContent = '✅ Arquivo baixado! Salve na pasta do projeto e sincronize.';
+    status.style.color = 'var(--green)';
+    setTimeout(() => {
+      status.textContent = '';
+    }, 5000);
+  }
+  toast('doctors-data.json baixado — salve na pasta do projeto para sincronizar com o bot','ok');
+}
 
 // =============================================================
 // INIT
