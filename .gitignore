@@ -1,0 +1,5 @@
+.DS_Store
+*.png
+*.jpg
+medicos_importados.json
+config-notificacoes.json
