@@ -1371,6 +1371,7 @@ function save(){
   localStorage.setItem(LS_BACKUP_COUNT, String(n));
   showSavedIndicator();
   updateBackupBanner();
+  if(typeof autoSync === 'function') autoSync();
 }
 function showSavedIndicator(){
   const el = document.getElementById('savedIndicator');
@@ -3475,24 +3476,44 @@ Object.keys(CLOSERS).forEach(id => {
 document.addEventListener('keydown', e => { if(e.key==='Escape'){ Object.values(CLOSERS).forEach(fn => fn()); } });
 
 // =============================================================
-// SYNC COM BOT TELEGRAM
+// SYNC COM BOT TELEGRAM (POST real para Netlify Function)
 // =============================================================
-function syncToBot(){
+const SYNC_ENDPOINT = 'https://martinelle-pro.netlify.app/api/sync';
+
+async function syncToBot(){
   const status = document.getElementById('syncStatus');
-  const data = JSON.stringify(doctors, null, 2);
-  const blob = new Blob([data], {type:'application/json'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'doctors-data.json';
-  a.click();
-  if(status){
-    status.textContent = '✅ Arquivo baixado! Salve na pasta do projeto e sincronize.';
-    status.style.color = 'var(--green)';
-    setTimeout(() => {
-      status.textContent = '';
-    }, 5000);
+  if(status){ status.textContent = '🔄 Sincronizando...'; status.style.color = 'var(--accent)'; }
+  try {
+    const res = await fetch(SYNC_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ doctors })
+    });
+    const data = await res.json();
+    if(data.ok){
+      if(status){
+        status.textContent = `✅ ${data.count} médicos sincronizados com o bot!`;
+        status.style.color = 'var(--green)';
+        setTimeout(() => { status.textContent = ''; }, 6000);
+      }
+      toast(`Bot sincronizado: ${data.count} médicos`, 'ok');
+    } else {
+      throw new Error(data.error || 'erro desconhecido');
+    }
+  } catch(e) {
+    if(status){
+      status.textContent = '❌ Falha — ' + e.message;
+      status.style.color = 'var(--red)';
+    }
+    toast('Erro ao sincronizar: ' + e.message, 'err');
   }
-  toast('doctors-data.json baixado — salve na pasta do projeto para sincronizar com o bot','ok');
+}
+
+// Auto-sync a cada save (debounced)
+let _syncTimer = null;
+function autoSync(){
+  if(_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => { syncToBot().catch(()=>{}); }, 30000);
 }
 
 // =============================================================

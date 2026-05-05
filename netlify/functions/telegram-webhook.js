@@ -1,5 +1,7 @@
+const { getStore } = require('@netlify/blobs');
+
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const DATA_URL = 'https://martinelle-pro.netlify.app/doctors-data.json';
+const STATIC_URL = 'https://martinelle-pro.netlify.app/doctors-data.json';
 
 async function sendMsg(chatId, text) {
   await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
@@ -10,8 +12,15 @@ async function sendMsg(chatId, text) {
 }
 
 async function getDoctors() {
+  // 1. tenta dados sincronizados do prospector (Netlify Blobs)
   try {
-    const res = await fetch(DATA_URL + '?t=' + Date.now());
+    const store = getStore('martinelle-doctors');
+    const data = await store.get('current', { type: 'json' });
+    if (data && Array.isArray(data) && data.length) return data;
+  } catch (e) {}
+  // 2. fallback: JSON estático no repo
+  try {
+    const res = await fetch(STATIC_URL + '?t=' + Date.now());
     return await res.json();
   } catch { return []; }
 }
