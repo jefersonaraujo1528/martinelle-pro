@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lado Coracao - Produtos Solidarios | Rede Feminina</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* ========== BOTAO WHATSAPP FLUTUANTE ========== */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            background: #25D366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            z-index: 9999;
+            text-decoration: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+        }
+        .whatsapp-float svg {
+            width: 32px;
+            height: 32px;
+            fill: #fff;
+        }
+
+        /* ========== 1a DOBRA — HERO ========== */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #7B2D5F 0%, #A13670 40%, #C74B7A 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 600px;
+            height: 600px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -40%;
+            left: -20%;
+            width: 500px;
+            height: 500px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 50%;
+        }
+        .hero-content {
+            max-width: 800px;
+            text-align: center;
+            color: #fff;
+            position: relative;
+            z-index: 2;
+        }
+        .hero-logo {
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        .hero-logo .heart {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .hero h1 {
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            font-weight: 800;
+            line-height: 1.2;
+            margin: 20px 0;
+        }
+        .hero h1 span {
+            color: #FFD700;
+        }
+        .hero-sub {
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            opacity: 0.95;
+            margin-bottom: 24px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero-oferta {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin: 24px auto;
+            max-width: 500px;
+        }
+        .hero-oferta strong {
+            color: #FFD700;
+            font-size: 1.1rem;
+        }
+        .hero-oferta p {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        .cta-btn {
+            display: inline-block;
+            background: #FFD700;
+            color: #7B2D5F;
+            font-size: 1.1rem;
+            font-weight: 800;
+            padding: 16px 40px;
+            border-radius: 50px;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 24px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .hero-contatos {
+            margin-top: 32px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+        .hero-contatos a {
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .hero-contatos a:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        /* ========== PRODUTOS ========== */
+        .produtos {
+            padding: 80px 20px;
+            background: #FFF9F5;
+        }
+        .section-title {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .section-title h2 {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            color: #7B2D5F;
+        }
+        .section-title p {
+            color: #666;
+            margin-top: 8px;
+            font-size: 1.05rem;
+        }
+        .produtos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .produto-card {
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .produto-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+        .produto-img {
+            width: 100%;
+            height: 280px;
+            background: #f0e6ef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            position: relative;
+        }
+        .produto-img .tag {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #C74B7A;
+            color: #fff;
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .produto-info {
+            padding: 24px;
+            text-align: center;
+        }
+        .produto-info h3 {
+            font-size: 1.2rem;
+            color: #7B2D5F;
+            margin-bottom: 8px;
+        }
+        .produto-info .desc {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+        .produto-preco {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #C74B7A;
+            margin-bottom: 16px;
+        }
+        .produto-preco small {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: #999;
+            display: block;
+        }
+        .produto-btn {
+            display: inline-block;
+            background: #7B2D5F;
+            color: #fff;
+            padding: 12px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: background 0.3s;
+        }
+        .produto-btn:hover {
+            background: #5E1D48;
+        }
+
+        /* ========== 2a DOBRA — DEPOIMENTOS ========== */
+        .depoimentos {
+            padding: 80px 20px;
+            background: #fff;
+        }
+        .depoimentos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto 40px;
+        }
+        .video-placeholder {
+            background: #f5eef4;
+            border-radius: 16px;
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: #7B2D5F;
+            font-weight: 600;
+        }
+        .video-placeholder .play {
+            width: 60px;
+            height: 60px;
+            background: #C74B7A;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.5rem;
+        }
+        .escritos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto 40px;
+        }
+        .depoimento-card {
+            background: #FFF9F5;
+            border-radius: 12px;
+            padding: 24px;
+            border-left: 4px solid #C74B7A;
+        }
+        .depoimento-stars {
+            color: #FFD700;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+        }
+        .depoimento-text {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+        .depoimento-autor {
+            font-weight: 700;
+            color: #7B2D5F;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .depoimento-autor .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e8d5e5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: #7B2D5F;
+        }
+
+        /* ========== FORMULARIO ========== */
+        .formulario-section {
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #7B2D5F, #A13670);
+        }
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 32px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+        }
+        .form-container h2 {
+            text-align: center;
+            color: #7B2D5F;
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+        }
+        .form-container .form-sub {
+            text-align: center;
+            color: #888;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0d5de;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            outline: none;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #C74B7A;
+        }
+        .form-submit {
+            width: 100%;
+            padding: 14px;
+            background: #C74B7A;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 8px;
+        }
+        .form-submit:hover {
+            background: #A13670;
+        }
+
+        /* ========== 3a DOBRA — QUEM SOMOS ========== */
+        .quem-somos {
+            padding: 80px 20px;
+            background: #FFF9F5;
+        }
+        .quem-somos-content {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 48px;
+            align-items: center;
+        }
+        .quem-foto {
+            width: 100%;
+            aspect-ratio: 3/4;
+            background: linear-gradient(135deg, #e8d5e5, #f5eef4);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #7B2D5F;
+            font-size: 1rem;
+            text-align: center;
+            gap: 8px;
+            padding: 20px;
+        }
+        .quem-foto .icon {
+            font-size: 4rem;
+        }
+        .quem-texto h2 {
+            font-size: 1.8rem;
+            color: #7B2D5F;
+            margin-bottom: 16px;
+        }
+        .quem-texto p {
+            color: #555;
+            margin-bottom: 16px;
+            font-size: 1rem;
+        }
+        .trust-list {
+            list-style: none;
+            margin: 24px 0;
+        }
+        .trust-list li {
+            padding: 8px 0;
+            color: #555;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+        .trust-list li .check {
+            color: #25D366;
+            font-weight: 700;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        .cta-btn-secondary {
+            display: inline-block;
+            background: #C74B7A;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 14px 36px;
+            border-radius: 50px;
+            text-decoration: none;
+            transition: background 0.3s, transform 0.3s;
+            margin-top: 8px;
+        }
+        .cta-btn-secondary:hover {
+            background: #A13670;
+            transform: translateY(-2px);
+        }
+
+        /* ========== 4a DOBRA — LOCAL + COMUNIDADE ========== */
+        .comunidade {
+            padding: 80px 20px;
+            background: #fff;
+        }
+        .comunidade-content {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .comunidade-img {
+            width: 100%;
+            max-width: 800px;
+            height: 350px;
+            background: linear-gradient(135deg, #e8d5e5, #f0e6ef);
+            border-radius: 16px;
+            margin: 0 auto 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #7B2D5F;
+            gap: 8px;
+        }
+        .comunidade-img .icon {
+            font-size: 3rem;
+        }
+        .comunidade-text {
+            max-width: 600px;
+            margin: 0 auto 32px;
+            color: #555;
+            font-size: 1.05rem;
+        }
+
+        /* ENDERECO */
+        .endereco-section {
+            background: #f8f3f7;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 700px;
+            margin: 32px auto 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            text-align: left;
+        }
+        .endereco-info h3 {
+            color: #7B2D5F;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+        .endereco-info p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .endereco-btns {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            justify-content: center;
+        }
+        .endereco-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: transform 0.3s;
+        }
+        .endereco-btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-ligar {
+            background: #7B2D5F;
+            color: #fff;
+        }
+        .btn-rota {
+            background: #fff;
+            color: #7B2D5F;
+            border: 2px solid #7B2D5F;
+        }
+
+        /* ========== FOOTER ========== */
+        footer {
+            background: #2D0F24;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+            padding: 32px 20px;
+            font-size: 0.85rem;
+        }
+        footer a {
+            color: #C74B7A;
+            text-decoration: none;
+        }
+
+        /* ========== RESPONSIVO ========== */
+        @media (max-width: 768px) {
+            .quem-somos-content {
+                grid-template-columns: 1fr;
+            }
+            .quem-foto {
+                max-width: 300px;
+                margin: 0 auto;
+            }
+            .endereco-section {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .endereco-btns {
+                flex-direction: row;
+                justify-content: center;
+            }
+            .hero-contatos {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ==================== WHATSAPP FLUTUANTE ==================== -->
+<a href="https://wa.me/5586999999999?text=Ola!%20Vi%20os%20produtos%20solidarios%20do%20Lado%20Coracao%20e%20quero%20saber%20mais." class="whatsapp-float" target="_blank" title="Fale conosco no WhatsApp">
+    <svg viewBox="0 0 32 32"><path d="M16.004 0C7.165 0 0 7.163 0 16.001c0 2.822.736 5.584 2.137 8.014L.074 32l8.2-2.148A15.92 15.92 0 0016.004 32C24.838 32 32 24.837 32 16.001 32 7.163 24.838 0 16.004 0zm0 29.39a13.36 13.36 0 01-6.81-1.865l-.488-.29-5.065 1.328 1.35-4.938-.318-.505A13.3 13.3 0 012.61 16.001c0-7.39 6.004-13.39 13.394-13.39S29.39 8.612 29.39 16c0 7.39-5.997 13.39-13.386 13.39zm7.337-10.026c-.402-.2-2.378-1.174-2.748-1.308-.37-.133-.639-.2-.908.201-.269.4-1.042 1.308-1.278 1.576-.236.269-.471.302-.874.101-.402-.2-1.699-.626-3.235-1.996-1.196-1.067-2.003-2.384-2.238-2.786-.235-.401-.025-.618.177-.818.182-.18.402-.469.604-.703.2-.235.268-.402.402-.67.134-.269.067-.503-.034-.703-.1-.2-.908-2.19-1.244-2.998-.328-.787-.66-.68-.908-.693-.235-.012-.503-.015-.772-.015-.268 0-.705.1-1.074.502-.37.4-1.411 1.379-1.411 3.362 0 1.984 1.444 3.9 1.645 4.168.2.269 2.84 4.335 6.882 6.078.962.415 1.713.663 2.299.849.966.307 1.845.264 2.54.16.775-.116 2.378-.972 2.714-1.91.335-.94.335-1.745.235-1.911-.1-.168-.369-.268-.771-.469z"/></svg>
+</a>
+
+<!-- ==================== 1a DOBRA — HERO ==================== -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-logo">
+            <span class="heart">&#9825;</span>
+            lado coracao
+        </div>
+        <h1>Sua Compra <span>Transforma a Vida</span> de Criancas e Familias</h1>
+        <p class="hero-sub">Produtos solidarios com qualidade de verdade. Camisetas 100% algodao, difusores naturais e bloquinhos — toda a renda vai direto pra quem precisa.</p>
+
+        <div class="hero-oferta">
+            <strong>Kit Solidario: Camiseta + Bloquinho por R$ 54,90</strong>
+            <p>Economize R$ 4,90 — oferta exclusiva por este link</p>
+        </div>
+
+        <a href="https://wa.me/5586999999999?text=Ola!%20Vi%20os%20produtos%20solidarios%20do%20Lado%20Coracao%20e%20quero%20saber%20mais." class="cta-btn" target="_blank">QUERO APOIAR ESSA CAUSA AGORA</a>
+
+        <div class="hero-contatos">
+            <a href="tel:+558632221234">&#9742; (86) 3222-1234</a>
+            <a href="https://instagram.com/ladocoracao" target="_blank">&#9741; @ladocoracao</a>
+            <a href="https://wa.me/5586999999999" target="_blank">&#9993; WhatsApp</a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== PRODUTOS ==================== -->
+<section class="produtos" id="produtos">
+    <div class="section-title">
+        <h2>Nossos Produtos Solidarios</h2>
+        <p>Cada compra apoia diretamente criancas e familias pela Rede Feminina</p>
+    </div>
+    <div class="produtos-grid">
+        <!-- Camiseta -->
+        <div class="produto-card">
+            <div class="produto-img" style="background: linear-gradient(135deg, #f5eef4, #e8d5e5);">
+                <span class="tag">MAIS VENDIDA</span>
+                &#128085;
+            </div>
+            <div class="produto-info">
+                <h3>Camiseta Solidaria</h3>
+                <p class="desc">100% algodao, super confortavel. Estampa exclusiva Lado Coracao.</p>
+                <div class="produto-preco">R$ 49,90 <small>Toda renda revertida</small></div>
+                <a href="https://wa.me/5586999999999?text=Ola!%20Quero%20a%20camiseta%20solidaria%20do%20Lado%20Coracao." class="produto-btn" target="_blank">QUERO A MINHA</a>
+            </div>
+        </div>
+        <!-- Difusor -->
+        <div class="produto-card">
+            <div class="produto-img" style="background: linear-gradient(135deg, #fef3e2, #f5e6c8);">
+                &#127863;
+            </div>
+            <div class="produto-info">
+                <h3>Difusor de Ambiente</h3>
+                <p class="desc">Fragancias Lavanda e Alecrim. Perfume natural e duradouro.</p>
+                <div class="produto-preco">R$ 69,90 <small>Toda renda revertida</small></div>
+                <a href="https://wa.me/5586999999999?text=Ola!%20Quero%20o%20difusor%20de%20ambiente%20do%20Lado%20Coracao." class="produto-btn" target="_blank">QUERO O MEU</a>
+            </div>
+        </div>
+        <!-- Bloquinho -->
+        <div class="produto-card">
+            <div class="produto-img" style="background: linear-gradient(135deg, #ece1f5, #d8c6e8);">
+                &#128221;
+            </div>
+            <div class="produto-info">
+                <h3>Bloquinho Solidario</h3>
+                <p class="desc">Pratico pro dia a dia. Design exclusivo Lado Coracao.</p>
+                <div class="produto-preco">R$ 9,90 <small>Toda renda revertida</small></div>
+                <a href="https://wa.me/5586999999999?text=Ola!%20Quero%20os%20bloquinhos%20solidarios%20do%20Lado%20Coracao." class="produto-btn" target="_blank">QUERO O MEU</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== 2a DOBRA — DEPOIMENTOS ==================== -->
+<section class="depoimentos">
+    <div class="section-title">
+        <h2>Veja o Impacto da Sua Compra</h2>
+        <p>Pessoas reais que ja fizeram parte dessa causa</p>
+    </div>
+
+    <!-- Videos -->
+    <div class="depoimentos-grid">
+        <div class="video-placeholder">
+            <div class="play">&#9654;</div>
+            <span>Depoimento em video</span>
+            <small>Familia atendida pela Rede Feminina</small>
+        </div>
+        <div class="video-placeholder">
+            <div class="play">&#9654;</div>
+            <span>Depoimento em video</span>
+            <small>Cliente que comprou e aprovou</small>
+        </div>
+    </div>
+
+    <!-- Escritos -->
+    <div class="escritos-grid">
+        <div class="depoimento-card">
+            <div class="depoimento-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <p class="depoimento-text">"Comprei a camiseta e amei a qualidade. Saber que minha compra apoia criancas fez tudo valer ainda mais."</p>
+            <div class="depoimento-autor">
+                <div class="avatar">MS</div>
+                Maria S.
+            </div>
+        </div>
+        <div class="depoimento-card">
+            <div class="depoimento-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <p class="depoimento-text">"Dei o difusor de presente pra minha mae. Ela amou a fragancia e ficou emocionada com a causa."</p>
+            <div class="depoimento-autor">
+                <div class="avatar">AP</div>
+                Ana P.
+            </div>
+        </div>
+        <div class="depoimento-card">
+            <div class="depoimento-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <p class="depoimento-text">"Os bloquinhos sao lindos e praticos. Comprei 5 pra dar de lembrancinha."</p>
+            <div class="depoimento-autor">
+                <div class="avatar">CM</div>
+                Carla M.
+            </div>
+        </div>
+        <div class="depoimento-card">
+            <div class="depoimento-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <p class="depoimento-text">"Produto excelente e causa nobre. Ja indiquei pra todo mundo do escritorio."</p>
+            <div class="depoimento-autor">
+                <div class="avatar">LR</div>
+                Lucia R.
+            </div>
+        </div>
+        <div class="depoimento-card">
+            <div class="depoimento-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+            <p class="depoimento-text">"A camiseta e super confortavel. Uso com orgulho sabendo que estou ajudando."</p>
+            <div class="depoimento-autor">
+                <div class="avatar">FT</div>
+                Fernanda T.
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:center;">
+        <a href="https://wa.me/5586999999999?text=Ola!%20Quero%20fazer%20parte%20dessa%20causa!" class="cta-btn-secondary" target="_blank">QUERO FAZER PARTE DESSA CAUSA</a>
+    </div>
+</section>
+
+<!-- ==================== FORMULARIO ==================== -->
+<section class="formulario-section">
+    <div class="form-container">
+        <h2>Garanta Seu Produto Solidario</h2>
+        <p class="form-sub">Preencha e entraremos em contato pelo WhatsApp</p>
+        <form id="formContato" onsubmit="enviarWhatsApp(event)">
+            <div class="form-group">
+                <label for="nome">Seu nome</label>
+                <input type="text" id="nome" placeholder="Digite seu nome" required>
+            </div>
+            <div class="form-group">
+                <label for="whatsapp">Seu WhatsApp</label>
+                <input type="tel" id="whatsapp" placeholder="(86) 9 9999-9999" required>
+            </div>
+            <div class="form-group">
+                <label for="produto">Qual produto te interessa?</label>
+                <select id="produto" required>
+                    <option value="">Selecione...</option>
+                    <option value="Camiseta Solidaria - R$ 49,90">Camiseta Solidaria — R$ 49,90</option>
+                    <option value="Difusor de Ambiente - R$ 69,90">Difusor de Ambiente — R$ 69,90</option>
+                    <option value="Bloquinho Solidario - R$ 9,90">Bloquinho Solidario — R$ 9,90</option>
+                    <option value="Kit Solidario - R$ 54,90">Kit Solidario (Camiseta + Bloquinho) — R$ 54,90</option>
+                    <option value="Quero saber de todos">Quero saber de todos</option>
+                </select>
+            </div>
+            <button type="submit" class="form-submit">ENVIAR E FALAR NO WHATSAPP</button>
+        </form>
+    </div>
+</section>
+
+<!-- ==================== 3a DOBRA — QUEM SOMOS ==================== -->
+<section class="quem-somos">
+    <div class="quem-somos-content">
+        <div class="quem-foto">
+            <span class="icon">&#128105;</span>
+            <strong>Foto da lider do projeto</strong>
+            <small>Coloque aqui a foto da responsavel pela Rede Feminina / Lado Coracao</small>
+        </div>
+        <div class="quem-texto">
+            <h2>Quem Esta Por Tras do Lado Coracao</h2>
+            <p>O Lado Coracao nasceu dentro da Rede Feminina com um proposito claro: oferecer apoio real a criancas e suas familias.</p>
+            <p>Cada produto que vendemos e pensado com carinho — camisetas 100% algodao, difusores com fragancias naturais, bloquinhos feitos com qualidade. Toda a renda e integralmente destinada ao projeto.</p>
+            <p>Quando voce compra do Lado Coracao, voce nao esta so levando um produto — voce esta sustentando um projeto que muda vidas todos os dias.</p>
+
+            <ul class="trust-list">
+                <li><span class="check">&#10003;</span> Projeto vinculado a Rede Feminina (instituicao reconhecida)</li>
+                <li><span class="check">&#10003;</span> 100% da renda revertida para o projeto</li>
+                <li><span class="check">&#10003;</span> Produtos de qualidade real (algodao, fragancias naturais)</li>
+                <li><span class="check">&#10003;</span> Entrega na sua regiao com atendimento humanizado</li>
+            </ul>
+
+            <a href="https://wa.me/5586999999999?text=Ola!%20Quero%20comprar%20com%20proposito!%20Vim%20pelo%20site%20do%20Lado%20Coracao." class="cta-btn-secondary" target="_blank">QUERO COMPRAR COM PROPOSITO</a>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== 4a DOBRA — COMUNIDADE + LOCAL ==================== -->
+<section class="comunidade">
+    <div class="comunidade-content">
+        <div class="section-title">
+            <h2>Faca Parte Dessa Rede de Apoio</h2>
+        </div>
+
+        <div class="comunidade-img">
+            <span class="icon">&#128101;</span>
+            <strong>Foto com pessoas do projeto</strong>
+            <small>Equipe, voluntarias, familias — pessoas reais, juntas</small>
+        </div>
+
+        <p class="comunidade-text">Cada camiseta vestida, cada difusor aceso, cada bloquinho usado representa alguem que decidiu fazer a diferenca. Junte-se a nos.</p>
+
+        <a href="https://wa.me/5586999999999?text=Ola!%20Vi%20os%20produtos%20solidarios%20do%20Lado%20Coracao%20e%20quero%20saber%20mais." class="cta-btn" style="background:#C74B7A; color:#fff;" target="_blank">QUERO APOIAR ESSA CAUSA AGORA</a>
+
+        <!-- Endereco -->
+        <div class="endereco-section">
+            <div class="endereco-info">
+                <h3>&#128205; Nosso Endereco</h3>
+                <p><strong>Rede Feminina — Lado Coracao</strong></p>
+                <p>[Endereco completo aqui]</p>
+                <p>[Cidade — PI]</p>
+                <p>Atendimento: Seg a Sex, 8h as 17h</p>
+            </div>
+            <div class="endereco-btns">
+                <a href="tel:+558632221234" class="endereco-btn btn-ligar">&#9742; LIGAR</a>
+                <a href="https://www.google.com/maps?q=Rede+Feminina+Teresina" class="endereco-btn btn-rota" target="_blank">&#128204; VER ROTA</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==================== FOOTER ==================== -->
+<footer>
+    <p>&#9825; Lado Coracao — Projeto Solidario da Rede Feminina</p>
+    <p style="margin-top:8px;">Toda a renda e destinada ao apoio de criancas e suas familias.</p>
+    <p style="margin-top:12px;"><a href="https://instagram.com/ladocoracao" target="_blank">@ladocoracao</a></p>
+</footer>
+
+<script>
+function enviarWhatsApp(e) {
+    e.preventDefault();
+    var nome = document.getElementById('nome').value;
+    var whats = document.getElementById('whatsapp').value;
+    var produto = document.getElementById('produto').value;
+    var msg = 'Ola! Meu nome e ' + nome + '. Tenho interesse no produto: ' + produto + '. Meu WhatsApp: ' + whats + '. Vim pelo site do Lado Coracao.';
+    var url = 'https://wa.me/5586999999999?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank');
+}
+
+// Mascara simples pro telefone
+document.getElementById('whatsapp').addEventListener('input', function(e) {
+    var v = e.target.value.replace(/\D/g, '');
+    if (v.length > 11) v = v.slice(0, 11);
+    if (v.length > 6) {
+        v = '(' + v.slice(0,2) + ') ' + v.slice(2,3) + ' ' + v.slice(3,7) + '-' + v.slice(7);
+    } else if (v.length > 2) {
+        v = '(' + v.slice(0,2) + ') ' + v.slice(2);
+    }
+    e.target.value = v;
+});
+</script>
+
+</body>
+</html>
