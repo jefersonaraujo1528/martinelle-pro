@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mdfind -onlyin ~/ \"kMDItemContentType == 'public.image'\")",
+      "Bash(open \"/Users/marciolinhares/AGÊNCIA MARTINELLE/Agencia martinelle CLAUDE/site/index.html\")",
+      "Bash(open \"https://app.netlify.com/drop\")",
+      "Bash(open \"/Users/marciolinhares/AGÊNCIA MARTINELLE/Agencia martinelle CLAUDE/\")",
+      "WebFetch(domain:loquacious-souffle-8a0dc6.netlify.app)",
+      "mcp__439f1cfb-36a5-43cf-87ae-2b7860fce908__request-outline-review",
+      "mcp__439f1cfb-36a5-43cf-87ae-2b7860fce908__generate-design-structured",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Read(//Users/marciolinhares/AGÊNCIA MARTINELLE/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import json,sys; data=json.load\\(sys.stdin\\); print\\(json.dumps\\(data, ensure_ascii=False, separators=\\(',',':'\\)\\)\\)\")",
+      "mcp__Claude_Preview__preview_start",
+      "Read(//private/tmp/**)",
+      "Bash(python3)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl -s \"https://martinelle-pro.netlify.app/doctors-data.json\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'OK {len\\(d\\)} medicos'\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f'{len\\(d\\)} medicos | com phone:', len\\([x for x in d if x.get\\('phone1'\\)]\\), '| com address:', len\\([x for x in d if x.get\\('address'\\)]\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w \"Update fn: %{http_code}\\\\n\" \"https://martinelle-pro.netlify.app/.netlify/functions/update-doctors\")",
+      "Bash(curl -s -o /dev/null -w \"Webhook fn: %{http_code}\\\\n\" \"https://martinelle-pro.netlify.app/.netlify/functions/telegram-webhook\")"
+    ]
+  }
+}
