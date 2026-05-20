@@ -3,3 +3,6 @@
 *.jpg
 medicos_importados.json
 config-notificacoes.json
+.netlify-token
+.netlify-site-id
+.netlify-deploy.zip
