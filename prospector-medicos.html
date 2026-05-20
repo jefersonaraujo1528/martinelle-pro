@@ -127,6 +127,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .hist-tag.h-call{background:var(--yellow-soft);color:#ffd592;border-color:rgba(245,166,35,.25)}
 .hist-tag.h-hot{background:var(--red-soft);color:#ff9bb3;border-color:rgba(239,71,111,.3)}
 .hist-tag.h-pos{background:var(--pink-soft);color:#ffc1d8;border-color:rgba(255,107,157,.3)}
+.hist-tag.h-now{background:linear-gradient(135deg,#ef476f,#ff6b9d);color:#fff;border-color:transparent;animation:pulse 1.4s infinite;font-size:11px}
+.hist-tag.h-soon{background:linear-gradient(135deg,#f5a623,#ffd592);color:#1a1208;border-color:transparent;font-size:11px}
+.hist-tag.h-past{background:var(--surface3);color:var(--muted);border-color:var(--border)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,71,111,.6)}50%{box-shadow:0 0 0 8px rgba(239,71,111,0)}}
+
+/* Card temporal states (agenda do dia) */
+.card.ts-now{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 4px 16px rgba(239,71,111,.25)}
+.card.ts-now::before{background:linear-gradient(180deg,var(--red),var(--pink));width:5px}
+.card.ts-future{border-color:rgba(245,166,35,.3)}
+.card.ts-past{opacity:.6}
+.card.ts-past .card-time{color:var(--muted)}
 
 .card-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:11px;padding-top:10px;border-top:1px solid var(--border)}
 .act{padding:7px 11px;border-radius:8px;font-size:12px;font-weight:700;background:var(--surface2);border:1px solid var(--border);color:var(--text);transition:all .15s;display:inline-flex;align-items:center;gap:5px;line-height:1}
@@ -156,6 +167,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 .field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800;margin-bottom:6px}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .days-pick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.time-pick{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:8px}
+.time-btn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);transition:all .12s}
+.time-btn:hover{border-color:var(--accent);color:var(--text)}
+.time-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .day-btn{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 8px;text-align:center;font-size:12px;font-weight:700;color:var(--muted);transition:all .15s}
 .day-btn:hover{border-color:var(--accent)}
 .day-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 10px rgba(108,99,255,.3)}
@@ -290,7 +305,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
     <div class="field"><label>Localização / Clínica</label><input id="fAddr" placeholder="Ex: Diamond Center, Sala 1201"></div>
     <div class="field"><label>Telefone</label><input id="fPhone" placeholder="(86) 9XXXX-XXXX" inputmode="tel"></div>
     <div class="field"><label>Dias para visitar</label><div class="days-pick" id="daysPick"></div></div>
-    <div class="field"><label>Horário</label><input id="fTime" placeholder="Ex: 8h, 14:30, manhã"></div>
+    <div class="field">
+      <label>Horário <span style="color:var(--muted);text-transform:none;letter-spacing:0;font-weight:600">(toque pra preencher)</span></label>
+      <input id="fTime" placeholder="Ex: 8h, 14:30" inputmode="numeric">
+      <div class="time-pick" id="timePick"></div>
+    </div>
     <div class="field"><label>Posicionamento digital</label><div class="pos-pick" id="posPick"></div></div>
     <div class="field"><label>⚠️ Observação importante</label><textarea id="fObs" rows="3" placeholder="Ex: Ligar antes para confirmar, chegar 20min antes, agendar via WhatsApp..."></textarea></div>
     <div class="stat-mini" id="formStats" style="display:none"></div>
@@ -602,19 +621,36 @@ function renderContent(){
   if(currentView === 'agenda'){
     const day = getSubTab();
     const isToday = day === todayName();
+    const dateObj = nextDateFor(day);
+    const dateStr = dateObj ? fmtFullDate(dateObj) : '';
     const times = list.map(d => parseTime(d.time)).filter(t => t < 9999).sort((a,b)=>a-b);
     const first = times.length ? fmtMin(times[0]) : '';
     const last = times.length ? fmtMin(times[times.length-1]) : '';
     const mapsList = list.filter(d => d.address).map(d => d.address);
     const routeUrl = mapsList.length ? 'https://www.google.com/maps/dir/' + mapsList.map(a => encodeURIComponent(a)).join('/') : '';
+    // Hoje: encontrar próxima visita
+    let nextInfo = '';
+    if(isToday && times.length){
+      const now = nowMinutes();
+      const future = times.filter(t => t > now);
+      if(future.length){
+        const next = future[0];
+        const diff = next - now;
+        nextInfo = `<div class="day-meta" style="margin-top:4px"><strong style="color:var(--yellow)">⏰ Próxima visita:</strong> ${fmtMin(next)} <span style="color:var(--muted)">(em ${fmtDuration(diff)})</span></div>`;
+      } else {
+        nextInfo = `<div class="day-meta" style="margin-top:4px;color:var(--green)"><strong>✓ Todas as visitas passaram</strong> — bom trabalho!</div>`;
+      }
+    }
     prefix = `<div class="day-header ${isToday?'today':''}">
       <div class="day-info">
-        <div class="day-title">${isToday?'⭐ ':''}${day}-feira <span style="color:var(--muted);font-weight:600;font-size:13px">— ${list.length} médico${list.length!==1?'s':''}</span></div>
-        <div class="day-meta">
-          ${times.length?`<strong>${first}</strong> → <strong>${last}</strong> · `:''}
-          ⏱ ~${Math.round(list.length*15)} min de visitas ·
-          ${list.filter(isPriority).length?`<span style="color:#ffc1d8">🎯 ${list.filter(isPriority).length} prioridade</span>`:'sem prioridades'}
+        <div class="day-title">${isToday?'⭐ HOJE · ':''}${day}-feira${dateStr?` <span style="color:var(--muted);font-weight:600;font-size:13px">· ${dateStr}</span>`:''}</div>
+        <div class="day-meta" style="margin-top:4px">
+          <strong>${list.length}</strong> médico${list.length!==1?'s':''}
+          ${times.length?` · <strong>${first}</strong> → <strong>${last}</strong>`:''}
+          · ⏱ ~${fmtDuration(list.length*15)}
+          ${list.filter(isPriority).length?` · <span style="color:#ffc1d8">🎯 ${list.filter(isPriority).length} prioridade</span>`:''}
         </div>
+        ${nextInfo}
       </div>
       <a class="btn-route" href="${routeUrl}" target="_blank" ${!routeUrl?'onclick="event.preventDefault();toast(\'Adicione endereços para gerar rota\',\'err\')"':''}>🗺 Rota do dia</a>
     </div>`;
@@ -662,6 +698,31 @@ function parseTime(t){
 }
 function fmtMin(m){ const h=Math.floor(m/60), mm=m%60; return mm ? `${h}:${String(mm).padStart(2,'0')}` : `${h}h`; }
 
+// Data próxima ocorrência de um dia da semana ("Terça" → próxima terça)
+function nextDateFor(dayName){
+  const dayIdx = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'].indexOf(dayName);
+  if(dayIdx < 0) return null;
+  const today = new Date();
+  const todayIdx = today.getDay();
+  let diff = dayIdx - todayIdx;
+  if(diff < 0) diff += 7;
+  const d = new Date(today);
+  d.setDate(today.getDate() + diff);
+  return d;
+}
+function fmtFullDate(date){
+  if(!date) return '';
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  return `${date.getDate()} de ${meses[date.getMonth()]}`;
+}
+function nowMinutes(){ const n = new Date(); return n.getHours()*60 + n.getMinutes(); }
+function fmtDuration(min){
+  const m = Math.abs(min);
+  if(m < 60) return `${m} min`;
+  const h = Math.floor(m/60), mm = m%60;
+  return mm ? `${h}h ${mm}min` : `${h}h`;
+}
+
 function emptyState(){
   const t = getSubTab();
   const map = {
@@ -683,12 +744,36 @@ function emptyState(){
 function cardHTML(d){
   const s = statusOf(d);
   const pri = isPriority(d);
-  const cls = s + (pri ? ' priority' : '');
+  // Status temporal (só relevante na agenda do dia atual)
+  let timeStatus = ''; // 'next' | 'now' | 'past' | ''
+  if(currentView === 'agenda' && d.time){
+    const day = getSubTab();
+    if(day === todayName() && s === 'visitar'){
+      const t = parseTime(d.time);
+      if(t < 9999){
+        const now = nowMinutes();
+        if(t < now - 30) timeStatus = 'past';
+        else if(t <= now + 15 && t >= now - 30) timeStatus = 'now';
+        else timeStatus = 'future';
+      }
+    }
+  }
+  const cls = s + (pri ? ' priority' : '') + (timeStatus ? ' ts-'+timeStatus : '');
   const dayTags = (d.days||[]).map(x => `<span class="hist-tag h-day">📅 ${esc(x)}</span>`).join('');
   const visTag = d.visitCount ? `<span class="hist-tag h-vis">✓ ${d.visitCount} visita${d.visitCount>1?'s':''}${d.lastVisitDate?' · '+formatDate(d.lastVisitDate):''}</span>` : '';
   const hot = (d.callAttempts||0) >= 3;
   const callTag = d.callAttempts ? `<span class="hist-tag ${hot?'h-hot':'h-call'}">📞 ${d.callAttempts}x${d.lastCallDate?' · '+formatDate(d.lastCallDate):''}</span>` : '';
   const posTag = d.positioning && d.positioning !== 'Desconhecido' ? `<span class="hist-tag ${d.positioning==='Sem'?'h-pos':''}">${d.positioning==='Sem'?'🎯 ':'📊 '}${esc(d.positioning)}</span>` : '';
+  // Tag temporal
+  let timeTag = '';
+  if(timeStatus === 'now') timeTag = '<span class="hist-tag h-now">🔥 AGORA</span>';
+  else if(timeStatus === 'future'){
+    const t = parseTime(d.time);
+    const diff = t - nowMinutes();
+    if(diff > 0 && diff < 120) timeTag = `<span class="hist-tag h-soon">⏰ em ${fmtDuration(diff)}</span>`;
+  } else if(timeStatus === 'past'){
+    timeTag = '<span class="hist-tag h-past">⏱ passou</span>';
+  }
   const mapsUrl = d.address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.address)}` : '';
   const telUrl = d.phone ? 'tel:'+d.phone.replace(/\D/g,'') : '';
   const waUrl = d.phone ? 'https://wa.me/55'+d.phone.replace(/\D/g,'') : '';
@@ -734,7 +819,7 @@ function cardHTML(d){
           <span>${esc(d.specialty||'Sem especialidade')}</span>
           ${d.secretary?`<span class="sep">·</span><span>👤 ${esc(d.secretary)}</span>`:''}
         </div>
-        <div class="history-row">${s==='ligar' && !d.time?'<span class="hist-tag h-call">⏰ Sem horário</span>':''}${s==='ligar' && !(d.days||[]).length?'<span class="hist-tag h-call">📅 Sem dia</span>':''}${dayTags}${posTag}${visTag}${callTag}${d.called && s==='ligar'?'<span class="hist-tag h-vis">✓ Liguei</span>':''}</div>
+        <div class="history-row">${timeTag}${s==='ligar' && !d.time?'<span class="hist-tag h-call">⏰ Sem horário</span>':''}${s==='ligar' && !(d.days||[]).length?'<span class="hist-tag h-call">📅 Sem dia</span>':''}${dayTags}${posTag}${visTag}${callTag}${d.called && s==='ligar'?'<span class="hist-tag h-vis">✓ Liguei</span>':''}</div>
       </div>
       ${timeBlock}
     </div>
@@ -857,6 +942,9 @@ function openForm(id){
   formPos = d?.positioning || 'Desconhecido';
   renderDaysPick();
   renderPosPick();
+  renderTimePick();
+  // Re-render time chips quando user digita manualmente
+  document.getElementById('fTime').oninput = renderTimePick;
   const fs = document.getElementById('formStats');
   if(d && (d.visitCount || d.callAttempts)){
     fs.style.display = 'block';
@@ -870,6 +958,17 @@ function renderDaysPick(){
   document.getElementById('daysPick').innerHTML = DAYS.map(d =>
     `<button type="button" class="day-btn ${formDays.includes(d)?'on':''}" onclick="toggleDay('${d}')">${d}</button>`
   ).join('');
+}
+function renderTimePick(){
+  const cur = (document.getElementById('fTime').value || '').trim();
+  const slots = ['7h','7:30','8h','8:30','9h','9:30','10h','10:30','11h','11:30','14h','14:30','15h','15:30','16h','16:30','17h','17:30'];
+  document.getElementById('timePick').innerHTML = slots.map(s =>
+    `<button type="button" class="time-btn ${cur===s?'on':''}" onclick="setFormTime('${s}')">${s}</button>`
+  ).join('');
+}
+function setFormTime(t){
+  document.getElementById('fTime').value = t;
+  renderTimePick();
 }
 function toggleDay(d){
   if(formDays.includes(d)) formDays = formDays.filter(x => x !== d);
@@ -1228,6 +1327,14 @@ load();
 // Set initial agenda subtab to today if applicable
 if(!subTab.agenda && DAYS.includes(todayName())) subTab.agenda = todayName();
 render();
+// Auto-refresh a cada 60s para atualizar "em 1h", "AGORA", "passou"
+// Só re-renderiza se estiver na Agenda do dia atual
+setInterval(() => {
+  if(currentView === 'agenda' && getSubTab() === todayName()){
+    renderContent();
+    renderKPI();
+  }
+}, 60000);
 </script>
 </body>
 </html>
