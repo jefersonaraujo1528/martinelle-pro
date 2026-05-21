@@ -1,12 +1,13 @@
-const CACHE = 'martinelle-v1';
+// Service Worker — Martinelle Prospector
+// Estratégia inteligente: HTML sempre busca rede primeiro (atualizações instantâneas),
+// assets ficam no cache (rápido offline).
+const CACHE = 'martinelle-v3';
 const ASSETS = [
-  './prospector-medicos.html',
   './manifest.json',
   './icon.svg',
-  'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js'
 ];
 
-// Instala e cacheia os arquivos principais
+// Instala — pré-cacheia só assets estáticos (não o HTML!)
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(ASSETS).catch(() => {}))
@@ -14,29 +15,50 @@ self.addEventListener('install', e => {
   self.skipWaiting();
 });
 
-// Remove caches antigos ao ativar nova versão
+// Ativa — apaga TODOS os caches antigos (de versões anteriores)
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    )
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Cache-first: serve do cache, atualiza em background se online
+// Estratégia por tipo de recurso
 self.addEventListener('fetch', e => {
   if(e.request.method !== 'GET') return;
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      const network = fetch(e.request).then(res => {
-        if(res && res.status === 200 && res.type !== 'opaque'){
+  const url = new URL(e.request.url);
+  const isHTML = e.request.mode === 'navigate' ||
+                 e.request.destination === 'document' ||
+                 url.pathname.endsWith('.html') ||
+                 url.pathname === '/' ||
+                 url.pathname === '';
+
+  if(isHTML){
+    // NETWORK-FIRST para HTML: sempre tenta servidor primeiro.
+    // Se rede falhar (offline), usa cache. Se cache vazio, mostra erro.
+    e.respondWith(
+      fetch(e.request).then(res => {
+        if(res && res.status === 200){
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
         return res;
-      }).catch(() => null);
-      return cached || network;
-    })
-  );
+      }).catch(() => caches.match(e.request))
+    );
+  } else {
+    // CACHE-FIRST para assets (ícone, manifest, scripts externos)
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        if(cached) return cached;
+        return fetch(e.request).then(res => {
+          if(res && res.status === 200 && res.type !== 'opaque'){
+            const clone = res.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+          }
+          return res;
+        });
+      })
+    );
+  }
 });

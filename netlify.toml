@@ -19,3 +19,20 @@
   from = "/api/sync"
   to = "/.netlify/functions/update-doctors"
   status = 200
+
+# Não cachear HTML — sempre busca versão fresca
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Não cachear o service worker — atualização instantânea da estratégia
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
