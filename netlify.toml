@@ -11,6 +11,11 @@
   status = 200
 
 [[redirects]]
+  from = "/api/autentique"
+  to = "/.netlify/functions/autentique-sign"
+  status = 200
+
+[[redirects]]
   from = "/api/contratos/criar"
   to = "/.netlify/functions/criar-contrato"
   status = 200
