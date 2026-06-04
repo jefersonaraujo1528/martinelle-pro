@@ -97,6 +97,75 @@ async function handleAsaas(body) {
   return { ok: true, customerId: cid, cobranças };
 }
 
+// E-mail de boas-vindas via Resend.com (gratuito 3000/mês)
+// Para ativar: criar conta em resend.com e colar a API key abaixo
+const RESEND_KEY = process.env.RESEND_KEY || ''; // cole sua key aqui ou use variável de ambiente
+
+async function enviarBoasVindas({ nomeCliente, emailCliente, plano, dataInicio, valor }) {
+  if (!RESEND_KEY) {
+    console.log(`[Boas-vindas] Resend não configurado. Para ativar: set RESEND_KEY=sua_key`);
+    return { ok: false, msg: 'RESEND_KEY não configurada' };
+  }
+
+  const planoNome = { google: 'Google Ads Pro', meta: 'Meta Ads Pro', youtube: 'YouTube Ads Pro' }[plano] || plano;
+  const data = JSON.stringify({
+    from: 'Agência Martinelle <agenciamartinelle@gmail.com>',
+    to: [emailCliente],
+    subject: `Boas-vindas à Agência Martinelle — ${planoNome}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5">
+        <div style="background:#0d0d0d;padding:28px 32px;text-align:center">
+          <h1 style="color:#c9a84c;margin:0;font-size:22px">Agência Martinelle</h1>
+          <p style="color:#888;margin:6px 0 0;font-size:13px">Tráfego pago que gera resultados reais</p>
+        </div>
+        <div style="padding:32px">
+          <h2 style="color:#111;margin:0 0 16px">Olá, ${nomeCliente}! 👋</h2>
+          <p style="color:#444;line-height:1.6;margin-bottom:16px">
+            Seu contrato com a <strong>Agência Martinelle</strong> foi assinado com sucesso. Estamos muito felizes em ter você como cliente!
+          </p>
+          <div style="background:#f8f8f8;border-radius:8px;padding:18px;margin-bottom:20px">
+            <p style="margin:0 0 8px;font-weight:700;color:#111">Resumo do seu pacote:</p>
+            <p style="margin:4px 0;color:#444">📦 Plano: <strong>${planoNome}</strong></p>
+            <p style="margin:4px 0;color:#444">💰 Investimento: <strong>R$ ${valor}/mês</strong></p>
+            <p style="margin:4px 0;color:#444">📅 Início: <strong>${dataInicio}</strong></p>
+          </div>
+          <p style="color:#444;line-height:1.6;margin-bottom:8px"><strong>Próximos passos:</strong></p>
+          <ol style="color:#444;line-height:1.8;padding-left:20px;margin-bottom:20px">
+            <li>Nossa equipe entrará em contato em até <strong>48 horas</strong> para iniciar o setup</li>
+            <li>Você receberá um link para acesso à sua conta e relatórios</li>
+            <li>Em até <strong>15 dias úteis</strong>, suas campanhas estarão no ar</li>
+          </ol>
+          <p style="color:#444;line-height:1.6">Qualquer dúvida, fale conosco pelo WhatsApp ou responda este e-mail.</p>
+        </div>
+        <div style="background:#f5f5f5;padding:20px 32px;text-align:center;border-top:1px solid #e5e5e5">
+          <p style="color:#888;font-size:12px;margin:0">Agência Martinelle · agenciamartinelle@gmail.com · Teresina/PI</p>
+          <p style="color:#888;font-size:12px;margin:4px 0 0">CNPJ 49.561.800/0001-70</p>
+        </div>
+      </div>
+    `,
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.resend.com',
+      path: '/emails',
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
+    }, res => {
+      let raw = '';
+      res.on('data', c => raw += c);
+      res.on('end', () => {
+        const r = JSON.parse(raw);
+        console.log(`[Boas-vindas] E-mail enviado para ${emailCliente} — ${r.id || r.error || 'erro'}`);
+        resolve({ ok: !r.error, id: r.id, erro: r.error });
+      });
+    });
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
+
 const server = http.createServer(async (req, res) => {
   // CORS
   if (req.method === 'OPTIONS') {
@@ -113,6 +182,8 @@ const server = http.createServer(async (req, res) => {
 
       if (req.url === '/api/asaas') {
         result = await handleAsaas(data);
+      } else if (req.url === '/api/boas-vindas') {
+        result = await enviarBoasVindas(data);
       } else {
         result = { erro: 'Endpoint não encontrado: ' + req.url };
         res.writeHead(404, CORS);

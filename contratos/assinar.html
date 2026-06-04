@@ -379,25 +379,31 @@
 
       <div class="clausula">
         <h3>6. Do Prazo e Renovação</h3>
-        <p><strong>6.1</strong> O presente contrato vigorará por <strong>${duracaoTexto}</strong>, com início em <strong>${dataInicio}</strong>${d.duracao !== '0' ? ` e término previsto em <strong>${dataFim}</strong>` : ''}, renovando-se automaticamente por igual período, salvo manifestação contrária de qualquer das partes com antecedência mínima de 30 (trinta) dias.</p>
-        <p><strong>6.2</strong> Na renovação, a CONTRATADA poderá reajustar o valor da Taxa de Gerenciamento, comunicando ao CONTRATANTE com no mínimo 30 (trinta) dias de antecedência.</p>
+        <p><strong>6.1</strong> O presente contrato vigorará por <strong>${duracaoTexto}</strong>, com início em <strong>${dataInicio}</strong>${d.duracao !== '0' ? ` e término previsto em <strong>${dataFim}</strong>` : ''}, renovando-se automaticamente por <strong>12 (doze) meses</strong>, salvo manifestação contrária de qualquer das partes com antecedência mínima de <strong>${d.cl_aviso || '30'} (${porExtensoNum(d.cl_aviso || '30')}) dias</strong>.</p>
+        <p><strong>Prazo mínimo de contratação: ${d.cl_prazoMin || '6'} (${porExtenso(d.cl_prazoMin || '6')}) meses.</strong></p>
+        <p><strong>6.2</strong> Na renovação, a CONTRATADA poderá reajustar o valor da Taxa de Gerenciamento, comunicando ao CONTRATANTE com no mínimo ${d.cl_aviso || '30'} (${porExtensoNum(d.cl_aviso || '30')}) dias de antecedência.</p>
       </div>
 
       <div class="clausula">
         <h3>7. Do Valor e Forma de Pagamento</h3>
         <p><strong>7.1</strong> Pela prestação dos serviços, o CONTRATANTE pagará à CONTRATADA a Taxa de Gerenciamento de <strong>R$ ${d.valor}/mês</strong>, com vencimento no dia <strong>${d.diaVencimento}</strong> de cada mês, mediante <strong>${pgtoTexto[d.pgto] || d.pgto}</strong>.</p>
+        ${descontoTexto(d.cl_desconto)}
         <p><strong>7.2</strong> O primeiro mês de gerenciamento será cobrado de forma proporcional à data de início do contrato, caso iniciado após o dia 1º do mês vigente.</p>
         <p><strong>7.3</strong> O atraso no pagamento implicará multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.</p>
-        <p><strong>7.4</strong> O não pagamento por período superior a 30 (trinta) dias corridos ensejará a suspensão imediata dos serviços pela CONTRATADA, independentemente de notificação prévia, sem prejuízo da cobrança dos valores devidos e da multa rescisória.</p>
+        <p><strong>7.4</strong> O não pagamento por período superior a <strong>${d.cl_suspensao || '7'} (${porExtensoNum(d.cl_suspensao || '7')}) dias</strong> ensejará a suspensão dos serviços pela CONTRATADA, sem prejuízo da cobrança dos valores devidos.</p>
+        ${d.cl_reajuste && d.cl_reajuste !== 'sem_reajuste' ? `<p><strong>7.5</strong> Os valores serão reajustados anualmente pelo índice <strong>${d.cl_reajuste}</strong>, acumulado no período.</p>` : (d.cl_reajuste === 'sem_reajuste' ? '<p><strong>7.5</strong> Fica acordado entre as partes que não haverá reajuste automático de valores durante o período de vigência deste contrato.</p>' : '<p><strong>7.5</strong> Os valores serão reajustados anualmente pelo índice <strong>IGP-M/FGV</strong>, acumulado no período.</p>')}
       </div>
 
       <div class="clausula">
         <h3>8. Da Rescisão e Multa</h3>
-        <p><strong>8.1</strong> Qualquer das partes poderá rescindir o presente contrato mediante notificação prévia de 30 (trinta) dias corridos, por escrito ou via e-mail.</p>
-        <p><strong>8.2</strong> A rescisão antecipada por iniciativa do CONTRATANTE, antes do término do prazo contratual estabelecido, implicará no pagamento de multa compensatória equivalente a <strong>20% (vinte por cento) do valor total dos meses remanescentes do contrato</strong>, sem prejuízo dos valores já vencidos e não pagos e dos juros e multa moratória incidentes.</p>
-        <p><strong>8.3</strong> A rescisão por inadimplência do CONTRATANTE — não pagamento superior a 30 (trinta) dias — poderá ser realizada pela CONTRATADA de forma imediata, sem necessidade de notificação prévia, mantendo o direito à multa descrita no §2.</p>
+        <p><strong>8.1</strong> Qualquer das partes poderá rescindir o presente contrato mediante notificação prévia de <strong>${d.cl_aviso || '30'} (${porExtensoNum(d.cl_aviso || '30')}) dias</strong> corridos, por escrito ou via e-mail.</p>
+        ${multaTexto(d.cl_multa)}
+        <p><strong>8.3</strong> A rescisão por inadimplência do CONTRATANTE — não pagamento superior a ${d.cl_suspensao || '7'} dias — poderá ser realizada pela CONTRATADA de forma imediata, sem notificação prévia, mantendo o direito à multa prevista.</p>
         <p><strong>8.4</strong> A rescisão por descumprimento comprovado de obrigações pela CONTRATADA não implicará multa ao CONTRATANTE.</p>
       </div>
+
+      ${exclusividadeTexto(d.cl_exclusividade)}
+      ${extrasTexto(d.cl_extras, d.cl_obs)}
 
       <div class="clausula">
         <h3>9. Da Ausência de Garantia de Resultado</h3>
@@ -435,6 +441,34 @@
         </div>
       </div>
     `;
+  }
+
+  function porExtensoNum(n) {
+    const m = {'7':'sete','10':'dez','15':'quinze','20':'vinte','21':'vinte e um','30':'trinta','60':'sessenta'};
+    return m[String(n)] || String(n);
+  }
+
+  function descontoTexto(cl) {
+    if (!cl || cl === '0') return '';
+    const [pct, dia] = cl.split('_');
+    return `<p><strong>Desconto de Pontualidade:</strong> ${pct}% de desconto sobre a Taxa de Gerenciamento para pagamentos realizados até o dia ${dia}º (${dia === '1' ? 'primeiro' : dia === '5' ? 'cinco' : dia}º) de cada mês.</p>`;
+  }
+
+  function multaTexto(cl) {
+    if (!cl || cl === '0') return '<p><strong>8.2</strong> As partes acordam pela <strong>isenção de multa rescisória</strong>, devendo apenas respeitar o aviso prévio estipulado na Cláusula 8.1.</p>';
+    return `<p><strong>8.2</strong> A rescisão antecipada por iniciativa do CONTRATANTE, antes do término do prazo, implicará multa compensatória equivalente a <strong>${cl}% (${cl === '20' ? 'vinte' : cl === '25' ? 'vinte e cinco' : 'trinta'} por cento) do valor total dos meses remanescentes do contrato</strong>, sem prejuízo dos valores já devidos.</p>`;
+  }
+
+  function exclusividadeTexto(cl) {
+    if (cl !== 'sim') return '';
+    return `<div class="clausula"><h3>8.5 Da Exclusividade</h3><p>Por força deste contrato, a CONTRATADA se compromete a <strong>não prestar os mesmos serviços de gestão de tráfego pago a concorrentes diretos do CONTRATANTE na mesma especialidade e cidade</strong>, durante a vigência deste instrumento. A exclusividade somente se aplica ao segmento e localidade específicos do CONTRATANTE, não limitando a atuação da CONTRATADA em outros segmentos ou localidades.</p></div>`;
+  }
+
+  function extrasTexto(extras, obs) {
+    let html = '';
+    if (extras) html += `<div class="clausula"><h3>Serviços Adicionais Incluídos</h3><p>${extras}</p></div>`;
+    if (obs) html += `<div class="clausula" style="background:#fff8f0;border:1px solid #f0c060;border-radius:6px;padding:14px 16px;margin-top:10px"><h3 style="color:#a06000">Condição Especial Acordada</h3><p>${obs}</p></div>`;
+    return html;
   }
 
   function nomePlataforma(plano) {
@@ -540,7 +574,15 @@
     return m[n] || n;
   }
 
-  // Enviar para Autentique e redirecionar
+  const AUTENTIQUE_TOKEN = 'dede35294c3788844ef0df69a3ca2e016ee7ac84d06bd89df3cd5e12741a6844';
+  const EMAIL_JEFERSON   = 'agenciamartinelle@gmail.com';
+
+  const MUTATION = `mutation CreateDocument($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) {
+    createDocument(document: $document, signers: $signers, file: $file) {
+      document { id name signers { email action link { short_link } } }
+    }
+  }`;
+
   async function enviarParaAutentique() {
     const btn = document.getElementById('btnAssinar');
     const msg = document.getElementById('gerandoMsg');
@@ -548,49 +590,90 @@
     msg.classList.add('show');
 
     try {
-      // 1. Gerar PDF do contrato visível na tela
+      // 1. Gerar PDF do contrato
       const contratoEl = document.getElementById('contratoBox');
-      const canvas = await html2canvas(contratoEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const canvasImg = await html2canvas(contratoEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvasImg.toDataURL('image/jpeg', 0.88);
 
       const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const ratio = canvas.height / canvas.width;
-      const imgH = pageW * ratio;
+      const imgH = pageW * (canvasImg.height / canvasImg.width);
       let remaining = imgH;
       let first = true;
-
       while (remaining > 0) {
         if (!first) pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, first ? 0 : -(imgH - remaining), pageW, imgH);
         remaining -= pageH;
         first = false;
       }
+      const pdfBlob = pdf.output('blob');
 
-      const pdfBase64 = pdf.output('datauristring').split(',')[1];
-
-      // 2. Enviar para Netlify Function → Autentique
+      // 2. Montar multipart GraphQL para o Autentique
+      const deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().split('T')[0];
       const planoNomes = { google:'Google Ads Pro', meta:'Meta Ads Pro', youtube:'YouTube Ads Pro' };
-      const resp = await fetch('/.netlify/functions/autentique-sign', {
+      const nomeContrato = `Contrato ${planoNomes[dadosContrato.plano]||dadosContrato.plano} — ${dadosContrato.nome}`;
+
+      const operations = JSON.stringify({
+        query: MUTATION,
+        variables: {
+          document: {
+            name: nomeContrato,
+            message: `Olá ${dadosContrato.nome}! Seu contrato com a Agência Martinelle está pronto. Você tem 48 horas para assinar.`,
+            deadline_at: deadline,
+            reminder: 1,
+            notify_in: 0,
+          },
+          signers: [
+            { email: dadosContrato.email, action: 'SIGN' },
+            { email: EMAIL_JEFERSON, action: 'SIGN' },
+          ],
+          file: null,
+        },
+      });
+
+      const form = new FormData();
+      form.append('operations', operations);
+      form.append('map', JSON.stringify({ '0': ['variables.file'] }));
+      form.append('0', pdfBlob, 'contrato.pdf');
+
+      // 3. Enviar para Autentique
+      const resp = await fetch('https://api.autentique.com.br/v2/graphql', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pdfBase64,
-          emailCliente: dadosContrato.email,
-          nomeCliente: dadosContrato.nome,
-          nomeContrato: `Contrato ${planoNomes[dadosContrato.plano]||dadosContrato.plano} — ${dadosContrato.nome}`,
-        }),
+        headers: { Authorization: `Bearer ${AUTENTIQUE_TOKEN}` },
+        body: form,
       });
 
       const data = await resp.json();
-      if (!resp.ok || !data.link) throw new Error(data.erro || 'Erro ao enviar para Autentique');
+      if (data.errors) throw new Error(data.errors[0].message);
 
-      // 3. Redirecionar para o Autentique assinar
-      window.location.href = data.link;
+      const signers = data.data.createDocument.document.signers;
+      const linkCliente = signers.find(s => s.email === dadosContrato.email)?.link?.short_link;
+
+      if (!linkCliente) throw new Error('Link de assinatura não retornado pelo Autentique');
+
+      // 4. Tentar enviar e-mail de boas-vindas via servidor local (silencioso se falhar)
+      try {
+        const planoNomes = { google:'Google Ads Pro', meta:'Meta Ads Pro', youtube:'YouTube Ads Pro' };
+        await fetch('http://localhost:3765/api/boas-vindas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nomeCliente: dadosContrato.nome,
+            emailCliente: dadosContrato.email,
+            plano: dadosContrato.plano,
+            dataInicio: dadosContrato.dataInicio,
+            valor: dadosContrato.valor,
+          }),
+        });
+      } catch(e) { /* servidor local não rodando — ignora */ }
+
+      // 5. Redirecionar para assinar no Autentique
+      window.location.href = linkCliente;
 
     } catch(e) {
-      alert('Erro: ' + e.message + '\n\nVerifique sua conexão e tente novamente.');
+      console.error(e);
+      alert('Erro ao processar: ' + e.message);
       btn.disabled = false;
       msg.classList.remove('show');
     }

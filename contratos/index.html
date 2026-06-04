@@ -236,6 +236,106 @@
     </div>
   </div>
 
+  <!-- CLÁUSULAS PERSONALIZÁVEIS -->
+  <div class="section">
+    <div class="section-title"><span>⚖️</span> Cláusulas Personalizáveis
+      <span style="margin-left:auto;font-size:0.72rem;color:var(--muted);text-transform:none;letter-spacing:0;font-weight:400">Altere só o que negociou diferente</span>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Prazo mínimo de contratação</label>
+        <select id="cl_prazoMin">
+          <option value="6">6 meses (padrão)</option>
+          <option value="3">3 meses</option>
+          <option value="12">12 meses</option>
+        </select>
+      </div>
+      <div>
+        <label>Multa por rescisão antecipada</label>
+        <select id="cl_multa">
+          <option value="30">30% do remanescente (padrão)</option>
+          <option value="20">20% do remanescente</option>
+          <option value="25">25% do remanescente</option>
+          <option value="0">Sem multa</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Desconto de pontualidade</label>
+        <select id="cl_desconto">
+          <option value="20_1">20% pagando até dia 1º (padrão)</option>
+          <option value="10_1">10% pagando até dia 1º</option>
+          <option value="0">Sem desconto de pontualidade</option>
+        </select>
+      </div>
+      <div>
+        <label>Suspensão por atraso no pagamento</label>
+        <select id="cl_suspensao">
+          <option value="7">Após 7 dias de atraso (padrão)</option>
+          <option value="10">Após 10 dias de atraso</option>
+          <option value="15">Após 15 dias de atraso</option>
+          <option value="30">Após 30 dias de atraso</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Prazo de entrega do setup inicial</label>
+        <select id="cl_setup">
+          <option value="15">15 dias úteis (padrão)</option>
+          <option value="10">10 dias úteis</option>
+          <option value="20">20 dias úteis</option>
+          <option value="30">30 dias úteis</option>
+        </select>
+      </div>
+      <div>
+        <label>Reajuste anual</label>
+        <select id="cl_reajuste">
+          <option value="IGP-M/FGV">IGP-M/FGV (padrão)</option>
+          <option value="IPCA/IBGE">IPCA/IBGE</option>
+          <option value="INPC/IBGE">INPC/IBGE</option>
+          <option value="sem_reajuste">Sem reajuste automático</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>Exclusividade de atendimento</label>
+        <select id="cl_exclusividade">
+          <option value="nao">Não inclusa (padrão)</option>
+          <option value="sim">Inclusa — exclusividade na especialidade/cidade</option>
+        </select>
+      </div>
+      <div>
+        <label>Aviso prévio para rescisão</label>
+        <select id="cl_aviso">
+          <option value="30">30 dias (padrão)</option>
+          <option value="15">15 dias</option>
+          <option value="60">60 dias</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row full">
+      <div>
+        <label>Serviços adicionais incluídos (opcional)</label>
+        <input type="text" id="cl_extras" placeholder="Ex: Google Meu Negócio, Landing Page, WhatsApp Business..." />
+      </div>
+    </div>
+
+    <div class="form-row full">
+      <div>
+        <label>Observação/condição especial (opcional)</label>
+        <input type="text" id="cl_obs" placeholder="Ex: Primeiro mês isento, desconto especial de inauguração..." />
+      </div>
+    </div>
+  </div>
+
   <div class="erro-msg" id="erroMsg"></div>
   <button class="btn-gerar" onclick="gerarContrato()">Gerar Contrato e Link de Assinatura</button>
 </div>
@@ -385,6 +485,17 @@
       formEntrada: pgto === 'misto' ? document.getElementById('formEntrada').value : '',
       parcelasMisto: pgto === 'misto' ? document.getElementById('parcelasMisto').value : '',
       taxaJurosMisto: pgto === 'misto' ? document.getElementById('taxaJurosMisto').value : '',
+      // Cláusulas personalizáveis
+      cl_prazoMin: document.getElementById('cl_prazoMin').value,
+      cl_multa: document.getElementById('cl_multa').value,
+      cl_desconto: document.getElementById('cl_desconto').value,
+      cl_suspensao: document.getElementById('cl_suspensao').value,
+      cl_setup: document.getElementById('cl_setup').value,
+      cl_reajuste: document.getElementById('cl_reajuste').value,
+      cl_exclusividade: document.getElementById('cl_exclusividade').value,
+      cl_aviso: document.getElementById('cl_aviso').value,
+      cl_extras: document.getElementById('cl_extras').value.trim(),
+      cl_obs: document.getElementById('cl_obs').value.trim(),
     };
 
     // Codifica em base64 — sem backend necessário
