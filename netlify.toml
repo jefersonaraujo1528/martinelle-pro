@@ -4,6 +4,10 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  NPM_FLAGS = "--ignore-scripts --no-audit --no-fund"
+
+[functions]
+  node_bundler = "nft"
 
 [[redirects]]
   from = "/"
