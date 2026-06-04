@@ -1,5 +1,6 @@
 [build]
   publish = "."
+  functions = "_functions"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -7,6 +8,11 @@
 [[redirects]]
   from = "/"
   to = "/prospector-medicos.html"
+  status = 200
+
+[[redirects]]
+  from = "/api/asaas"
+  to = "/.netlify/functions/asaas"
   status = 200
 
 [[headers]]
