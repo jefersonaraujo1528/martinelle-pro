@@ -11,11 +11,6 @@
   to = "/prospector-medicos.html"
   status = 200
 
-[[redirects]]
-  from = "/api/autentique"
-  to = "/.netlify/functions/autentique-sign"
-  status = 200
-
 # Não cachear HTML — sempre busca versão fresca
 [[headers]]
   for = "/*.html"
