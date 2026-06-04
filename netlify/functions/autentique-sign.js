@@ -17,22 +17,25 @@ const MUTATION = `
   }
 `;
 
-exports.handler = async (event) => {
+export default async (req, context) => {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
   };
 
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ erro: 'Método não permitido' }) };
+  if (req.method === 'OPTIONS') {
+    return new Response('', { status: 200, headers });
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(JSON.stringify({ erro: 'Método não permitido' }), { status: 405, headers });
+  }
 
   try {
-    const { pdfBase64, emailCliente, nomeCliente, nomeContrato } = JSON.parse(event.body);
+    const { pdfBase64, emailCliente, nomeCliente, nomeContrato } = await req.json();
 
     if (!pdfBase64 || !emailCliente || !nomeCliente) {
-      return { statusCode: 400, headers, body: JSON.stringify({ erro: 'Dados incompletos' }) };
+      return new Response(JSON.stringify({ erro: 'Dados incompletos' }), { status: 400, headers });
     }
 
     // Prazo: 48 horas
@@ -43,7 +46,7 @@ exports.handler = async (event) => {
       variables: {
         document: {
           name: nomeContrato || `Contrato — ${nomeCliente}`,
-          message: `Olá ${nomeCliente}! Seu contrato com a Agência Martinelle está pronto para assinatura. Você tem 48 horas para assinar. Após esse prazo, o contrato expirará.`,
+          message: `Olá ${nomeCliente}! Seu contrato com a Agência Martinelle está pronto para assinatura. Você tem 48 horas para assinar.`,
           deadline_at: deadline,
           reminder: 1,
           notify_in: 0,
@@ -57,17 +60,21 @@ exports.handler = async (event) => {
     });
 
     const map = JSON.stringify({ '0': ['variables.file'] });
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+    const pdfBuffer = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
     const boundary = 'Boundary' + Date.now();
+    const encoder = new TextEncoder();
 
-    const header = Buffer.from(
+    const headerPart = encoder.encode(
       `--${boundary}\r\nContent-Disposition: form-data; name="operations"\r\n\r\n${operations}\r\n` +
       `--${boundary}\r\nContent-Disposition: form-data; name="map"\r\n\r\n${map}\r\n` +
-      `--${boundary}\r\nContent-Disposition: form-data; name="0"; filename="contrato.pdf"\r\nContent-Type: application/pdf\r\n\r\n`,
-      'utf8'
+      `--${boundary}\r\nContent-Disposition: form-data; name="0"; filename="contrato.pdf"\r\nContent-Type: application/pdf\r\n\r\n`
     );
-    const footer = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8');
-    const body = Buffer.concat([header, pdfBuffer, footer]);
+    const footerPart = encoder.encode(`\r\n--${boundary}--\r\n`);
+
+    const body = new Uint8Array(headerPart.length + pdfBuffer.length + footerPart.length);
+    body.set(headerPart, 0);
+    body.set(pdfBuffer, headerPart.length);
+    body.set(footerPart, headerPart.length + pdfBuffer.length);
 
     const resp = await fetch('https://api.autentique.com.br/v2/graphql', {
       method: 'POST',
@@ -85,13 +92,12 @@ exports.handler = async (event) => {
     const signers = data.data.createDocument.document.signers;
     const linkCliente = signers.find(s => s.email === emailCliente)?.link?.short_link || '';
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ ok: true, link: linkCliente }),
-    };
+    return new Response(JSON.stringify({ ok: true, link: linkCliente }), { status: 200, headers });
+
   } catch (e) {
-    console.error('autentique-sign error:', e);
-    return { statusCode: 500, headers, body: JSON.stringify({ erro: e.message }) };
+    console.error('autentique-sign error:', e.message);
+    return new Response(JSON.stringify({ erro: e.message }), { status: 500, headers });
   }
 };
+
+export const config = { path: '/api/autentique' };

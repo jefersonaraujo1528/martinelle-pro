@@ -15,21 +15,6 @@
   to = "/.netlify/functions/autentique-sign"
   status = 200
 
-[[redirects]]
-  from = "/api/contratos/criar"
-  to = "/.netlify/functions/criar-contrato"
-  status = 200
-
-[[redirects]]
-  from = "/api/contratos/buscar"
-  to = "/.netlify/functions/buscar-contrato"
-  status = 200
-
-[[redirects]]
-  from = "/api/contratos/assinar"
-  to = "/.netlify/functions/assinar-contrato"
-  status = 200
-
 # Não cachear HTML — sempre busca versão fresca
 [[headers]]
   for = "/*.html"
