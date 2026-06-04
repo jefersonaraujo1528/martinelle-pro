@@ -1,6 +1,6 @@
 [build]
   publish = "."
-  functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -8,16 +8,6 @@
 [[redirects]]
   from = "/"
   to = "/prospector-medicos.html"
-  status = 200
-
-[[redirects]]
-  from = "/api/asaas"
-  to = "/.netlify/functions/asaas"
-  status = 200
-
-[[redirects]]
-  from = "/api/autentique"
-  to = "/.netlify/functions/autentique-sign"
   status = 200
 
 [[headers]]
