@@ -3,15 +3,26 @@
   functions = "netlify/functions"
   command = ""
 
-[functions]
-  node_bundler = "esbuild"
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_FLAGS = "--no-optional"
 
 [[redirects]]
   from = "/"
   to = "/prospector-medicos.html"
   status = 200
 
-# Não cachear HTML — sempre busca versão fresca
+[[redirects]]
+  from = "/api/asaas"
+  to = "/.netlify/functions/asaas"
+  status = 200
+
+[[redirects]]
+  from = "/api/autentique"
+  to = "/.netlify/functions/autentique-sign"
+  status = 200
+
+# Não cachear HTML
 [[headers]]
   for = "/*.html"
   [headers.values]
@@ -22,7 +33,6 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
-# Não cachear o service worker — atualização instantânea da estratégia
 [[headers]]
   for = "/sw.js"
   [headers.values]
