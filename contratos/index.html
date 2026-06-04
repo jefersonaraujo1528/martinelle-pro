@@ -393,7 +393,7 @@
 
     dadosUltimo = dados;
     document.getElementById('linkBox').textContent = link;
-    mostrarDadosAsaas(dados);
+    criarNoAsaas(dados); // tenta automático, fallback para dados manuais
     document.getElementById('modalSucesso').classList.add('show');
   }
 
@@ -428,6 +428,38 @@
       <button id="${id}" onclick="copiarCampo('${valor.replace(/'/g,"\\'")}',this)"
         style="background:var(--gold);color:#0d0d0d;border:none;border-radius:6px;padding:6px 10px;font-size:0.8rem;cursor:pointer;white-space:nowrap">📋</button>
     </div>`;
+  }
+
+  async function criarNoAsaas(d) {
+    // Tenta o servidor local primeiro (100% automático)
+    try {
+      const resp = await fetch('http://localhost:3765/api/asaas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(d),
+      });
+      const data = await resp.json();
+      if (data.ok && data.cobranças?.length) {
+        // Mostrar links de cobrança gerados automaticamente
+        const el = document.getElementById('asaasDados');
+        el.innerHTML = '<p style="color:var(--success);font-size:0.8rem;font-weight:700;margin-bottom:10px">✅ Cobrança criada automaticamente no Asaas!</p>' +
+          data.cobranças.map(c => {
+            const val = c.total ? `${c.tipo} — ${c.valor.toFixed(2).replace('.',',')} × parcelas = R$ ${c.total.toFixed(2).replace('.',',')}` : `${c.tipo} — R$ ${c.valor.toFixed(2).replace('.',',')}`;
+            return `<div style="background:#1e2e1e;border:1px solid #2a4a2a;border-radius:8px;padding:10px 12px;margin-bottom:8px">
+              <div style="font-size:0.78rem;color:#4caf72;font-weight:700;margin-bottom:4px">${val} · Vence ${c.vencimento}</div>
+              <div style="font-size:0.72rem;word-break:break-all;color:var(--gold-light);cursor:pointer;margin-bottom:6px" onclick="navigator.clipboard.writeText('${c.link}')">${c.link}</div>
+              <button onclick="navigator.clipboard.writeText('${c.link}').then(()=>{this.textContent='✔ Copiado!';setTimeout(()=>this.textContent='📋 Copiar link',1500)})"
+                style="background:var(--gold);color:#0d0d0d;border:none;border-radius:6px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer">📋 Copiar link</button>
+            </div>`;
+          }).join('');
+        document.getElementById('asaasBtn').style.display = 'none';
+        return;
+      }
+    } catch(e) {
+      // Servidor local não está rodando — mostrar dados para copiar
+    }
+    // Fallback: dados formatados para copiar manualmente
+    mostrarDadosAsaas(d);
   }
 
   function mostrarDadosAsaas(d) {
