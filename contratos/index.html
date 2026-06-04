@@ -244,34 +244,26 @@
 <div class="modal-overlay" id="modalSucesso">
   <div class="modal" style="max-width:540px">
 
-    <!-- PASSO 1: Link de assinatura -->
+    <!-- PASSO 1: Link de assinatura + dados Asaas -->
     <div id="passoContrato">
       <div style="font-size:2.5rem;margin-bottom:10px">✅</div>
       <h2>Contrato Gerado!</h2>
-      <p>Mande o link para o cliente assinar. Depois clique em "Criar Cobrança no Asaas".</p>
+      <p style="margin-bottom:12px">Mande o link para o cliente assinar pelo WhatsApp:</p>
       <div class="link-box" id="linkBox" onclick="copiarLink()"></div>
       <button class="btn-copiar" onclick="copiarLink()">📋 Copiar Link do Contrato</button>
-      <p class="copiado" id="copiado">Link copiado!</p>
+      <p class="copiado" id="copiado">✔ Copiado!</p>
 
-      <div style="margin:16px 0;border-top:1px solid var(--border);padding-top:16px">
-        <button class="btn-copiar" style="background:linear-gradient(135deg,#1a8a2e,#22a83a);margin-bottom:8px" onclick="criarCobrancaAsaas()">
-          💰 Criar Cobrança no Asaas
-        </button>
-        <div id="asaasLoading" style="display:none;color:var(--muted);font-size:0.82rem;margin-top:8px">
-          <span style="display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:6px"></span>
-          Criando cliente e cobrança no Asaas...
-        </div>
+      <!-- Dados para o Asaas -->
+      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px;text-align:left">
+        <p style="font-size:0.78rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">💰 Dados para cadastrar no Asaas</p>
+        <div id="asaasDados"></div>
+        <a id="asaasBtn" href="https://app.asaas.com/customerAccount/list" target="_blank"
+           style="display:block;margin-top:10px;background:linear-gradient(135deg,#1a6a2e,#22a83a);color:#fff;border:none;border-radius:8px;padding:12px;font-weight:700;font-size:0.88rem;cursor:pointer;text-align:center;text-decoration:none">
+          🏦 Abrir Asaas e Cadastrar
+        </a>
       </div>
-      <button class="btn-fechar" onclick="fecharModal()">Fechar e criar novo contrato</button>
-    </div>
 
-    <!-- PASSO 2: Cobrança criada -->
-    <div id="passoAsaas" style="display:none">
-      <div style="font-size:2.5rem;margin-bottom:10px">💰</div>
-      <h2 style="color:#22a83a">Cobrança Criada no Asaas!</h2>
-      <p style="margin-bottom:16px">Clique nos links abaixo para copiar e mandar ao cliente:</p>
-      <div id="asaasLinks"></div>
-      <button class="btn-fechar" style="margin-top:16px" onclick="fecharModal()">Fechar e criar novo contrato</button>
+      <button class="btn-fechar" style="margin-top:12px" onclick="fecharModal()">Fechar e criar novo contrato</button>
     </div>
 
   </div>
@@ -399,8 +391,9 @@
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(dados))));
     const link = `${location.origin}/contratos/assinar.html?d=${encoded}`;
 
-    dadosUltimo = dados; // salva para uso no Asaas
+    dadosUltimo = dados;
     document.getElementById('linkBox').textContent = link;
+    mostrarDadosAsaas(dados);
     document.getElementById('modalSucesso').classList.add('show');
   }
 
@@ -414,47 +407,59 @@
 
   function fecharModal() {
     document.getElementById('modalSucesso').classList.remove('show');
-    document.getElementById('passoContrato').style.display = 'block';
-    document.getElementById('passoAsaas').style.display = 'none';
   }
 
-  let dadosUltimo = null; // guarda os dados do último contrato gerado
+  let dadosUltimo = null;
 
-  async function criarCobrancaAsaas() {
-    if (!dadosUltimo) return;
-    document.getElementById('asaasLoading').style.display = 'block';
-    document.querySelector('#passoContrato button[onclick="criarCobrancaAsaas()"]').disabled = true;
+  function copiarCampo(valor, btn) {
+    navigator.clipboard.writeText(valor).then(() => {
+      btn.textContent = '✔';
+      setTimeout(() => btn.textContent = '📋', 1500);
+    });
+  }
 
-    try {
-      const resp = await fetch('/api/asaas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dadosUltimo),
-      });
-      const data = await resp.json();
-      if (!resp.ok || !data.ok) throw new Error(data.erro || 'Erro no Asaas');
+  function campo(label, valor) {
+    const id = 'c_' + Math.random().toString(36).slice(2);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+      <div style="flex:1;background:#1e1e1e;border-radius:6px;padding:7px 10px;font-size:0.8rem">
+        <span style="color:var(--muted);font-size:0.7rem;display:block">${label}</span>
+        <span style="color:var(--text)">${valor}</span>
+      </div>
+      <button id="${id}" onclick="copiarCampo('${valor.replace(/'/g,"\\'")}',this)"
+        style="background:var(--gold);color:#0d0d0d;border:none;border-radius:6px;padding:6px 10px;font-size:0.8rem;cursor:pointer;white-space:nowrap">📋</button>
+    </div>`;
+  }
 
-      // Mostrar links de cobrança
-      const linksEl = document.getElementById('asaasLinks');
-      linksEl.innerHTML = data.cobranças.map(c => {
-        const val = c.total
-          ? `${c.valor.toFixed(2).replace('.',',')} × parcelas = Total R$ ${c.total.toFixed(2).replace('.',',')}`
-          : `R$ ${c.valor.toFixed(2).replace('.',',')}`;
-        return `
-          <div style="background:#1e1e1e;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;text-align:left">
-            <div style="font-size:0.8rem;color:var(--gold);font-weight:700;margin-bottom:4px">${c.tipo} — ${val} · Vence ${c.vencimento}</div>
-            <div style="font-size:0.75rem;word-break:break-all;color:var(--gold-light);cursor:pointer" onclick="navigator.clipboard.writeText('${c.link}').then(()=>alert('Link copiado!'))">${c.link}</div>
-            <button onclick="navigator.clipboard.writeText('${c.link}').then(()=>alert('Copiado!'))" style="margin-top:6px;background:var(--gold);color:#0d0d0d;border:none;border-radius:6px;padding:6px 12px;font-size:0.75rem;font-weight:700;cursor:pointer">📋 Copiar link</button>
-          </div>`;
-      }).join('');
+  function mostrarDadosAsaas(d) {
+    const num = s => parseFloat((s||'0').replace(/\./g,'').replace(',','.')) || 0;
+    const parc = (v,n,t) => (n<=1||t<=0)?v:v*(t*Math.pow(1+t,n))/(Math.pow(1+t,n)-1);
+    const fmt = v => 'R$ ' + v.toFixed(2).replace('.',',');
+    const valor = num(d.valor);
 
-      document.getElementById('passoContrato').style.display = 'none';
-      document.getElementById('passoAsaas').style.display = 'block';
-    } catch(e) {
-      alert('Erro ao criar cobrança no Asaas: ' + e.message);
-      document.getElementById('asaasLoading').style.display = 'none';
-      document.querySelector('#passoContrato button[onclick="criarCobrancaAsaas()"]').disabled = false;
+    let cobranca = '';
+    if (d.pgto === 'boleto') cobranca = `Boleto — ${fmt(valor)}`;
+    else if (d.pgto === 'pix') cobranca = `PIX — ${fmt(valor)}`;
+    else if (d.pgto === 'cartao') {
+      const n=parseInt(d.parcelas||1), t=parseFloat(d.taxaJuros||0)/100;
+      const p=parc(valor,n,t), total=p*n;
+      cobranca = n>1 ? `Cartão ${n}x de ${fmt(p)} = ${fmt(total)}` : `Cartão 1x — ${fmt(valor)}`;
+    } else if (d.pgto === 'misto') {
+      const ent=num(d.entrada), rest=valor-ent;
+      const n=parseInt(d.parcelasMisto||1), t=parseFloat(d.taxaJurosMisto||0)/100;
+      const p=parc(rest,n,t), total=p*n;
+      cobranca = `Entrada ${fmt(ent)} + ${n>1?`${n}x ${fmt(p)}`:`1x ${fmt(rest)}`}`;
     }
+
+    const planoNome = d.plano==='google'?'Google Ads Pro':d.plano==='meta'?'Meta Ads Pro':'YouTube Ads Pro';
+
+    document.getElementById('asaasDados').innerHTML =
+      campo('Nome completo', d.nome) +
+      campo(d.tipoDoc, d.documento) +
+      campo('E-mail', d.email) +
+      campo('WhatsApp', d.telefone) +
+      campo('Descrição da cobrança', `Taxa Gerenciamento ${planoNome} — Agência Martinelle`) +
+      campo('Cobrança', cobranca) +
+      campo('Vencimento (dia do mês)', d.diaVencimento);
   }
 </script>
 </body>
