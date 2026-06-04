@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assinar Contrato — Agência Martinelle</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --gold: #c9a84c;
+      --gold-light: #e8c96a;
+      --text: #f0f0f0;
+      --muted: #888;
+      --success: #4caf72;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      text-align: center;
+    }
+    header h1 { font-size: 1rem; color: var(--gold); }
+    header p { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    .container { max-width: 760px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* Loading */
+    .loading-state {
+      text-align: center;
+      padding: 80px 20px;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Contrato */
+    .contrato-box {
+      background: #fff;
+      color: #1a1a1a;
+      border-radius: 12px;
+      padding: 48px 44px;
+      margin-bottom: 28px;
+      font-size: 0.88rem;
+      line-height: 1.75;
+    }
+    @media (max-width: 600px) { .contrato-box { padding: 28px 20px; } }
+
+    .contrato-box h2 {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+      color: #1a1a1a;
+    }
+    .contrato-box .subtitulo {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #555;
+      margin-bottom: 28px;
+    }
+    .contrato-box .partes {
+      background: #f8f8f8;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 0.84rem;
+    }
+    .contrato-box .partes strong { color: #1a1a1a; }
+    .contrato-box h3 {
+      font-size: 0.84rem;
+      font-weight: 700;
+      margin: 20px 0 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .contrato-box p { margin-bottom: 10px; }
+    .contrato-box ul { margin: 8px 0 10px 20px; }
+    .contrato-box li { margin-bottom: 4px; }
+    .contrato-box .clausula { margin-bottom: 16px; }
+    .contrato-box .data-local {
+      text-align: right;
+      margin-top: 28px;
+      margin-bottom: 28px;
+      font-size: 0.82rem;
+      color: #555;
+    }
+
+    /* Assinatura */
+    .assinar-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .assinar-titulo {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+    .assinar-instrucao {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .canvas-wrapper {
+      background: #fff;
+      border-radius: 8px;
+      border: 2px dashed #ccc;
+      overflow: hidden;
+      touch-action: none;
+    }
+    .canvas-wrapper.ativo { border-color: var(--gold); border-style: solid; }
+    canvas { display: block; width: 100%; cursor: crosshair; }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    .btn-limpar {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .nome-input-wrap { margin-top: 16px; }
+    .nome-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; }
+    .nome-input {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 11px 14px;
+      font-size: 0.9rem;
+    }
+    .nome-input:focus { outline: none; border-color: var(--gold); }
+
+    .btn-assinar {
+      width: 100%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #0d0d0d;
+      border: none;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: opacity 0.2s;
+    }
+    .btn-assinar:hover { opacity: 0.9; }
+    .btn-assinar:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Sucesso */
+    .sucesso {
+      text-align: center;
+      padding: 48px 20px;
+      display: none;
+    }
+    .sucesso-icon { font-size: 4rem; margin-bottom: 16px; }
+    .sucesso h2 { font-size: 1.4rem; color: var(--success); margin-bottom: 8px; }
+    .sucesso p { font-size: 0.9rem; color: var(--muted); margin-bottom: 24px; }
+    .btn-pdf {
+      background: var(--gold);
+      color: #0d0d0d;
+      border: none;
+      border-radius: 10px;
+      padding: 14px 28px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: inline-block;
+      text-decoration: none;
+    }
+    .erro-tela {
+      text-align: center;
+      padding: 80px 20px;
+      color: #e05252;
+    }
+  </style>
+  <!-- jsPDF + html2canvas via CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>Contrato de Prestação de Serviços</h1>
+  <p>Agência Martinelle — CNPJ 49.561.800/0001-70</p>
+</header>
+
+<div class="container">
+
+  <!-- Loading -->
+  <div class="loading-state" id="loadingState">
+    <div class="spinner"></div>
+    <p style="color:var(--muted);font-size:0.85rem">Carregando contrato...</p>
+  </div>
+
+  <!-- Erro -->
+  <div class="erro-tela" id="erroTela" style="display:none">
+    <p style="font-size:2rem;margin-bottom:12px">⚠️</p>
+    <p>Link inválido ou contrato não encontrado.</p>
+  </div>
+
+  <!-- Sucesso pós-assinatura -->
+  <div class="sucesso" id="sucesso">
+    <div class="sucesso-icon">✅</div>
+    <h2>Contrato Assinado!</h2>
+    <p>Obrigado. O contrato foi assinado com sucesso e será enviado por e-mail.</p>
+    <button class="btn-pdf" id="btnBaixarPdf">⬇️ Baixar PDF do Contrato</button>
+  </div>
+
+  <!-- Conteúdo principal -->
+  <div id="conteudo" style="display:none">
+
+    <div class="contrato-box" id="contratoBox">
+      <!-- Preenchido via JS -->
+    </div>
+
+    <div class="assinar-section">
+      <div class="assinar-titulo">✍️ Sua Assinatura</div>
+      <p class="assinar-instrucao">Desenhe sua assinatura abaixo com o dedo ou mouse.</p>
+      <div class="canvas-wrapper" id="canvasWrapper">
+        <canvas id="assinaturaCanvas" height="160"></canvas>
+      </div>
+      <div class="btn-row">
+        <button class="btn-limpar" onclick="limparCanvas()">Limpar</button>
+      </div>
+      <div class="nome-input-wrap">
+        <p class="nome-label">Nome completo para confirmar identidade</p>
+        <input class="nome-input" type="text" id="nomeConfirma" placeholder="Digite seu nome completo" />
+      </div>
+      <button class="btn-assinar" id="btnAssinar" onclick="assinarContrato()">
+        Assinar e Confirmar Contrato
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const { jsPDF } = window.jspdf;
+
+  let dadosContrato = null;
+  let canvasVazio = true;
+
+  // Buscar contrato via ID na URL
+  async function init() {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+    if (!id) { mostrarErro(); return; }
+
+    try {
+      const resp = await fetch(`/api/contratos/buscar?id=${id}`);
+      if (!resp.ok) throw new Error();
+      dadosContrato = await resp.json();
+      dadosContrato.id = id;
+      renderizarContrato(dadosContrato);
+      iniciarCanvas();
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('conteudo').style.display = 'block';
+    } catch(e) {
+      mostrarErro();
+    }
+  }
+
+  function mostrarErro() {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('erroTela').style.display = 'block';
+  }
+
+  // Renderizar o texto do contrato
+  function renderizarContrato(d) {
+    const planos = {
+      google: { nome: 'Google Ads Pro' },
+      meta:   { nome: 'Meta Ads Pro' },
+      youtube:{ nome: 'YouTube Ads Pro' },
+    };
+    const pgtoTexto = {
+      boleto: 'boleto bancário',
+      pix: 'PIX',
+      cartao: 'cartão de crédito',
+      misto: `entrada de R$ ${d.entrada} via ${d.formEntrada}, com o restante via ${d.restanteCartao}`,
+    };
+    const plano = planos[d.plano] || { nome: d.plano };
+    const dataInicio = formatarData(d.dataInicio);
+    const dataFim = calcularFim(d.dataInicio, d.duracao);
+    const duracaoTexto = d.duracao === '0' ? 'prazo indeterminado' : `${d.duracao} (${porExtenso(d.duracao)}) meses`;
+    const hoje = formatarData(new Date().toISOString().split('T')[0]);
+    const numContrato = `MRT-${new Date().getFullYear()}-${Math.floor(Math.random()*9000)+1000}`;
+
+    document.getElementById('contratoBox').innerHTML = `
+      <h2>Contrato de Prestação de Serviços de Marketing Digital</h2>
+      <p class="subtitulo">${plano.nome} · Nº ${numContrato}</p>
+
+      <div class="partes">
+        <p><strong>CONTRATANTE:</strong> ${d.nome}, ${d.tipoDoc}: ${d.documento}, e-mail: ${d.email}, telefone: ${d.telefone}, doravante denominado CONTRATANTE.</p>
+        <br/>
+        <p><strong>CONTRATADA:</strong> <strong>Agência Martinelle</strong>, inscrita no CNPJ sob o nº 49.561.800/0001-02, com sede em Teresina/PI, representada por Jeferson Araujo Martinelle, doravante denominada CONTRATADA.</p>
+      </div>
+
+      <p>Ambas individualmente denominadas "Parte" e, em conjunto, "Partes", têm entre si justo e acertado o presente Contrato de Prestação de Serviços de Marketing Digital, que se regerá pelas cláusulas e condições a seguir.</p>
+
+      <div class="clausula">
+        <h3>1. Das Definições</h3>
+        <p><strong>1.1</strong> Para os fins deste contrato, considera-se:</p>
+        <p>(a) <strong>"Campanha"</strong> — Conjunto de anúncios criados e gerenciados pela CONTRATADA na plataforma ${nomePlataforma(d.plano)};</p>
+        <p>(b) <strong>"Verba de Mídia"</strong> — Valor investido diretamente na plataforma de anúncios pelo CONTRATANTE, distinto e não incluído na taxa de gerenciamento;</p>
+        <p>(c) <strong>"Taxa de Gerenciamento"</strong> — Valor mensal pago à CONTRATADA pelos serviços de gestão, estratégia e otimização das campanhas;</p>
+        <p>(d) <strong>"Setup Inicial"</strong> — Configuração inicial das campanhas, realizada uma única vez no início do contrato, isenta de cobrança adicional neste pacote;</p>
+        <p>(e) <strong>"Relatório"</strong> — Documento mensal com dados de desempenho das campanhas (cliques, impressões, CTR, CPC médio e conversões).</p>
+      </div>
+
+      <div class="clausula">
+        <h3>2. Do Objeto</h3>
+        <p><strong>2.1</strong> O presente contrato tem por objeto a prestação de serviços de gestão de tráfego pago no âmbito do plano <strong>${plano.nome}</strong>, sendo este documento autossuficiente e não dependente de qualquer anexo ou proposta complementar.</p>
+        ${setupPorPlano(d.plano)}
+        ${servicosPorPlano(d.plano)}
+        <p><strong>Parágrafo Único:</strong> A Verba de Mídia (investimento direto em anúncios) <strong>NÃO está incluída</strong> na Taxa de Gerenciamento e deverá ser paga diretamente pelo CONTRATANTE à plataforma ${nomePlataforma(d.plano)}, sendo recomendado o investimento mínimo de R$ 50,00 (cinquenta reais) por dia.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>3. Da Inexistência de Exclusividade</h3>
+        <p><strong>3.1</strong> A prestação dos serviços objeto deste Contrato não tem caráter de exclusividade, podendo a CONTRATADA prestá-los para outras empresas ou profissionais, inclusive concorrentes do CONTRATANTE, salvo mediante celebração de Termo Aditivo de Exclusividade.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>4. Das Obrigações e Responsabilidades do Contratante</h3>
+        <p><strong>4.1</strong> O CONTRATANTE se obriga a:</p>
+        <p><strong>4.1.1</strong> Efetuar o pagamento da Taxa de Gerenciamento nas datas acordadas e manter a Verba de Mídia ativa na plataforma ${nomePlataforma(d.plano)};</p>
+        <p><strong>4.1.2</strong> Fornecer à CONTRATADA, sempre que solicitado e no prazo acordado, todas as informações, acessos e aprovações necessárias ao desenvolvimento dos serviços;</p>
+        <p><strong>4.1.3</strong> Aprovar previamente todo conteúdo publicado em seu nome, respondendo perante consumidores, autoridades, CONAR e terceiros pela qualidade, autenticidade e legalidade das informações divulgadas;</p>
+        <p><strong>4.1.4</strong> Fornecer informações verdadeiras, corretas, atuais e completas, mantendo-as sempre atualizadas;</p>
+        <p><strong>4.1.5</strong> Resguardar a CONTRATADA de quaisquer demandas judiciais ou administrativas em decorrência do conteúdo das campanhas, assumindo toda a responsabilidade e ônus daí advindos;</p>
+        <p><strong>4.2</strong> O CONTRATANTE é o único responsável pelo conteúdo e veracidade das informações contidas nas campanhas, eximindo a CONTRATADA de quaisquer responsabilidades perante terceiros, autoridades reguladoras e órgãos de classe.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>5. Das Obrigações e Responsabilidades da Contratada</h3>
+        <p><strong>5.1</strong> A CONTRATADA se obriga a:</p>
+        <p><strong>5.1.1</strong> Executar os serviços descritos na Cláusula 2 com qualidade, técnica e profissionalismo;</p>
+        <p><strong>5.1.2</strong> Manter o CONTRATANTE informado sobre o andamento das campanhas por meio de relatório mensal, entregue até o 5º dia útil do mês subsequente;</p>
+        <p><strong>5.1.3</strong> Manter sigilo absoluto sobre informações confidenciais e dados do CONTRATANTE obtidos em decorrência deste contrato;</p>
+        <p><strong>5.1.4</strong> Comunicar ao CONTRATANTE alterações relevantes nas plataformas de anúncio que possam impactar as campanhas.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>6. Do Prazo e Renovação</h3>
+        <p><strong>6.1</strong> O presente contrato vigorará por <strong>${duracaoTexto}</strong>, com início em <strong>${dataInicio}</strong>${d.duracao !== '0' ? ` e término previsto em <strong>${dataFim}</strong>` : ''}, renovando-se automaticamente por igual período, salvo manifestação contrária de qualquer das partes com antecedência mínima de 30 (trinta) dias.</p>
+        <p><strong>6.2</strong> Na renovação, a CONTRATADA poderá reajustar o valor da Taxa de Gerenciamento, comunicando ao CONTRATANTE com no mínimo 30 (trinta) dias de antecedência.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>7. Do Valor e Forma de Pagamento</h3>
+        <p><strong>7.1</strong> Pela prestação dos serviços, o CONTRATANTE pagará à CONTRATADA a Taxa de Gerenciamento de <strong>R$ ${d.valor}/mês</strong>, com vencimento no dia <strong>${d.diaVencimento}</strong> de cada mês, mediante <strong>${pgtoTexto[d.pgto] || d.pgto}</strong>.</p>
+        <p><strong>7.2</strong> O primeiro mês de gerenciamento será cobrado de forma proporcional à data de início do contrato, caso iniciado após o dia 1º do mês vigente.</p>
+        <p><strong>7.3</strong> O atraso no pagamento implicará multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.</p>
+        <p><strong>7.4</strong> O não pagamento por período superior a 30 (trinta) dias corridos ensejará a suspensão imediata dos serviços pela CONTRATADA, independentemente de notificação prévia, sem prejuízo da cobrança dos valores devidos e da multa rescisória.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>8. Da Rescisão e Multa</h3>
+        <p><strong>8.1</strong> Qualquer das partes poderá rescindir o presente contrato mediante notificação prévia de 30 (trinta) dias corridos, por escrito ou via e-mail.</p>
+        <p><strong>8.2</strong> A rescisão antecipada por iniciativa do CONTRATANTE, antes do término do prazo contratual estabelecido, implicará no pagamento de multa compensatória equivalente a <strong>20% (vinte por cento) do valor total dos meses remanescentes do contrato</strong>, sem prejuízo dos valores já vencidos e não pagos e dos juros e multa moratória incidentes.</p>
+        <p><strong>8.3</strong> A rescisão por inadimplência do CONTRATANTE — não pagamento superior a 30 (trinta) dias — poderá ser realizada pela CONTRATADA de forma imediata, sem necessidade de notificação prévia, mantendo o direito à multa descrita no §2.</p>
+        <p><strong>8.4</strong> A rescisão por descumprimento comprovado de obrigações pela CONTRATADA não implicará multa ao CONTRATANTE.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>9. Da Ausência de Garantia de Resultado</h3>
+        <p><strong>9.1</strong> A CONTRATADA se compromete a executar as atividades descritas neste contrato com empenho, técnica e profissionalismo. Contudo, <strong>não garante resultados específicos</strong> em número de cliques, leads, consultas, vendas ou retorno sobre investimento (ROI), uma vez que tais resultados dependem de fatores externos não controláveis, incluindo condições de mercado, concorrência, valor da Verba de Mídia, sazonalidade e comportamento dos usuários.</p>
+        <p><strong>9.2</strong> A eventual não obtenção dos resultados esperados pelo CONTRATANTE não configura descumprimento contratual pela CONTRATADA, desde que os serviços descritos na Cláusula 2 tenham sido devidamente executados.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>10. Da Proteção de Dados (LGPD)</h3>
+        <p><strong>10.1</strong> As partes se comprometem a tratar os dados pessoais obtidos em decorrência deste contrato em conformidade com a Lei Geral de Proteção de Dados (Lei 13.709/2018), utilizando-os exclusivamente para as finalidades previstas neste instrumento, adotando medidas adequadas de proteção contra acesso não autorizado ou uso indevido.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>11. Da Propriedade Intelectual</h3>
+        <p><strong>11.1</strong> Os criativos, estruturas de campanha, listas de palavras-chave e estratégias desenvolvidas pela CONTRATADA são de sua propriedade intelectual. Ao término do contrato, o CONTRATANTE terá direito de acesso aos dados históricos de campanhas diretamente na plataforma, desde que possua conta própria vinculada.</p>
+      </div>
+
+      <div class="clausula">
+        <h3>12. Do Foro</h3>
+        <p><strong>12.1</strong> As partes elegem o Foro da Comarca de <strong>Teresina/PI</strong> para dirimir quaisquer controvérsias decorrentes do presente contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</p>
+      </div>
+
+      ${clausulaCFM(d.tipoCliente)}
+
+      <p style="margin-top:24px">E por estarem assim justos e acertados, as partes firmam o presente instrumento eletronicamente, com plena validade jurídica nos termos da MP 2.200-2/2001 e Lei 14.063/2020, na data de sua assinatura digital.</p>
+
+      <div class="data-local">Teresina/PI, ${hoje}</div>
+
+      <div style="display:flex;gap:40px;margin-top:20px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;border-top:2px solid #222;padding-top:10px;font-size:0.82rem;color:#333">
+          <strong>${d.nome}</strong><br/>${d.tipoDoc}: ${d.documento}<br/>CONTRATANTE
+        </div>
+        <div style="flex:1;min-width:200px;border-top:2px solid #222;padding-top:10px;font-size:0.82rem;color:#333">
+          <strong>Jeferson Araujo Martinelle</strong><br/>CNPJ: 49.561.800/0001-70<br/>CONTRATADA — Agência Martinelle
+        </div>
+      </div>
+    `;
+  }
+
+  function nomePlataforma(plano) {
+    const p = { google: 'Google', meta: 'Meta (Facebook/Instagram)', youtube: 'YouTube/Google' };
+    return p[plano] || plano;
+  }
+
+  function setupPorPlano(plano) {
+    const setup = {
+      google: `<p><strong>2.2 Setup Inicial (isento de cobrança adicional):</strong></p>
+        <ul>
+          <li>Configuração completa da conta Google Ads (orçamento, CPC, segmentações, extensões, públicos-alvo, dispositivos e pagamentos);</li>
+          <li>Pesquisa personalizada de palavras-chave de branding, relevantes ao negócio e dos principais concorrentes;</li>
+          <li>Estruturação de campanhas, grupos de anúncios e extensões;</li>
+          <li>Configuração do Google Analytics e Google Tag Manager;</li>
+          <li>Configuração do Google Meu Negócio (se aplicável).</li>
+        </ul>`,
+      meta: `<p><strong>2.2 Setup Inicial (isento de cobrança adicional):</strong></p>
+        <ul>
+          <li>Configuração do Gerenciador de Anúncios do Meta (campanhas, públicos, conjuntos de anúncios, orçamentos, Pixel personalizado);</li>
+          <li>Criação de até 5 (cinco) campanhas com até 5 (cinco) conjuntos de anúncios cada, com mínimo de 3 (três) anúncios por conjunto;</li>
+          <li>Construção e desenvolvimento estratégico de públicos-alvo, interesses e segmentações do negócio;</li>
+          <li>Configuração de Website Smart Links (página de captura vinculada à campanha, hospedagem inclusa).</li>
+        </ul>`,
+      youtube: `<p><strong>2.2 Setup Inicial (isento de cobrança adicional):</strong></p>
+        <ul>
+          <li>Configuração de campanhas YouTube Ads no Google Ads (TrueView In-Stream, Bumper Ads e Video Discovery);</li>
+          <li>Pesquisa personalizada de canais, tópicos, palavras-chave e públicos personalizados;</li>
+          <li>Estruturação de campanhas com segmentação geográfica, demográfica e por dispositivo;</li>
+          <li>Configuração de remarketing via YouTube.</li>
+        </ul>`,
+    };
+    return setup[plano] || '';
+  }
+
+  function servicosPorPlano(plano) {
+    const servicos = {
+      google: `<p><strong>2.3 Gerenciamento Mensal:</strong></p>
+        <ul>
+          <li>Pesquisa e orientação contínua para escolha de palavras-chave de maior retorno;</li>
+          <li>Criação de anúncios de texto otimizados para CTR e conversão;</li>
+          <li>Monitoramento constante de posição, CTR, CPC, Índice de Qualidade, custo e conversões;</li>
+          <li>Otimização contínua de lances, segmentações e grupos de anúncios;</li>
+          <li>Emissão de relatório mensal de desempenho (cliques, impressões, CTR, CPC médio, conversões e custo);</li>
+          <li>Reunião mensal de alinhamento via Zoom ou WhatsApp, não cumulativa;</li>
+          <li>Suporte via WhatsApp em horário comercial (segunda a sexta, 8h às 18h).</li>
+        </ul>`,
+      meta: `<p><strong>2.3 Gerenciamento Mensal:</strong></p>
+        <ul>
+          <li>Otimização de desempenho das campanhas e conjuntos de anúncios;</li>
+          <li>Testes A/B de criativos, públicos e conjuntos de anúncios;</li>
+          <li>Monitoramento constante do Custo por Resultado, relevância e alcance;</li>
+          <li>Criação e atualização de públicos personalizados e semelhantes (Lookalike);</li>
+          <li>Emissão de relatório mensal de desempenho (alcance, cliques, CPL, conversões e custo);</li>
+          <li>Reunião mensal de alinhamento via Zoom ou WhatsApp, não cumulativa;</li>
+          <li>Suporte via WhatsApp em horário comercial (segunda a sexta, 8h às 18h).</li>
+        </ul>`,
+      youtube: `<p><strong>2.3 Gerenciamento Mensal:</strong></p>
+        <ul>
+          <li>Otimização contínua de campanhas, públicos, segmentações e lances;</li>
+          <li>Monitoramento de visualizações, retenção, CTR e engajamento;</li>
+          <li>Análise de desempenho por canal, tópico e público-alvo;</li>
+          <li>Emissão de relatório mensal de desempenho (visualizações, CPV, CTR, engajamento e custo);</li>
+          <li>Reunião semanal de alinhamento via Zoom ou WhatsApp, não cumulativa;</li>
+          <li>Suporte via WhatsApp em horário comercial (segunda a sexta, 8h às 18h).</li>
+        </ul>`,
+    };
+    return servicos[plano] || '';
+  }
+
+  function clausulaCFM(tipoCliente) {
+    if (tipoCliente !== 'medico') return '';
+    return `
+      <div class="clausula" style="background:#fff8f0;border:1px solid #f0c060;border-radius:6px;padding:14px 16px;margin-top:16px;">
+        <h3 style="color:#a06000">Cláusula Específica — Publicidade Médica (CFM)</h3>
+        <p>O CONTRATANTE declara estar ciente das vedações e limitações estabelecidas pela <strong>Resolução CFM nº 2.336/2023</strong> e demais normas do Conselho Federal de Medicina referentes à publicidade médica, assumindo integral responsabilidade pelo cumprimento das seguintes diretrizes no conteúdo veiculado:</p>
+        <ul style="margin:8px 0 8px 18px;">
+          <li>É vedado prometer resultados ou garantir número de consultas, pacientes ou procedimentos;</li>
+          <li>É vedado o uso de expressões como "o melhor", "o mais qualificado" ou similares;</li>
+          <li>É vedada a divulgação de depoimentos identificados de pacientes;</li>
+          <li>É vedado qualquer conteúdo que induza o paciente a tratamentos desnecessários;</li>
+          <li>Todo conteúdo deve prezar pela dignidade da profissão médica e pela ética publicitária.</li>
+        </ul>
+        <p>A CONTRATADA executará as campanhas em conformidade com as diretrizes acima, ficando isenta de qualquer responsabilidade por eventuais infrações decorrentes de conteúdo aprovado e fornecido pelo CONTRATANTE em desacordo com a Resolução CFM nº 2.336/2023.</p>
+      </div>`;
+  }
+
+  function formatarData(iso) {
+    if (!iso) return '';
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  function calcularFim(iso, meses) {
+    if (!iso || meses === '0') return '';
+    const d = new Date(iso);
+    d.setMonth(d.getMonth() + parseInt(meses));
+    return formatarData(d.toISOString().split('T')[0]);
+  }
+
+  function porExtenso(n) {
+    const m = { '3': 'três', '6': 'seis', '12': 'doze' };
+    return m[n] || n;
+  }
+
+  // Canvas de assinatura
+  let ctx, isDrawing = false, lastX = 0, lastY = 0;
+
+  function iniciarCanvas() {
+    const canvas = document.getElementById('assinaturaCanvas');
+    const wrapper = document.getElementById('canvasWrapper');
+    canvas.width = wrapper.offsetWidth;
+    ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mouseleave', stopDraw);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; startDraw({ offsetX: t.clientX - canvas.getBoundingClientRect().left, offsetY: t.clientY - canvas.getBoundingClientRect().top }); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); const t = e.touches[0]; draw({ offsetX: t.clientX - canvas.getBoundingClientRect().left, offsetY: t.clientY - canvas.getBoundingClientRect().top }); }, { passive: false });
+    canvas.addEventListener('touchend', stopDraw);
+  }
+
+  function startDraw(e) {
+    isDrawing = true;
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+    document.getElementById('canvasWrapper').classList.add('ativo');
+    canvasVazio = false;
+  }
+  function draw(e) {
+    if (!isDrawing) return;
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(e.offsetX, e.offsetY);
+    ctx.stroke();
+    [lastX, lastY] = [e.offsetX, e.offsetY];
+  }
+  function stopDraw() { isDrawing = false; }
+  function limparCanvas() {
+    const canvas = document.getElementById('assinaturaCanvas');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvasVazio = true;
+    document.getElementById('canvasWrapper').classList.remove('ativo');
+  }
+
+  // Assinar
+  async function assinarContrato() {
+    if (canvasVazio) {
+      alert('Por favor, desenhe sua assinatura antes de confirmar.');
+      return;
+    }
+    const nome = document.getElementById('nomeConfirma').value.trim();
+    if (!nome) {
+      alert('Por favor, digite seu nome completo para confirmar.');
+      return;
+    }
+
+    const btn = document.getElementById('btnAssinar');
+    btn.disabled = true;
+    btn.textContent = 'Processando...';
+
+    const canvas = document.getElementById('assinaturaCanvas');
+    const assinaturaDataURL = canvas.toDataURL('image/png');
+
+    try {
+      const resp = await fetch('/api/contratos/assinar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: dadosContrato.id,
+          nomeAssinante: nome,
+          assinatura: assinaturaDataURL,
+          dataAssinatura: new Date().toISOString(),
+          ip: await getIP(),
+        })
+      });
+      if (!resp.ok) throw new Error();
+
+      document.getElementById('conteudo').style.display = 'none';
+      document.getElementById('sucesso').style.display = 'block';
+
+      document.getElementById('btnBaixarPdf').onclick = () => gerarPDF(assinaturaDataURL, nome);
+    } catch(e) {
+      alert('Erro ao registrar assinatura. Tente novamente.');
+      btn.disabled = false;
+      btn.textContent = 'Assinar e Confirmar Contrato';
+    }
+  }
+
+  async function getIP() {
+    try {
+      const r = await fetch('https://api.ipify.org?format=json');
+      const j = await r.json();
+      return j.ip;
+    } catch { return 'desconhecido'; }
+  }
+
+  // Gerar PDF com assinatura embutida
+  async function gerarPDF(assinaturaDataURL, nomeAssinante) {
+    const btn = document.getElementById('btnBaixarPdf');
+    btn.textContent = 'Gerando PDF...';
+
+    try {
+      const contratoEl = document.getElementById('contratoBox');
+      // Adiciona assinatura temporariamente no DOM para captura
+      const sigArea = contratoEl.querySelectorAll('.sig-area');
+
+      const canvas = await html2canvas(contratoEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+
+      const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const ratio = canvas.height / canvas.width;
+      const imgH = pageW * ratio;
+      let pos = 0;
+      let remaining = imgH;
+
+      while (remaining > 0) {
+        const sliceH = Math.min(remaining, pageH);
+        pdf.addImage(imgData, 'JPEG', 0, pos === 0 ? 0 : -(imgH - sliceH), pageW, imgH);
+        remaining -= pageH;
+        pos += pageH;
+        if (remaining > 0) pdf.addPage();
+      }
+
+      // Adicionar imagem da assinatura na última página
+      pdf.addPage();
+      pdf.setFontSize(12);
+      pdf.text('REGISTRO DE ASSINATURA DIGITAL', 20, 20);
+      pdf.setFontSize(9);
+      pdf.text(`Assinante: ${nomeAssinante}`, 20, 32);
+      pdf.text(`Data/hora: ${new Date().toLocaleString('pt-BR')}`, 20, 38);
+      pdf.text(`Documento: ${dadosContrato.tipoDoc} ${dadosContrato.documento}`, 20, 44);
+      pdf.addImage(assinaturaDataURL, 'PNG', 20, 52, 80, 30);
+
+      const nomeArquivo = `Contrato_Martinelle_${dadosContrato.nome.replace(/\s+/g,'_')}.pdf`;
+      pdf.save(nomeArquivo);
+    } catch(e) {
+      alert('Erro ao gerar PDF. Por favor, tire um print do contrato como alternativa.');
+    } finally {
+      btn.textContent = '⬇️ Baixar PDF do Contrato';
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

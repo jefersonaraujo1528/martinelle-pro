@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Contratos — Agência Martinelle</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --gold: #c9a84c;
+      --gold-light: #e8c96a;
+      --text: #f0f0f0;
+      --muted: #888;
+      --danger: #e05252;
+      --success: #4caf72;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header img { height: 40px; }
+    header h1 { font-size: 1.1rem; font-weight: 600; color: var(--gold); }
+    header p { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    .container { max-width: 720px; margin: 0 auto; padding: 32px 20px; }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title span { font-size: 1rem; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .form-row.full { grid-template-columns: 1fr; }
+    @media (max-width: 540px) { .form-row { grid-template-columns: 1fr; } }
+
+    label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    label .req { color: var(--gold); margin-left: 2px; }
+
+    input, select, textarea {
+      width: 100%;
+      background: #1e1e1e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 11px 14px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+    select option { background: #1e1e1e; }
+
+    .plano-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 540px) { .plano-grid { grid-template-columns: 1fr; } }
+
+    .plano-card {
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .plano-card:hover { border-color: var(--gold); }
+    .plano-card.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+    .plano-card input[type=radio] { display: none; }
+    .plano-card .plano-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .plano-card .plano-nome { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+    .plano-card .plano-preco { font-size: 0.95rem; font-weight: 700; color: var(--gold); margin-top: 4px; }
+
+    .pgto-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 540px) { .pgto-grid { grid-template-columns: 1fr; } }
+
+    .pgto-card {
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pgto-card:hover { border-color: var(--gold); }
+    .pgto-card.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+    .pgto-card input[type=radio] { display: none; }
+    .pgto-card .pgto-icon { font-size: 1.3rem; }
+    .pgto-card .pgto-label { font-size: 0.85rem; font-weight: 600; }
+    .pgto-card .pgto-desc { font-size: 0.72rem; color: var(--muted); }
+
+    .misto-fields {
+      margin-top: 14px;
+      padding: 14px;
+      background: rgba(201,168,76,0.05);
+      border-radius: 8px;
+      border: 1px solid rgba(201,168,76,0.2);
+      display: none;
+    }
+    .misto-fields.show { display: block; }
+
+    .btn-gerar {
+      width: 100%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: #0d0d0d;
+      border: none;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.02em;
+    }
+    .btn-gerar:hover { opacity: 0.92; }
+    .btn-gerar:active { transform: scale(0.99); }
+    .btn-gerar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Modal de sucesso */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+    .modal-icon { font-size: 3rem; margin-bottom: 12px; }
+    .modal h2 { font-size: 1.2rem; margin-bottom: 8px; color: var(--gold); }
+    .modal p { font-size: 0.85rem; color: var(--muted); margin-bottom: 20px; }
+
+    .link-box {
+      background: #1e1e1e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 0.8rem;
+      word-break: break-all;
+      color: var(--gold-light);
+      margin-bottom: 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .link-box:hover { border-color: var(--gold); }
+
+    .btn-copiar {
+      background: var(--gold);
+      color: #0d0d0d;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .btn-fechar {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      width: 100%;
+    }
+    .copiado { color: var(--success); font-size: 0.8rem; margin-top: 6px; display: none; }
+
+    .loading { display: none; align-items: center; gap: 8px; justify-content: center; padding: 10px; }
+    .loading.show { display: flex; }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .erro-msg {
+      background: rgba(224,82,82,0.1);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .erro-msg.show { display: block; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Gerador de Contratos</h1>
+    <p>Agência Martinelle — CNPJ 49.561.800/0001-70</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- DADOS DO CLIENTE -->
+  <div class="section">
+    <div class="section-title"><span>👤</span> Dados do Cliente</div>
+    <div class="form-row full">
+      <div>
+        <label>Nome completo <span class="req">*</span></label>
+        <input type="text" id="nome" placeholder="Nome completo do cliente" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>CPF ou CNPJ <span class="req">*</span></label>
+        <input type="text" id="documento" placeholder="000.000.000-00" maxlength="18" />
+      </div>
+      <div>
+        <label>Tipo</label>
+        <select id="tipoDoc">
+          <option value="CPF">CPF</option>
+          <option value="CNPJ">CNPJ</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>E-mail <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="email@exemplo.com" />
+      </div>
+      <div>
+        <label>WhatsApp <span class="req">*</span></label>
+        <input type="tel" id="telefone" placeholder="(86) 9 9999-9999" />
+      </div>
+    </div>
+  </div>
+
+  <!-- TIPO DE CLIENTE -->
+  <div class="section">
+    <div class="section-title"><span>🏥</span> Tipo de Cliente</div>
+    <div class="pgto-grid">
+      <label class="pgto-card" id="tipo-local">
+        <input type="radio" name="tipoCliente" value="local" />
+        <div class="pgto-icon">🏪</div>
+        <div>
+          <div class="pgto-label">Negócio Local</div>
+          <div class="pgto-desc">Empresa, comércio, clínica, etc.</div>
+        </div>
+      </label>
+      <label class="pgto-card" id="tipo-medico">
+        <input type="radio" name="tipoCliente" value="medico" />
+        <div class="pgto-icon">🩺</div>
+        <div>
+          <div class="pgto-label">Médico</div>
+          <div class="pgto-desc">Inclui cláusula CFM 2.336/2023</div>
+        </div>
+      </label>
+    </div>
+  </div>
+
+  <!-- PLANO -->
+  <div class="section">
+    <div class="section-title"><span>📦</span> Plano Contratado</div>
+    <div class="plano-grid">
+      <label class="plano-card" id="card-google">
+        <input type="radio" name="plano" value="google" />
+        <div class="plano-icon">🔍</div>
+        <div class="plano-nome">Google Ads Pro</div>
+        <div class="plano-preco">R$ 1.200/mês</div>
+      </label>
+      <label class="plano-card" id="card-meta">
+        <input type="radio" name="plano" value="meta" />
+        <div class="plano-icon">📱</div>
+        <div class="plano-nome">Meta Ads Pro</div>
+        <div class="plano-preco">R$ 1.200/mês</div>
+      </label>
+      <label class="plano-card" id="card-youtube">
+        <input type="radio" name="plano" value="youtube" />
+        <div class="plano-icon">▶️</div>
+        <div class="plano-nome">YouTube Ads Pro</div>
+        <div class="plano-preco">R$ 3.500/mês</div>
+      </label>
+    </div>
+  </div>
+
+  <!-- VALOR E DATAS -->
+  <div class="section">
+    <div class="section-title"><span>💰</span> Valor e Datas</div>
+    <div class="form-row">
+      <div>
+        <label>Valor mensal (R$) <span class="req">*</span></label>
+        <input type="text" id="valor" placeholder="1.200,00" />
+      </div>
+      <div>
+        <label>Dia do vencimento <span class="req">*</span></label>
+        <select id="diaVencimento">
+          <option value="">Selecione</option>
+          <option value="5">Dia 5</option>
+          <option value="10">Dia 10</option>
+          <option value="15">Dia 15</option>
+          <option value="20">Dia 20</option>
+          <option value="25">Dia 25</option>
+          <option value="1">Dia 1</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label>Data de início <span class="req">*</span></label>
+        <input type="date" id="dataInicio" />
+      </div>
+      <div>
+        <label>Duração do contrato <span class="req">*</span></label>
+        <select id="duracao">
+          <option value="">Selecione</option>
+          <option value="3">3 meses</option>
+          <option value="6">6 meses</option>
+          <option value="12">12 meses</option>
+          <option value="0">Indeterminado</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMA DE PAGAMENTO -->
+  <div class="section">
+    <div class="section-title"><span>💳</span> Forma de Pagamento</div>
+    <div class="pgto-grid">
+      <label class="pgto-card" id="pgto-boleto">
+        <input type="radio" name="pgto" value="boleto" />
+        <div class="pgto-icon">🏦</div>
+        <div>
+          <div class="pgto-label">Boleto</div>
+          <div class="pgto-desc">Mensal via boleto bancário</div>
+        </div>
+      </label>
+      <label class="pgto-card" id="pgto-pix">
+        <input type="radio" name="pgto" value="pix" />
+        <div class="pgto-icon">⚡</div>
+        <div>
+          <div class="pgto-label">PIX</div>
+          <div class="pgto-desc">Transferência instantânea</div>
+        </div>
+      </label>
+      <label class="pgto-card" id="pgto-cartao">
+        <input type="radio" name="pgto" value="cartao" />
+        <div class="pgto-icon">💳</div>
+        <div>
+          <div class="pgto-label">Cartão de Crédito</div>
+          <div class="pgto-desc">Recorrente ou parcelado</div>
+        </div>
+      </label>
+      <label class="pgto-card" id="pgto-misto">
+        <input type="radio" name="pgto" value="misto" />
+        <div class="pgto-icon">🔀</div>
+        <div>
+          <div class="pgto-label">Misto</div>
+          <div class="pgto-desc">Entrada + restante no cartão</div>
+        </div>
+      </label>
+    </div>
+
+    <div class="misto-fields" id="mistoFields">
+      <div class="form-row">
+        <div>
+          <label>Valor da entrada (R$)</label>
+          <input type="text" id="entrada" placeholder="600,00" />
+        </div>
+        <div>
+          <label>Forma da entrada</label>
+          <select id="formEntrada">
+            <option value="boleto">Boleto</option>
+            <option value="pix">PIX</option>
+            <option value="dinheiro">Dinheiro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div>
+          <label>Restante</label>
+          <select id="restanteCartao">
+            <option value="cartao_1x">1x no cartão</option>
+            <option value="cartao_2x">2x no cartão</option>
+            <option value="cartao_3x">3x no cartão</option>
+            <option value="boleto">Boleto</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERRO -->
+  <div class="erro-msg" id="erroMsg"></div>
+
+  <!-- BOTÃO -->
+  <button class="btn-gerar" id="btnGerar" onclick="gerarContrato()">
+    Gerar Contrato e Link de Assinatura
+  </button>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span style="color:var(--muted);font-size:0.85rem">Gerando contrato...</span>
+  </div>
+
+</div>
+
+<!-- MODAL SUCESSO -->
+<div class="modal-overlay" id="modalSucesso">
+  <div class="modal">
+    <div class="modal-icon">✅</div>
+    <h2>Contrato Gerado!</h2>
+    <p>Copie o link abaixo e mande para o cliente assinar pelo WhatsApp.</p>
+    <div class="link-box" id="linkBox" onclick="copiarLink()"></div>
+    <button class="btn-copiar" onclick="copiarLink()">📋 Copiar Link</button>
+    <p class="copiado" id="copiado">Link copiado!</p>
+    <button class="btn-fechar" onclick="fecharModal()">Fechar e criar novo</button>
+  </div>
+</div>
+
+<script>
+  // Planos — seleção visual
+  document.querySelectorAll('.plano-card input').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('.plano-card').forEach(c => c.classList.remove('selected'));
+      radio.closest('.plano-card').classList.add('selected');
+      const precos = { google: '1.200,00', meta: '1.200,00', youtube: '3.500,00' };
+      document.getElementById('valor').value = precos[radio.value] || '';
+    });
+  });
+
+  // Tipo de cliente — seleção visual
+  document.querySelectorAll('[name=tipoCliente]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('.pgto-card').forEach(c => c.classList.remove('selected'));
+      radio.closest('.pgto-card').classList.add('selected');
+    });
+  });
+
+  // Formas de pagamento — seleção visual
+  document.querySelectorAll('[name=pgto]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('.pgto-card').forEach(c => c.classList.remove('selected'));
+      radio.closest('.pgto-card').classList.add('selected');
+      document.getElementById('mistoFields').classList.toggle('show', radio.value === 'misto');
+    });
+  });
+
+  // Data de início — default hoje
+  const hoje = new Date().toISOString().split('T')[0];
+  document.getElementById('dataInicio').value = hoje;
+
+  // Máscara CPF/CNPJ
+  document.getElementById('documento').addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '');
+    const tipo = document.getElementById('tipoDoc').value;
+    if (tipo === 'CPF') {
+      v = v.slice(0,11);
+      v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    } else {
+      v = v.slice(0,14);
+      v = v.replace(/(\d{2})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1/$2').replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+    }
+    this.value = v;
+  });
+
+  function validar() {
+    const campos = [
+      { id: 'nome', label: 'Nome completo' },
+      { id: 'documento', label: 'CPF/CNPJ' },
+      { id: 'email', label: 'E-mail' },
+      { id: 'telefone', label: 'WhatsApp' },
+      { id: 'valor', label: 'Valor' },
+      { id: 'diaVencimento', label: 'Dia de vencimento' },
+      { id: 'dataInicio', label: 'Data de início' },
+      { id: 'duracao', label: 'Duração' },
+    ];
+    for (const c of campos) {
+      if (!document.getElementById(c.id).value.trim()) {
+        return `Preencha o campo: ${c.label}`;
+      }
+    }
+    if (!document.querySelector('[name=plano]:checked')) return 'Selecione um plano';
+    if (!document.querySelector('[name=pgto]:checked')) return 'Selecione a forma de pagamento';
+    if (!document.querySelector('[name=tipoCliente]:checked')) return 'Selecione o tipo de cliente (Médico ou Negócio Local)';
+    return null;
+  }
+
+  async function gerarContrato() {
+    const erro = validar();
+    const erroEl = document.getElementById('erroMsg');
+    if (erro) {
+      erroEl.textContent = erro;
+      erroEl.classList.add('show');
+      erroEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    erroEl.classList.remove('show');
+
+    const plano = document.querySelector('[name=plano]:checked').value;
+    const pgto = document.querySelector('[name=pgto]:checked').value;
+    const tipoCliente = document.querySelector('[name=tipoCliente]:checked').value;
+
+    const dados = {
+      nome: document.getElementById('nome').value.trim(),
+      tipoDoc: document.getElementById('tipoDoc').value,
+      documento: document.getElementById('documento').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      telefone: document.getElementById('telefone').value.trim(),
+      plano,
+      tipoCliente,
+      valor: document.getElementById('valor').value.trim(),
+      diaVencimento: document.getElementById('diaVencimento').value,
+      dataInicio: document.getElementById('dataInicio').value,
+      duracao: document.getElementById('duracao').value,
+      pgto,
+      entrada: pgto === 'misto' ? document.getElementById('entrada').value.trim() : '',
+      formEntrada: pgto === 'misto' ? document.getElementById('formEntrada').value : '',
+      restanteCartao: pgto === 'misto' ? document.getElementById('restanteCartao').value : '',
+    };
+
+    document.getElementById('btnGerar').disabled = true;
+    document.getElementById('loading').classList.add('show');
+
+    try {
+      const resp = await fetch('/api/contratos/criar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      });
+      const json = await resp.json();
+      if (!resp.ok) throw new Error(json.erro || 'Erro ao gerar contrato');
+
+      const link = `${location.origin}/contratos/assinar.html?id=${json.id}`;
+      document.getElementById('linkBox').textContent = link;
+      document.getElementById('modalSucesso').classList.add('show');
+    } catch(e) {
+      erroEl.textContent = e.message;
+      erroEl.classList.add('show');
+    } finally {
+      document.getElementById('btnGerar').disabled = false;
+      document.getElementById('loading').classList.remove('show');
+    }
+  }
+
+  function copiarLink() {
+    const link = document.getElementById('linkBox').textContent;
+    navigator.clipboard.writeText(link).then(() => {
+      document.getElementById('copiado').style.display = 'block';
+      setTimeout(() => { document.getElementById('copiado').style.display = 'none'; }, 2000);
+    });
+  }
+
+  function fecharModal() {
+    document.getElementById('modalSucesso').classList.remove('show');
+    document.getElementById('btnGerar').disabled = false;
+  }
+</script>
+</body>
+</html>
