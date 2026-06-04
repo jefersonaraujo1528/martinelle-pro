@@ -6,3 +6,5 @@ config-notificacoes.json
 .netlify-token
 .netlify-site-id
 .netlify-deploy.zip
+
+.claude/
