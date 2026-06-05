@@ -329,7 +329,7 @@
       <div class="partes">
         <p><strong>CONTRATANTE:</strong> ${d.nome}, ${d.tipoDoc}: ${d.documento}, e-mail: ${d.email}, telefone: ${d.telefone}, doravante denominado CONTRATANTE.</p>
         <br/>
-        <p><strong>CONTRATADA:</strong> <strong>Agência Martinelle</strong>, inscrita no CNPJ sob o nº 49.561.800/0001-02, com sede em Teresina/PI, representada por Jeferson Araujo Martinelle, doravante denominada CONTRATADA.</p>
+        <p><strong>CONTRATADA:</strong> <strong>Agência Martinelle</strong>, inscrita no CNPJ sob o nº 49.561.800/0001-70, com sede em Teresina/PI, representada por Jeferson Araujo Martinelle, doravante denominada CONTRATADA.</p>
       </div>
 
       <p>Ambas individualmente denominadas "Parte" e, em conjunto, "Partes", têm entre si justo e acertado o presente Contrato de Prestação de Serviços de Marketing Digital, que se regerá pelas cláusulas e condições a seguir.</p>
@@ -574,15 +574,6 @@
     return m[n] || n;
   }
 
-  const AUTENTIQUE_TOKEN = 'dede35294c3788844ef0df69a3ca2e016ee7ac84d06bd89df3cd5e12741a6844';
-  const EMAIL_JEFERSON   = 'agenciamartinelle@gmail.com';
-
-  const MUTATION = `mutation CreateDocument($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) {
-    createDocument(document: $document, signers: $signers, file: $file) {
-      document { id name signers { email action link { short_link } } }
-    }
-  }`;
-
   async function enviarParaAutentique() {
     const btn = document.getElementById('btnAssinar');
     const msg = document.getElementById('gerandoMsg');
@@ -592,8 +583,8 @@
     try {
       // 1. Gerar PDF do contrato
       const contratoEl = document.getElementById('contratoBox');
-      const canvasImg = await html2canvas(contratoEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-      const imgData = canvasImg.toDataURL('image/jpeg', 0.88);
+      const canvasImg = await html2canvas(contratoEl, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvasImg.toDataURL('image/jpeg', 0.85);
 
       const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const pageW = pdf.internal.pageSize.getWidth();
@@ -607,54 +598,55 @@
         remaining -= pageH;
         first = false;
       }
-      const pdfBlob = pdf.output('blob');
 
-      // 2. Montar multipart GraphQL para o Autentique
+      // 2. Converter PDF para base64 para envio via proxy
+      const pdfBase64 = pdf.output('datauristring').split(',')[1];
+
+      // 3. Preparar dados para o Autentique
       const deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const planoNomes = { google:'Google Ads Pro', meta:'Meta Ads Pro', youtube:'YouTube Ads Pro' };
-      const nomeContrato = `Contrato ${planoNomes[dadosContrato.plano]||dadosContrato.plano} — ${dadosContrato.nome}`;
+      const planoNomes = { google: 'Google Ads Pro', meta: 'Meta Ads Pro', youtube: 'YouTube Ads Pro' };
+      const nomeContrato = `Contrato ${planoNomes[dadosContrato.plano] || dadosContrato.plano} — ${dadosContrato.nome}`;
 
       const operations = JSON.stringify({
-        query: MUTATION,
+        query: `mutation CreateDocument($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) {
+          createDocument(document: $document, signers: $signers, file: $file) {
+            document { id name signers { email action link { short_link } } }
+          }
+        }`,
         variables: {
           document: {
             name: nomeContrato,
             message: `Olá ${dadosContrato.nome}! Seu contrato com a Agência Martinelle está pronto. Você tem 48 horas para assinar.`,
             deadline_at: deadline,
             reminder: 1,
-            notify_in: 0,
           },
           signers: [
             { email: dadosContrato.email, action: 'SIGN' },
-            { email: EMAIL_JEFERSON, action: 'SIGN' },
+            { email: 'agenciamartinelle@gmail.com', action: 'SIGN' },
           ],
           file: null,
         },
       });
 
-      const form = new FormData();
-      form.append('operations', operations);
-      form.append('map', JSON.stringify({ '0': ['variables.file'] }));
-      form.append('0', pdfBlob, 'contrato.pdf');
-
-      // 3. Enviar para Autentique
-      const resp = await fetch('https://api.autentique.com.br/v2/graphql', {
+      // 4. Enviar via proxy Netlify (evita CORS e mantém token seguro)
+      const resp = await fetch('/api/autentique-proxy', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${AUTENTIQUE_TOKEN}` },
-        body: form,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operations, pdfBase64 }),
       });
 
       const data = await resp.json();
       if (data.errors) throw new Error(data.errors[0].message);
+      if (data.error) throw new Error(data.error);
 
-      const signers = data.data.createDocument.document.signers;
+      const signers = data.data?.createDocument?.document?.signers;
+      if (!signers) throw new Error('Resposta inesperada do Autentique. Verifique o token.');
+
       const linkCliente = signers.find(s => s.email === dadosContrato.email)?.link?.short_link;
-
       if (!linkCliente) throw new Error('Link de assinatura não retornado pelo Autentique');
 
-      // 4. Tentar enviar e-mail de boas-vindas via servidor local (silencioso se falhar)
+      // 5. Enviar e-mail de boas-vindas via servidor local (silencioso se falhar)
       try {
-        const planoNomes = { google:'Google Ads Pro', meta:'Meta Ads Pro', youtube:'YouTube Ads Pro' };
         await fetch('http://localhost:3765/api/boas-vindas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -666,12 +658,12 @@
             valor: dadosContrato.valor,
           }),
         });
-      } catch(e) { /* servidor local não rodando — ignora */ }
+      } catch (e) { /* servidor local não está rodando — ignora */ }
 
-      // 5. Redirecionar para assinar no Autentique
+      // 6. Redirecionar para assinar no Autentique
       window.location.href = linkCliente;
 
-    } catch(e) {
+    } catch (e) {
       console.error(e);
       alert('Erro ao processar: ' + e.message);
       btn.disabled = false;

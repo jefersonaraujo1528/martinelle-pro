@@ -370,22 +370,22 @@
 </div>
 
 <script>
-  // Seleção visual dos cards
-  function ativarCards(name, selector) {
+  // Seleção visual dos cards — apenas dentro do próprio grupo
+  function ativarCards(name) {
     document.querySelectorAll(`[name=${name}]`).forEach(r => {
       r.addEventListener('change', () => {
-        document.querySelectorAll(selector).forEach(c => c.classList.remove('selected'));
-        r.closest(selector).classList.add('selected');
+        document.querySelectorAll(`[name=${name}]`).forEach(x => x.closest('label').classList.remove('selected'));
+        r.closest('label').classList.add('selected');
       });
     });
   }
-  ativarCards('plano', '.plano-card');
-  ativarCards('tipoCliente', '.opcao-card');
+  ativarCards('plano');
+  ativarCards('tipoCliente');
 
   document.querySelectorAll('[name=pgto]').forEach(r => {
     r.addEventListener('change', () => {
-      document.querySelectorAll('.opcao-card').forEach(c => c.classList.remove('selected'));
-      r.closest('.opcao-card').classList.add('selected');
+      document.querySelectorAll('[name=pgto]').forEach(x => x.closest('label').classList.remove('selected'));
+      r.closest('label').classList.add('selected');
       document.getElementById('cartaoFields').classList.toggle('show', r.value === 'cartao');
       document.getElementById('mistoFields').classList.toggle('show', r.value === 'misto');
     });
