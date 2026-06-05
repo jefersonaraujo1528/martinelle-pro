@@ -11,6 +11,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 
 const ASAAS_KEY = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmQ2ODEyY2IwLTg5OGEtNGJhMi04MWIwLTdmZGI1YWQzY2NjMjo6JGFhY2hfMWM3NWY1YjktMTViYS00YmM4LTljNDgtNTdiNTUyMmRhM2Q3';
 const AUTENTIQUE_TOKEN = 'dede35294c3788844ef0df69a3ca2e016ee7ac84d06bd89df3cd5e12741a6844';
@@ -255,13 +256,15 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
+  const url = 'http://localhost:' + PORT + '/contratos/index.html';
   console.log('');
-  console.log('✅ Servidor Martinelle rodando em http://localhost:' + PORT);
+  console.log('✅ Servidor Martinelle rodando!');
   console.log('');
-  console.log('   📄 Gerador de Contratos → http://localhost:' + PORT + '/contratos/index.html');
-  console.log('   🏥 CRM Médicos          → http://localhost:' + PORT + '/prospector-medicos.html');
+  console.log('   📄 Contratos → ' + url);
   console.log('');
-  console.log('   Deixe esta janela aberta enquanto usa o formulário.');
-  console.log('   Para parar: Ctrl+C');
+  console.log('   Abrindo navegador...');
+  console.log('   (Mantenha esta janela aberta. Para parar: Ctrl+C)');
   console.log('');
+  // Abre o navegador automaticamente
+  exec('open "' + url + '"');
 });
