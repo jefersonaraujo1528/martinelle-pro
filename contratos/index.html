@@ -124,15 +124,21 @@
     <div class="plano-grid">
       <label class="plano-card" id="card-google">
         <input type="radio" name="plano" value="google" />
-        <div class="pi">🔍</div><div class="pn">Google Ads Pro</div><div class="pp">R$ 1.200/mês</div>
+        <div class="pi">🔍</div><div class="pn">Google Ads Pro</div>
+        <div class="pp">R$ 1.200/mês</div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">R$ 1.500 sem pontualidade</div>
       </label>
       <label class="plano-card" id="card-meta">
         <input type="radio" name="plano" value="meta" />
-        <div class="pi">📱</div><div class="pn">Meta Ads Pro</div><div class="pp">R$ 1.200/mês</div>
+        <div class="pi">📱</div><div class="pn">Meta Ads Pro</div>
+        <div class="pp">R$ 1.200/mês</div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">R$ 1.500 sem pontualidade</div>
       </label>
       <label class="plano-card" id="card-youtube">
         <input type="radio" name="plano" value="youtube" />
-        <div class="pi">▶️</div><div class="pn">YouTube Ads Pro</div><div class="pp">R$ 3.500/mês</div>
+        <div class="pi">▶️</div><div class="pn">YouTube Ads Pro</div>
+        <div class="pp">R$ 3.500/mês</div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">R$ 4.000 sem pontualidade</div>
       </label>
     </div>
   </div>
@@ -165,7 +171,7 @@
   <!-- FORMA DE PAGAMENTO -->
   <div class="section">
     <div class="section-title"><span>💳</span> Forma de Pagamento</div>
-    <div class="opcao-grid">
+    <div class="opcao-grid" style="grid-template-columns:repeat(3,1fr)">
       <label class="opcao-card" id="pgto-boleto">
         <input type="radio" name="pgto" value="boleto" />
         <div class="oi">🏦</div><div><div class="ol">Boleto</div><div class="od">Mensal via boleto bancário</div></div>
@@ -174,9 +180,17 @@
         <input type="radio" name="pgto" value="pix" />
         <div class="oi">⚡</div><div><div class="ol">PIX</div><div class="od">Transferência instantânea</div></div>
       </label>
+      <label class="opcao-card" id="pgto-recorrente">
+        <input type="radio" name="pgto" value="recorrente" />
+        <div class="oi">🔄</div><div><div class="ol">Recorrente 12x</div><div class="od">Mensal sem juros, 12 meses</div></div>
+      </label>
       <label class="opcao-card" id="pgto-cartao">
         <input type="radio" name="pgto" value="cartao" />
         <div class="oi">💳</div><div><div class="ol">Cartão de Crédito</div><div class="od">Com juros configuráveis</div></div>
+      </label>
+      <label class="opcao-card" id="pgto-ted">
+        <input type="radio" name="pgto" value="ted" />
+        <div class="oi">🏛️</div><div><div class="ol">Transferência Bancária</div><div class="od">TED / DOC mensal</div></div>
       </label>
       <label class="opcao-card" id="pgto-misto">
         <input type="radio" name="pgto" value="misto" />
@@ -388,13 +402,17 @@
       r.closest('label').classList.add('selected');
       document.getElementById('cartaoFields').classList.toggle('show', r.value === 'cartao');
       document.getElementById('mistoFields').classList.toggle('show', r.value === 'misto');
+      // Recorrente 12x: força duração 12 meses
+      if (r.value === 'recorrente') document.getElementById('duracao').value = '12';
     });
   });
 
-  // Preço automático por plano
+  // Preço automático por plano — valor CHEIO (sem desconto de pontualidade)
+  // Google/Meta: R$1.500 cheio | R$1.200 c/ pontualidade
+  // YouTube: R$4.000 cheio | R$3.500 c/ pontualidade
   document.querySelectorAll('[name=plano]').forEach(r => {
     r.addEventListener('change', () => {
-      const p = { google:'1.200,00', meta:'1.200,00', youtube:'3.500,00' };
+      const p = { google:'1.500,00', meta:'1.500,00', youtube:'4.000,00' };
       document.getElementById('valor').value = p[r.value] || '';
       calcularJuros();
     });
@@ -498,9 +516,10 @@
       cl_obs: document.getElementById('cl_obs').value.trim(),
     };
 
-    // Codifica em base64 — sem backend necessário
+    // Codifica em base64 — funciona em file:// (local) e https:// (Netlify)
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(dados))));
-    const link = `${location.origin}/contratos/assinar.html?d=${encoded}`;
+    const baseUrl = location.href.replace(/\/[^/]*(\?.*)?$/, '');
+    const link = `${baseUrl}/assinar.html?d=${encoded}`;
 
     dadosUltimo = dados;
     document.getElementById('linkBox').textContent = link;
@@ -582,6 +601,8 @@
     let cobranca = '';
     if (d.pgto === 'boleto') cobranca = `Boleto — ${fmt(valor)}`;
     else if (d.pgto === 'pix') cobranca = `PIX — ${fmt(valor)}`;
+    else if (d.pgto === 'recorrente') cobranca = `Recorrente 12x — ${fmt(valor)}/mês (sem juros)`;
+    else if (d.pgto === 'ted') cobranca = `Transferência Bancária — ${fmt(valor)}/mês`;
     else if (d.pgto === 'cartao') {
       const n=parseInt(d.parcelas||1), t=parseFloat(d.taxaJuros||0)/100;
       const p=parc(valor,n,t), total=p*n;

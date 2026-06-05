@@ -9,16 +9,30 @@
 
 const http = require('http');
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 
 const ASAAS_KEY = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmQ2ODEyY2IwLTg5OGEtNGJhMi04MWIwLTdmZGI1YWQzY2NjMjo6JGFhY2hfMWM3NWY1YjktMTViYS00YmM4LTljNDgtNTdiNTUyMmRhM2Q3';
 const AUTENTIQUE_TOKEN = 'dede35294c3788844ef0df69a3ca2e016ee7ac84d06bd89df3cd5e12741a6844';
 const EMAIL_JEFERSON = 'agenciamartinelle@gmail.com';
 const BASE_ASAAS = 'https://www.asaas.com/api/v3';
 const PORT = 3765;
+const ROOT = __dirname;
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js':   'application/javascript; charset=utf-8',
+  '.css':  'text/css; charset=utf-8',
+  '.json': 'application/json',
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.svg':  'image/svg+xml',
+  '.ico':  'image/x-icon',
+};
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
@@ -166,11 +180,51 @@ async function enviarBoasVindas({ nomeCliente, emailCliente, plano, dataInicio, 
   });
 }
 
+// Proxy para API do Autentique (mantém token server-side)
+async function handleAutentiqueProxy({ operations, pdfBase64 }) {
+  if (!operations || !pdfBase64) throw new Error('operations e pdfBase64 são obrigatórios');
+  const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+  const boundary = 'MartinelleBoundary' + Date.now();
+  const pre = Buffer.from(
+    `--${boundary}\r\nContent-Disposition: form-data; name="operations"\r\n\r\n${operations}\r\n` +
+    `--${boundary}\r\nContent-Disposition: form-data; name="map"\r\n\r\n{"0":["variables.file"]}\r\n` +
+    `--${boundary}\r\nContent-Disposition: form-data; name="0"; filename="contrato.pdf"\r\nContent-Type: application/pdf\r\n\r\n`, 'utf8');
+  const post = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8');
+  const bodyBuffer = Buffer.concat([pre, pdfBuffer, post]);
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.autentique.com.br', path: '/v2/graphql', method: 'POST',
+      headers: { Authorization: `Bearer ${AUTENTIQUE_TOKEN}`, 'Content-Type': `multipart/form-data; boundary=${boundary}`, 'Content-Length': bodyBuffer.length },
+    }, (r) => {
+      let raw = '';
+      r.on('data', c => raw += c);
+      r.on('end', () => { try { resolve(JSON.parse(raw)); } catch (e) { reject(new Error('Resposta inválida: ' + raw.slice(0, 200))); } });
+    });
+    req.on('error', reject);
+    req.write(bodyBuffer);
+    req.end();
+  });
+}
+
 const server = http.createServer(async (req, res) => {
-  // CORS
+  // CORS preflight
   if (req.method === 'OPTIONS') {
     res.writeHead(200, CORS);
     return res.end();
+  }
+
+  // Servir arquivos estáticos (HTML, JS, CSS, imagens)
+  if (req.method === 'GET') {
+    const urlPath = req.url.split('?')[0];
+    const filePath = path.join(ROOT, urlPath === '/' ? '/contratos/index.html' : urlPath);
+    const ext = path.extname(filePath);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ct = MIME[ext] || 'application/octet-stream';
+      res.writeHead(200, { 'Content-Type': ct, 'Access-Control-Allow-Origin': '*' });
+      return res.end(fs.readFileSync(filePath));
+    }
+    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    return res.end('Not found: ' + urlPath);
   }
 
   let body = '';
@@ -184,10 +238,11 @@ const server = http.createServer(async (req, res) => {
         result = await handleAsaas(data);
       } else if (req.url === '/api/boas-vindas') {
         result = await enviarBoasVindas(data);
+      } else if (req.url === '/api/autentique-proxy') {
+        result = await handleAutentiqueProxy(data);
       } else {
-        result = { erro: 'Endpoint não encontrado: ' + req.url };
         res.writeHead(404, CORS);
-        return res.end(JSON.stringify(result));
+        return res.end(JSON.stringify({ erro: 'Endpoint não encontrado: ' + req.url }));
       }
 
       res.writeHead(200, CORS);
@@ -202,7 +257,10 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   console.log('');
   console.log('✅ Servidor Martinelle rodando em http://localhost:' + PORT);
-  console.log('   Pronto para criar clientes e cobranças no Asaas!');
+  console.log('');
+  console.log('   📄 Gerador de Contratos → http://localhost:' + PORT + '/contratos/index.html');
+  console.log('   🏥 CRM Médicos          → http://localhost:' + PORT + '/prospector-medicos.html');
+  console.log('');
   console.log('   Deixe esta janela aberta enquanto usa o formulário.');
   console.log('   Para parar: Ctrl+C');
   console.log('');

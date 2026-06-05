@@ -312,6 +312,8 @@
     const pgtoTexto = {
       boleto: 'boleto bancário',
       pix: 'PIX',
+      recorrente: `pagamento mensal recorrente em 12 (doze) parcelas de R$ ${d.valor}/mês, sem acréscimos ou juros`,
+      ted: 'transferência bancária (TED/DOC/PIX mensal)',
       cartao: pgtoCartao(),
       misto: pgtoMisto(),
     };
@@ -387,7 +389,7 @@
       <div class="clausula">
         <h3>7. Do Valor e Forma de Pagamento</h3>
         <p><strong>7.1</strong> Pela prestação dos serviços, o CONTRATANTE pagará à CONTRATADA a Taxa de Gerenciamento de <strong>R$ ${d.valor}/mês</strong>, com vencimento no dia <strong>${d.diaVencimento}</strong> de cada mês, mediante <strong>${pgtoTexto[d.pgto] || d.pgto}</strong>.</p>
-        ${descontoTexto(d.cl_desconto)}
+        ${descontoTexto(d.cl_desconto, d.valor)}
         <p><strong>7.2</strong> O primeiro mês de gerenciamento será cobrado de forma proporcional à data de início do contrato, caso iniciado após o dia 1º do mês vigente.</p>
         <p><strong>7.3</strong> O atraso no pagamento implicará multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.</p>
         <p><strong>7.4</strong> O não pagamento por período superior a <strong>${d.cl_suspensao || '7'} (${porExtensoNum(d.cl_suspensao || '7')}) dias</strong> ensejará a suspensão dos serviços pela CONTRATADA, sem prejuízo da cobrança dos valores devidos.</p>
@@ -448,10 +450,15 @@
     return m[String(n)] || String(n);
   }
 
-  function descontoTexto(cl) {
+  function descontoTexto(cl, valorCheio) {
     if (!cl || cl === '0') return '';
     const [pct, dia] = cl.split('_');
-    return `<p><strong>Desconto de Pontualidade:</strong> ${pct}% de desconto sobre a Taxa de Gerenciamento para pagamentos realizados até o dia ${dia}º (${dia === '1' ? 'primeiro' : dia === '5' ? 'cinco' : dia}º) de cada mês.</p>`;
+    const pctNum = parseInt(pct);
+    const valorNum = parseFloat((valorCheio || '0').replace(/\./g, '').replace(',', '.')) || 0;
+    const valorDesc = valorNum * (1 - pctNum / 100);
+    const fmtDesc = 'R$ ' + valorDesc.toFixed(2).replace('.', ',');
+    const diaLabel = dia === '1' ? 'primeiro' : dia === '5' ? 'cinco' : dia === '10' ? 'dez' : dia;
+    return `<p><strong>Desconto de Pontualidade:</strong> O CONTRATANTE terá direito a desconto de <strong>${pct}% (${pct === '20' ? 'vinte' : pct === '10' ? 'dez' : pct} por cento)</strong> sobre a Taxa de Gerenciamento para pagamentos realizados até o dia <strong>${dia}º (${diaLabel})</strong> de cada mês, totalizando <strong>${fmtDesc}/mês</strong>. Após essa data, aplica-se o valor integral de <strong>R$ ${valorCheio}/mês</strong>.</p>`;
   }
 
   function multaTexto(cl) {
