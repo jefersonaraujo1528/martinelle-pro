@@ -97,13 +97,12 @@ if [ "$SKIP_NETLIFY" = false ]; then
   # Cria ZIP
   echo -e "${B}📦 Empacotando…${N}"
   rm -f .netlify-deploy.zip
-  ZIP_FILES=""
-  for f in prospector-medicos.html manifest.json sw.js icon.svg _redirects netlify.toml; do
-    [ -f "$f" ] && ZIP_FILES="$ZIP_FILES $f"
-  done
-  zip -q .netlify-deploy.zip $ZIP_FILES
+  # Inclui arquivos estáticos, contratos e netlify/functions (necessário para assinatura digital)
+  zip -q .netlify-deploy.zip netlify.toml _redirects manifest.json sw.js icon.svg crm-pipeline.json prospector-medicos.html 2>/dev/null || true
+  [ -d contratos ] && zip -q -r .netlify-deploy.zip contratos/
+  [ -d netlify/functions ] && zip -q -r .netlify-deploy.zip netlify/functions/
   SIZE=$(wc -c < .netlify-deploy.zip | tr -d ' ')
-  echo -e "   ZIP: $(($SIZE / 1024)) KB · $(echo $ZIP_FILES | wc -w | tr -d ' ') arquivo(s)"
+  echo -e "   ZIP: $(($SIZE / 1024)) KB"
 
   # POST pro Netlify
   echo -e "${B}⬆ Enviando para Netlify…${N}"
