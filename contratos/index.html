@@ -171,30 +171,22 @@
   <!-- FORMA DE PAGAMENTO -->
   <div class="section">
     <div class="section-title"><span>💳</span> Forma de Pagamento</div>
-    <div class="opcao-grid" style="grid-template-columns:repeat(3,1fr)">
+    <div class="opcao-grid">
       <label class="opcao-card" id="pgto-boleto">
         <input type="radio" name="pgto" value="boleto" />
         <div class="oi">🏦</div><div><div class="ol">Boleto</div><div class="od">Mensal via boleto bancário</div></div>
       </label>
       <label class="opcao-card" id="pgto-pix">
         <input type="radio" name="pgto" value="pix" />
-        <div class="oi">⚡</div><div><div class="ol">PIX</div><div class="od">Transferência instantânea</div></div>
+        <div class="oi">⚡</div><div><div class="ol">PIX</div><div class="od">Chave: agenciamartinelle@gmail.com</div></div>
       </label>
-      <label class="opcao-card" id="pgto-recorrente">
-        <input type="radio" name="pgto" value="recorrente" />
-        <div class="oi">🔄</div><div><div class="ol">Recorrente 12x</div><div class="od">Mensal sem juros, 12 meses</div></div>
+      <label class="opcao-card" id="pgto-dinheiro">
+        <input type="radio" name="pgto" value="dinheiro" />
+        <div class="oi">💵</div><div><div class="ol">Dinheiro</div><div class="od">Espécie com emissão de recibo</div></div>
       </label>
       <label class="opcao-card" id="pgto-cartao">
         <input type="radio" name="pgto" value="cartao" />
         <div class="oi">💳</div><div><div class="ol">Cartão de Crédito</div><div class="od">Com juros configuráveis</div></div>
-      </label>
-      <label class="opcao-card" id="pgto-ted">
-        <input type="radio" name="pgto" value="ted" />
-        <div class="oi">🏛️</div><div><div class="ol">Transferência Bancária</div><div class="od">TED / DOC mensal</div></div>
-      </label>
-      <label class="opcao-card" id="pgto-misto">
-        <input type="radio" name="pgto" value="misto" />
-        <div class="oi">🔀</div><div><div class="ol">Misto</div><div class="od">Entrada + restante no cartão</div></div>
       </label>
     </div>
 
@@ -222,32 +214,14 @@
       </div>
     </div>
 
-    <!-- MISTO -->
-    <div class="sub-fields" id="mistoFields">
-      <div class="form-row">
-        <div><label>Valor da entrada (R$)</label><input type="text" id="entrada" placeholder="600,00" /></div>
-        <div><label>Forma da entrada</label>
-          <select id="formEntrada"><option value="boleto">Boleto</option><option value="pix">PIX</option><option value="dinheiro">Dinheiro</option></select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div>
-          <label>Restante — Nº de parcelas no cartão</label>
-          <select id="parcelasMisto" onchange="calcularJurosMisto()">
-            <option value="1">1x</option><option value="2">2x</option><option value="3">3x</option>
-            <option value="4">4x</option><option value="5">5x</option><option value="6">6x</option>
-          </select>
-        </div>
-        <div>
-          <label>Taxa de juros ao mês (%)</label>
-          <input type="number" id="taxaJurosMisto" value="2.99" step="0.01" min="0" max="10" oninput="calcularJurosMisto()" />
-        </div>
-      </div>
-      <div class="juros-info">
-        <strong>Padrão Asaas:</strong> 2,99% ao mês
-        <div class="juros-preview" id="jurosPreviewMisto"></div>
-      </div>
+    <!-- campos fantasma para evitar erros de getElementById em calcularJurosMisto -->
+    <div style="display:none">
+      <input id="entrada" /><select id="formEntrada"></select>
+      <select id="parcelasMisto"></select><input id="taxaJurosMisto" value="0" />
+      <div id="jurosPreviewMisto"></div>
+      <div id="mistoFields"></div>
     </div>
+
   </div>
 
   <!-- CLÁUSULAS PERSONALIZÁVEIS -->
@@ -401,9 +375,6 @@
       document.querySelectorAll('[name=pgto]').forEach(x => x.closest('label').classList.remove('selected'));
       r.closest('label').classList.add('selected');
       document.getElementById('cartaoFields').classList.toggle('show', r.value === 'cartao');
-      document.getElementById('mistoFields').classList.toggle('show', r.value === 'misto');
-      // Recorrente 12x: força duração 12 meses
-      if (r.value === 'recorrente') document.getElementById('duracao').value = '12';
     });
   });
 
@@ -499,10 +470,6 @@
       duracao: document.getElementById('duracao').value,
       parcelas: pgto === 'cartao' ? document.getElementById('parcelas').value : '',
       taxaJuros: pgto === 'cartao' ? document.getElementById('taxaJuros').value : '',
-      entrada: pgto === 'misto' ? document.getElementById('entrada').value.trim() : '',
-      formEntrada: pgto === 'misto' ? document.getElementById('formEntrada').value : '',
-      parcelasMisto: pgto === 'misto' ? document.getElementById('parcelasMisto').value : '',
-      taxaJurosMisto: pgto === 'misto' ? document.getElementById('taxaJurosMisto').value : '',
       // Cláusulas personalizáveis
       cl_prazoMin: document.getElementById('cl_prazoMin').value,
       cl_multa: document.getElementById('cl_multa').value,
@@ -601,17 +568,11 @@
     let cobranca = '';
     if (d.pgto === 'boleto') cobranca = `Boleto — ${fmt(valor)}`;
     else if (d.pgto === 'pix') cobranca = `PIX — ${fmt(valor)}`;
-    else if (d.pgto === 'recorrente') cobranca = `Recorrente 12x — ${fmt(valor)}/mês (sem juros)`;
-    else if (d.pgto === 'ted') cobranca = `Transferência Bancária — ${fmt(valor)}/mês`;
+    else if (d.pgto === 'dinheiro') cobranca = `Dinheiro/Espécie — ${fmt(valor)} (emitir recibo)`;
     else if (d.pgto === 'cartao') {
       const n=parseInt(d.parcelas||1), t=parseFloat(d.taxaJuros||0)/100;
       const p=parc(valor,n,t), total=p*n;
       cobranca = n>1 ? `Cartão ${n}x de ${fmt(p)} = ${fmt(total)}` : `Cartão 1x — ${fmt(valor)}`;
-    } else if (d.pgto === 'misto') {
-      const ent=num(d.entrada), rest=valor-ent;
-      const n=parseInt(d.parcelasMisto||1), t=parseFloat(d.taxaJurosMisto||0)/100;
-      const p=parc(rest,n,t), total=p*n;
-      cobranca = `Entrada ${fmt(ent)} + ${n>1?`${n}x ${fmt(p)}`:`1x ${fmt(rest)}`}`;
     }
 
     const planoNome = d.plano==='google'?'Google Ads Pro':d.plano==='meta'?'Meta Ads Pro':'YouTube Ads Pro';
