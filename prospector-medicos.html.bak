@@ -188,10 +188,6 @@ td{padding:11px 14px;vertical-align:middle;font-size:13px}
 .agenda-card.dragging{opacity:.4}
 .agenda-card.ag-priority{border-left:3px solid var(--red)}
 .agenda-card.ag-visitado{border-left:3px solid var(--green);opacity:.7}
-.agenda-card.ag-selected{border-color:var(--green)!important;background:rgba(67,217,173,.10);box-shadow:0 0 0 1px rgba(67,217,173,.3)}
-.ag-sel-cb{width:17px;height:17px;accent-color:var(--green);cursor:pointer;flex-shrink:0;margin-top:3px;align-self:flex-start}
-.agenda-sel-bar{background:var(--surface2);border:2px solid var(--green);border-radius:12px;padding:11px 16px;display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.agenda-sel-count{font-weight:800;color:var(--green);font-size:14px}
 .agenda-num{width:18px;height:18px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--muted);margin-top:2px}
 .agenda-card-body{flex:1;min-width:0}
 .agenda-card-row1{display:flex;justify-content:space-between;align-items:flex-start;gap:6px}
@@ -720,11 +716,6 @@ tr.sel-on td{background:rgba(108,99,255,.07)}
       <button class="btn btn-primary" onclick="redistributeSchedule()">🔄 Auto-distribuir</button>
     </div>
   </div>
-  <div id="agendaSelBar" style="display:none;background:rgba(67,217,173,.12);border:2px solid var(--green);border-radius:12px;padding:12px 18px;margin-bottom:16px;gap:12px;flex-wrap:wrap">
-    <span style="font-weight:800;color:var(--green);font-size:14px">☑️ <span id="agendaSelCount">0</span> médico(s) selecionado(s)</span>
-    <button class="btn btn-green" onclick="openRouteForSelected()">🗺️ Abrir Rota no Google Maps</button>
-    <button class="btn btn-ghost btn-sm" onclick="clearAgendaSel()">✕ Limpar</button>
-  </div>
   <div class="agenda-grid" id="agendaGrid"></div>
   <div class="unsched-bar">
     <div><strong id="unschedCount">0</strong> médicos sem dia definido</div>
@@ -797,8 +788,15 @@ tr.sel-on td{background:rgba(108,99,255,.07)}
 
   <div class="config-section">
     <h3>📅 Dias de prospecção</h3>
-    <div class="desc">Em quais dias você sai pra visitar médicos?</div>
+    <div class="desc">Em quais dias você sai pra visitar médicos? <strong>Foco recomendado: Terça, Quarta e Quinta.</strong></div>
     <div class="day-toggles" id="dayToggles"></div>
+    <button class="btn btn-ghost" style="margin-top:10px" onclick="setFocusDays()">🎯 Focar só em Terça/Quarta/Quinta</button>
+  </div>
+
+  <div class="config-section">
+    <h3>🧹 Limpar duplicados</h3>
+    <div class="desc">Procura médicos com o mesmo nome cadastrados mais de uma vez e mescla os dados (mantém o registro mais completo, junta dias e visitas).</div>
+    <button class="btn btn-primary" onclick="dedupeDoctors(false)">🔍 Verificar e mesclar duplicados</button>
   </div>
 
   <div class="config-section">
@@ -1406,6 +1404,91 @@ function loadState(){
     if(!Array.isArray(d.days)) d.days = [];
     if(d.scheduledDay && !d.days.includes(d.scheduledDay)) d.days.push(d.scheduledDay);
   });
+  // Dedupe automático na carga: nomes iguais (normalizados) → mescla mantendo o mais completo
+  dedupeDoctors(true);
+}
+
+// Normaliza nome para comparação: minúsculas, sem acentos, sem títulos, sem pontuação extra
+function normalizeName(name){
+  if(!name) return '';
+  return String(name)
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .toLowerCase()
+    .replace(/\b(dr|dra|doutor|doutora|sr|sra)\.?\s*/g,'')
+    .replace(/[^a-z0-9\s]/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+// Score de completude (quantos campos preenchidos) — usado pra escolher qual registro manter
+function completenessScore(d){
+  let s = 0;
+  ['phone1','phone2','address','clinic','specialty','secretary','arrive','window','alert','notes','positioning'].forEach(k=>{
+    if(d[k] && d[k]!=='Desconhecido') s++;
+  });
+  s += (d.days||[]).length;
+  s += (d.visits||[]).length * 2;
+  if(['Visitado','Fechado','Interessado','Proposta'].includes(d.status)) s += 3;
+  return s;
+}
+
+// Mescla campos vazios de "into" usando "from"
+function mergeDoctor(into, from){
+  ['phone1','phone2','address','clinic','specialty','secretary','arrive','window','alert','notes','instagram','site','gmn','motivation','personality'].forEach(k=>{
+    if((!into[k] || into[k]==='Desconhecido') && from[k]) into[k] = from[k];
+  });
+  // Dias: união
+  const allDays = new Set([...(into.days||[]),...(from.days||[])]);
+  into.days = [...allDays];
+  // Visitas: concatena
+  if((from.visits||[]).length){
+    into.visits = [...(into.visits||[]),...from.visits];
+  }
+  // Positioning: prioriza "Sem" > "Básico" > "Bom" > "Desconhecido"
+  const posRank = {'Sem':3,'Básico':2,'Bom':1,'Desconhecido':0};
+  if((posRank[from.positioning]||0) > (posRank[into.positioning]||0)) into.positioning = from.positioning;
+  // Status: se um foi visitado/fechado, prevalece
+  const statRank = {'Fechado':5,'Proposta':4,'Interessado':3,'Visitado':2,'Pendente':1,'Perdido':0};
+  if((statRank[from.status]||0) > (statRank[into.status]||0)) into.status = from.status;
+  return into;
+}
+
+function dedupeDoctors(silent){
+  const seen = new Map(); // chave normalizada → médico mantido
+  const removed = [];
+  const kept = [];
+  doctors.forEach(d => {
+    const key = normalizeName(d.name);
+    if(!key){ kept.push(d); return; }
+    if(seen.has(key)){
+      const existing = seen.get(key);
+      // Mantém o mais completo
+      if(completenessScore(d) > completenessScore(existing)){
+        // Substitui: novo vira o principal, mescla campos do antigo
+        mergeDoctor(d, existing);
+        const idx = kept.indexOf(existing);
+        if(idx>=0) kept[idx] = d;
+        removed.push(existing.name);
+        seen.set(key, d);
+      } else {
+        mergeDoctor(existing, d);
+        removed.push(d.name);
+      }
+    } else {
+      seen.set(key, d);
+      kept.push(d);
+    }
+  });
+  if(removed.length){
+    doctors = kept;
+    if(!silent){
+      save(); render();
+      toast(`✅ ${removed.length} duplicado(s) mesclado(s)`, 'ok');
+    }
+  } else if(!silent){
+    toast('Nenhum duplicado encontrado','ok');
+  }
+  return removed.length;
 }
 const LS_BACKUP_COUNT = 'martinelle_backup_count';
 const BACKUP_THRESHOLD = 20;
@@ -1828,6 +1911,7 @@ function renderMedCard(d, currentDay){
       ${d.address?`<button class="btn btn-sm btn-ghost" onclick="quickRoute('${d.id}')">🗺️</button>`:''}
       <button class="btn btn-sm btn-ghost" onclick="openForm('${d.id}')">✏️</button>
       ${d.status !== 'Perdido'?`<button class="btn btn-sm btn-danger" onclick="markDeclined('${d.id}')" title="Marcar como Não Aceitou">🚫 Não Aceitou</button>`:''}
+      <button class="btn btn-sm btn-danger" onclick="delDoctor('${d.id}')" title="Excluir médico">🗑 Excluir</button>
     </div>
   </div>`;
 }
@@ -1982,15 +2066,17 @@ function renderAgendaCard(d, i, day, hasTime){
   if(d.alert)     tags.push(`<span class="ag-tag ag-tag-alert">⚠️ ${esc(d.alert)}</span>`);
   const multiDays = (d.days||[]).length > 1 ? `<span class="ag-tag ag-tag-multi">📅 ${esc(d.days.join(' + '))}</span>` : '';
   if(multiDays) tags.push(multiDays);
-  const isSel = agendaSelected.has(d.id);
-  return `<div class="agenda-card${isPri?' ag-priority':''}${isDone?' ag-visitado':''}${hasTime?'':' ag-notime'}${isSel?' ag-selected':''}"
+  return `<div class="agenda-card${isPri?' ag-priority':''}${isDone?' ag-visitado':''}${hasTime?'':' ag-notime'}"
     draggable="true"
     ondragstart="event.dataTransfer.setData('text/plain','${d.id}');this.classList.add('dragging')"
     ondragend="this.classList.remove('dragging')"
     onclick="openForm('${d.id}')">
-    <input type="checkbox" class="ag-sel-cb" ${isSel?'checked':''} onclick="event.stopPropagation();toggleAgendaSelect('${d.id}',this)" title="Selecionar para rota">
     <button class="agenda-remove" onclick="event.stopPropagation();removeFromDay('${d.id}','${day}')" title="Tirar de ${day}">×</button>
     <div class="agenda-num">${i+1}</div>
+    <div style="position:absolute;top:6px;right:30px;display:flex;gap:4px">
+      <button class="agenda-remove" style="background:rgba(239,71,111,.18);color:#ff9bb3" onclick="event.stopPropagation();markDeclined('${d.id}')" title="Recusou">🚫</button>
+      <button class="agenda-remove" style="background:rgba(239,71,111,.18);color:#ff9bb3" onclick="event.stopPropagation();delDoctor('${d.id}')" title="Excluir">🗑</button>
+    </div>
     <div class="agenda-card-body">
       <div class="agenda-card-row1">
         <div class="agenda-card-name">${esc(d.name)}${isPri?' 🎯':''}</div>
@@ -2156,6 +2242,12 @@ function toggleDay(d){
   else config.days.push(d);
   save(); render();
   toast('Dias atualizados — clique em Redistribuir','ok');
+}
+
+function setFocusDays(){
+  config.days = ['Terça','Quarta','Quinta'];
+  save(); render();
+  toast('🎯 Focado em Terça, Quarta e Quinta','ok');
 }
 
 function resetAll(){
@@ -2535,43 +2627,6 @@ function impConfirm(){
   if(added) parts.push(`${added} novo(s)`);
   if(updated) parts.push(`${updated} atualizado(s)`);
   toast(`Importação: ${parts.join(', ')} médico(s)`,'ok');
-}
-
-// =============================================================
-// AGENDA SELEÇÃO
-// =============================================================
-let agendaSelected = new Set();
-
-function toggleAgendaSelect(id, cb){
-  if(cb.checked) agendaSelected.add(id);
-  else agendaSelected.delete(id);
-  const card = cb.closest('.agenda-card');
-  if(card) card.classList.toggle('ag-selected', cb.checked);
-  updateAgendaSelBar();
-}
-
-function updateAgendaSelBar(){
-  const bar = document.getElementById('agendaSelBar');
-  if(!bar) return;
-  const count = agendaSelected.size;
-  document.getElementById('agendaSelCount').textContent = count;
-  bar.style.display = count > 0 ? 'flex' : 'none';
-  bar.style.alignItems = 'center';
-}
-
-function clearAgendaSel(){
-  agendaSelected.clear();
-  document.querySelectorAll('.ag-sel-cb').forEach(cb => cb.checked = false);
-  document.querySelectorAll('.agenda-card').forEach(c => c.classList.remove('ag-selected'));
-  updateAgendaSelBar();
-}
-
-function openRouteForSelected(){
-  const list = doctors.filter(d => agendaSelected.has(d.id) && d.address);
-  if(!list.length){ toast('Nenhum médico selecionado com endereço','err'); return; }
-  list.sort((a,b) => parseTimeMin(a.arrive||'23:59') - parseTimeMin(b.arrive||'23:59'));
-  routeList = list;
-  showRoute(`${list.length} médico(s) selecionados`);
 }
 
 // =============================================================
@@ -3515,6 +3570,8 @@ function cmCardHTML(d, isCallTab=false){
   }
   if(!isCallTab) actions.push(`<button class="cm-abtn cm-abtn-danger" onclick="cmMoveToLigar('${d.id}');event.stopPropagation()">↩ Sem horário</button>`);
   actions.push(`<button class="cm-abtn cm-abtn-ghost" onclick="openForm('${d.id}');event.stopPropagation()">✏️ Editar</button>`);
+  actions.push(`<button class="cm-abtn cm-abtn-danger" onclick="markDeclined('${d.id}');event.stopPropagation()" title="Recusou">🚫 Recusou</button>`);
+  actions.push(`<button class="cm-abtn cm-abtn-danger" onclick="delDoctor('${d.id}');event.stopPropagation()" title="Excluir">🗑 Excluir</button>`);
 
   return `<div class="cm-doc-card cm-qual-${qual}${isToday?' cm-card-today':''}">
     <div class="cm-doc-card-top" onclick="cmToggleExpand('${d.id}')">
@@ -3690,6 +3747,7 @@ function renderDeclined(){
         ${(d.phone1||d.phone2)?`<button class="btn btn-sm btn-wa" onclick="openWA('${d.phone2||d.phone1}')">💬</button>`:''}
         <button class="btn btn-sm btn-ghost" onclick="openForm('${d.id}')">✏️ Editar</button>
         ${(d.visits||[]).length?`<button class="btn btn-sm btn-ghost" onclick="openHistory('${d.id}')">📋 Histórico (${d.visits.length})</button>`:''}
+        <button class="btn btn-sm btn-danger" onclick="delDoctor('${d.id}')" title="Excluir definitivamente">🗑 Excluir</button>
       </div>
     </div>`).join('')}`;
 }
