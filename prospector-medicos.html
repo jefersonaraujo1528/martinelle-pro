@@ -255,15 +255,47 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 @media(min-width:521px){
   .fab{display:none}
 }
+
+/* =================== ☁️ SYNC PILL =================== */
+.sync-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 9px;border-radius:8px;white-space:nowrap;border:1px solid var(--border);transition:all .2s}
+.sync-pill .sync-label{font-size:11px}
+.sync-pill.s-ok{background:var(--green-soft);color:var(--green);border-color:rgba(67,217,173,.3)}
+.sync-pill.s-sync{background:var(--yellow-soft);color:var(--yellow);border-color:rgba(245,166,35,.3)}
+.sync-pill.s-err{background:var(--red-soft);color:var(--red);border-color:rgba(239,71,111,.3)}
+@media(max-width:520px){ .sync-pill .sync-label{display:none} .sync-pill{padding:6px 8px} }
+
+/* =================== 🔒 GATE (senha equipe) =================== */
+.gate-overlay{display:none;position:fixed;inset:0;z-index:9999;background:radial-gradient(circle at 30% -10%, rgba(108,99,255,.12), transparent 55%),var(--bg);align-items:center;justify-content:center;padding:24px}
+.gate-box{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:32px 26px;box-shadow:var(--shadow-lg);text-align:center}
+.gate-logo{width:54px;height:54px;border-radius:15px;background:linear-gradient(135deg,var(--accent),#43d9ad);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;margin:0 auto 16px;box-shadow:0 6px 18px rgba(108,99,255,.45)}
+.gate-title{font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:5px}
+.gate-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.4}
+.gate-box input{text-align:center;font-size:16px;padding:13px;margin-bottom:12px}
+.gate-err{display:none;color:var(--red);font-size:12.5px;font-weight:600;margin-bottom:12px}
+.gate-btn{width:100%;background:linear-gradient(135deg,var(--accent),#5b54e8);color:#fff;font-weight:800;font-size:15px;padding:13px;border-radius:11px;box-shadow:0 4px 14px rgba(108,99,255,.4);transition:transform .15s}
+.gate-btn:hover{transform:translateY(-1px)}
 </style>
 </head>
 <body>
+
+<!-- =================== PORTÃO DE SENHA (equipe) =================== -->
+<div id="gateOverlay" class="gate-overlay">
+  <div class="gate-box">
+    <div class="gate-logo">M</div>
+    <div class="gate-title">Prospecção Martinelle</div>
+    <div class="gate-sub">Área da equipe — digite a senha de acesso</div>
+    <input id="gatePass" type="password" placeholder="Senha da equipe" autocomplete="off">
+    <div id="gateErr" class="gate-err">Senha incorreta. Tente novamente.</div>
+    <button class="gate-btn" onclick="submitGate()">Entrar</button>
+  </div>
+</div>
 
 <!-- =================== HEADER =================== -->
 <header class="header">
   <div class="header-top">
     <div class="brand"><span class="brand-logo">M</span> Prospecção Martinelle</div>
     <div class="header-actions">
+      <span id="syncPill" class="sync-pill s-ok" title="Status da nuvem"><span>☁️</span><span class="sync-label">Salvo na nuvem</span></span>
       <button class="btn-cfg" onclick="openConfig()" title="Configurações">⚙</button>
       <button class="btn-add" onclick="openForm()"><span>+</span><span class="add-text">Médico</span></button>
     </div>
@@ -412,6 +444,125 @@ let moveDays = [];
 let movingId = null;
 
 // ============================================================
+// ☁️ NUVEM (Supabase) — sincronização da equipe
+// ============================================================
+// >>> Para trocar a SENHA da equipe, mude só a linha abaixo <<<
+const TEAM_PASSWORD = '28082019';
+// ------------------------------------------------------------
+const SUPA_URL = 'https://wtirdmwrttoxpljxsoci.supabase.co';
+const SUPA_KEY = 'sb_publishable_9UF6Ebv3mkxVP2x4kx-eZA_5dDPPuf0';
+const STATE_ID = 'state';            // 1 linha guarda toda a lista
+const AUTH_KEY = 'martinelle_auth';
+
+let cloudReady   = false;            // libera os pushes só depois do boot
+let lastCloudStamp = null;           // último updated_at conhecido
+let pushTimer    = null;
+
+function supaHeaders(extra){
+  return Object.assign({
+    'apikey': SUPA_KEY,
+    'Authorization': 'Bearer ' + SUPA_KEY,
+    'Content-Type': 'application/json'
+  }, extra || {});
+}
+
+// Lê a lista da nuvem (ou null se ainda não existe)
+async function cloudLoad(){
+  const r = await fetch(`${SUPA_URL}/rest/v1/medicos?id=eq.${STATE_ID}&select=data,updated_at`,
+    { headers: supaHeaders() });
+  if(!r.ok) throw new Error('cloud load ' + r.status);
+  const rows = await r.json();
+  if(rows.length){ lastCloudStamp = rows[0].updated_at; return rows[0].data; }
+  return null;
+}
+
+// Envia a lista inteira pra nuvem (upsert numa linha só)
+async function cloudPush(){
+  const body = [{ id: STATE_ID, data: doctors, updated_at: new Date().toISOString() }];
+  const r = await fetch(`${SUPA_URL}/rest/v1/medicos?on_conflict=id`, {
+    method: 'POST',
+    headers: supaHeaders({ 'Prefer': 'resolution=merge-duplicates,return=representation' }),
+    body: JSON.stringify(body)
+  });
+  if(!r.ok) throw new Error('cloud push ' + r.status);
+  const rows = await r.json();
+  if(rows.length) lastCloudStamp = rows[0].updated_at;
+}
+
+// Agenda um push (debounce) — chamado a cada save()
+function schedulePush(){
+  if(!cloudReady) return;
+  setSync('sync');
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    cloudPush().then(() => setSync('ok')).catch(e => { console.warn(e); setSync('err'); });
+  }, 600);
+}
+
+// Verifica se alguém da equipe mudou algo → puxa
+async function cloudPoll(){
+  if(!cloudReady) return;
+  // Não atropela quem está editando/movendo/com modal aberto
+  const modalOpen = ['formOverlay','moveOverlay','cfgOverlay','dupOverlay']
+    .some(id => { const el = document.getElementById(id); return el && el.classList.contains('show'); });
+  if(editingId !== null || movingId !== null || modalOpen) return;
+  try{
+    const r = await fetch(`${SUPA_URL}/rest/v1/medicos?id=eq.${STATE_ID}&select=updated_at`,
+      { headers: supaHeaders() });
+    if(!r.ok) return;
+    const rows = await r.json();
+    if(rows.length && rows[0].updated_at !== lastCloudStamp){
+      const data = await cloudLoad();
+      if(data){
+        doctors = data;
+        localStorage.setItem(LS_KEY, JSON.stringify(doctors));
+        render();
+        setSync('ok');
+        toast('🔄 Lista atualizada pela equipe', 'ok');
+      }
+    }
+  }catch(e){ setSync('err'); }
+}
+
+// Indicador visual de sincronização no header
+function setSync(state){
+  const el = document.getElementById('syncPill');
+  if(!el) return;
+  const map = {
+    ok:   ['☁️','Salvo na nuvem','s-ok'],
+    sync: ['🔄','Salvando...','s-sync'],
+    err:  ['⚠️','Sem conexão','s-err']
+  };
+  const [ico, label, cls] = map[state] || map.ok;
+  el.className = 'sync-pill ' + cls;
+  el.innerHTML = `<span>${ico}</span><span class="sync-label">${label}</span>`;
+}
+
+// Boot na nuvem: tenta puxar; se vazia, sobe a lista local como semente
+async function cloudBoot(){
+  setSync('sync');
+  try{
+    const data = await cloudLoad();
+    if(data && data.length){
+      doctors = data;
+      localStorage.setItem(LS_KEY, JSON.stringify(doctors));
+      render();
+      cloudReady = true;
+      setSync('ok');
+    } else {
+      cloudReady = true;
+      await cloudPush();          // primeira vez: migra os médicos atuais
+      setSync('ok');
+    }
+  }catch(e){
+    console.warn('Nuvem indisponível, rodando local:', e);
+    cloudReady = true;            // segue local; os próximos saves tentam subir
+    setSync('err');
+  }
+  setInterval(cloudPoll, 10000);  // checa a equipe a cada 10s
+}
+
+// ============================================================
 // PERSISTÊNCIA + MIGRAÇÃO
 // ============================================================
 function load(){
@@ -449,6 +600,7 @@ function save(){
   localStorage.setItem(LS_KEY, JSON.stringify(doctors));
   localStorage.setItem(LS_VIEW, currentView);
   localStorage.setItem(LS_SUBTAB, JSON.stringify(subTab));
+  schedulePush();   // ☁️ replica a mudança pra nuvem (equipe)
 }
 
 function normName(n){
@@ -1381,10 +1533,36 @@ document.addEventListener('keydown', e => {
 // ============================================================
 // INIT
 // ============================================================
-load();
-// Set initial agenda subtab to today if applicable
-if(!subTab.agenda && DAYS.includes(todayName())) subTab.agenda = todayName();
-render();
+function startApp(){
+  load();
+  // Set initial agenda subtab to today if applicable
+  if(!subTab.agenda && DAYS.includes(todayName())) subTab.agenda = todayName();
+  render();
+  cloudBoot();   // ☁️ depois do local, sincroniza com a equipe
+}
+
+// --- Portão de senha da equipe ---
+function showGate(){ document.getElementById('gateOverlay').style.display = 'flex'; document.getElementById('gatePass').focus(); }
+function hideGate(){ document.getElementById('gateOverlay').style.display = 'none'; }
+function submitGate(){
+  const v = document.getElementById('gatePass').value.trim();
+  if(v === TEAM_PASSWORD){
+    localStorage.setItem(AUTH_KEY, v);
+    hideGate();
+    startApp();
+  } else {
+    const err = document.getElementById('gateErr');
+    err.style.display = 'block';
+    document.getElementById('gatePass').value = '';
+    document.getElementById('gatePass').focus();
+  }
+}
+function checkAuth(){
+  if(localStorage.getItem(AUTH_KEY) === TEAM_PASSWORD){ hideGate(); startApp(); }
+  else showGate();
+}
+document.getElementById('gatePass').addEventListener('keydown', e => { if(e.key==='Enter') submitGate(); });
+checkAuth();
 // Auto-refresh a cada 60s para atualizar "em 1h", "AGORA", "passou"
 // Só re-renderiza se estiver na Agenda do dia atual
 setInterval(() => {
