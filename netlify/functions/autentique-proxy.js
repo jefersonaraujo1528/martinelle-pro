@@ -1,7 +1,7 @@
 const https = require('https');
 
-// Token fica server-side — não fica exposto no browser
-const TOKEN = process.env.AUTENTIQUE_TOKEN || 'dede35294c3788844ef0df69a3ca2e016ee7ac84d06bd89df3cd5e12741a6844';
+// Token fica server-side via variável de ambiente — NUNCA hardcoded.
+const TOKEN = process.env.AUTENTIQUE_TOKEN;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',

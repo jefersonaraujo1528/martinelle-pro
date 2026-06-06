@@ -633,30 +633,24 @@
         },
       });
 
-      // 4. Tenta proxy Netlify primeiro; se indisponível, chama Autentique direto
-      let data;
-      try {
-        const proxyResp = await fetch('/api/autentique-proxy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ operations, pdfBase64 }),
-        });
-        if (!proxyResp.ok) throw new Error('proxy_indisponivel');
-        data = await proxyResp.json();
-      } catch (proxyErr) {
-        // Fallback: chamada direta ao Autentique (funciona se Autentique permitir CORS)
-        const pdfBlob = pdf.output('blob');
-        const form = new FormData();
-        form.append('operations', operations);
-        form.append('map', JSON.stringify({ '0': ['variables.file'] }));
-        form.append('0', pdfBlob, 'contrato.pdf');
-        const directResp = await fetch('https://api.autentique.com.br/v2/graphql', {
-          method: 'POST',
-          headers: { Authorization: 'Bearer dede35294c3788844ef0df69a3ca2e016ee7ac84d06bd89df3cd5e12741a6844' },
-          body: form,
-        });
-        data = await directResp.json();
+      // 4. Envia pro assinador (Supabase Edge Function). O token fica no servidor —
+      //    nunca no navegador. Sem fallback direto pra não expor segredo.
+      const SUPA_FN = 'https://wtirdmwrttoxpljxsoci.supabase.co/functions/v1/autentique-proxy';
+      const SUPA_PUBKEY = 'sb_publishable_9UF6Ebv3mkxVP2x4kx-eZA_5dDPPuf0';
+      const proxyResp = await fetch(SUPA_FN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SUPA_PUBKEY,
+          'Authorization': 'Bearer ' + SUPA_PUBKEY,
+        },
+        body: JSON.stringify({ operations, pdfBase64 }),
+      });
+      if (!proxyResp.ok) {
+        const t = await proxyResp.text().catch(() => '');
+        throw new Error('Assinador indisponível (' + proxyResp.status + '). ' + t.slice(0, 200));
       }
+      const data = await proxyResp.json();
 
       if (data.errors) throw new Error(data.errors[0].message);
       if (data.error) throw new Error(data.error);

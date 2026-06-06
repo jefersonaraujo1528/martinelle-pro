@@ -13,8 +13,13 @@ const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
 
-const ASAAS_KEY = '$aact_prod_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmQ2ODEyY2IwLTg5OGEtNGJhMi04MWIwLTdmZGI1YWQzY2NjMjo6JGFhY2hfMWM3NWY1YjktMTViYS00YmM4LTljNDgtNTdiNTUyMmRhM2Q3';
-const AUTENTIQUE_TOKEN = 'dede35294c3788844ef0df69a3ca2e016ee7ac84d06bd89df3cd5e12741a6844';
+// Segredos ficam FORA do código público — em secrets.local.json (está no .gitignore).
+const SECRETS = (() => {
+  try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'secrets.local.json'), 'utf8')); }
+  catch (e) { console.warn('⚠ secrets.local.json não encontrado — Asaas/Autentique ficarão inativos.'); return {}; }
+})();
+const ASAAS_KEY = process.env.ASAAS_KEY || SECRETS.ASAAS_KEY || '';
+const AUTENTIQUE_TOKEN = process.env.AUTENTIQUE_TOKEN || SECRETS.AUTENTIQUE_TOKEN || '';
 const EMAIL_JEFERSON = 'agenciamartinelle@gmail.com';
 const BASE_ASAAS = 'https://www.asaas.com/api/v3';
 const PORT = 3765;
