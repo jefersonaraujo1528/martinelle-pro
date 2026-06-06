@@ -347,7 +347,7 @@
       <div class="clausula">
         <h3>2. Do Objeto</h3>
         <p><strong>2.1</strong> O presente contrato tem por objeto a prestação de serviços de gestão de tráfego pago no âmbito do plano <strong>${plano.nome}</strong>, sendo este documento autossuficiente e não dependente de qualquer anexo ou proposta complementar.</p>
-        ${setupPorPlano(d.plano)}
+        ${setupPorPlano(d.plano, d.cl_setup)}
         ${servicosPorPlano(d.plano)}
         <p><strong>Parágrafo Único:</strong> A Verba de Mídia (investimento direto em anúncios) <strong>NÃO está incluída</strong> na Taxa de Gerenciamento e deverá ser paga diretamente pelo CONTRATANTE à plataforma ${nomePlataforma(d.plano)}, sendo recomendado o investimento mínimo de R$ 50,00 (cinquenta reais) por dia.</p>
       </div>
@@ -456,7 +456,7 @@
     const valorDesc = valorNum * (1 - pctNum / 100);
     const fmtDesc = 'R$ ' + valorDesc.toFixed(2).replace('.', ',');
     const diaLabel = dia === '1' ? 'primeiro' : dia === '5' ? 'cinco' : dia === '10' ? 'dez' : dia;
-    return `<p><strong>Desconto de Pontualidade:</strong> O CONTRATANTE terá direito a desconto de <strong>${pct}% (${pct === '20' ? 'vinte' : pct === '10' ? 'dez' : pct} por cento)</strong> sobre a Taxa de Gerenciamento para pagamentos realizados até o dia <strong>${dia}º (${diaLabel})</strong> de cada mês, totalizando <strong>${fmtDesc}/mês</strong>. Após essa data, aplica-se o valor integral de <strong>R$ ${valorCheio}/mês</strong>.</p>`;
+    return `<p><strong>Desconto de Pontualidade:</strong> O CONTRATANTE terá direito a desconto de <strong>${pct}% (${pct === '20' ? 'vinte' : pct === '30' ? 'trinta' : pct === '10' ? 'dez' : pct} por cento)</strong> sobre a Taxa de Gerenciamento para pagamentos realizados até o dia <strong>${dia}º (${diaLabel})</strong> de cada mês, totalizando <strong>${fmtDesc}/mês</strong>. Após essa data, aplica-se o valor integral de <strong>R$ ${valorCheio}/mês</strong>.</p>`;
   }
 
   function multaTexto(cl) {
@@ -481,9 +481,12 @@
     return p[plano] || plano;
   }
 
-  function setupPorPlano(plano) {
+  function setupPorPlano(plano, prazoSetup) {
+    const prazo = prazoSetup || '15';
+    const ext = { '5': 'cinco', '10': 'dez', '15': 'quinze' }[String(prazo)] || prazo;
+    const head = `<p><strong>2.2 Setup Inicial (isento de cobrança adicional — prazo de entrega: ${prazo} (${ext}) dias úteis):</strong></p>`;
     const setup = {
-      google: `<p><strong>2.2 Setup Inicial (isento de cobrança adicional):</strong></p>
+      google: head + `
         <ul>
           <li>Configuração completa da conta Google Ads (orçamento, CPC, segmentações, extensões, públicos-alvo, dispositivos e pagamentos);</li>
           <li>Pesquisa personalizada de palavras-chave de branding, relevantes ao negócio e dos principais concorrentes;</li>
@@ -491,14 +494,14 @@
           <li>Configuração do Google Analytics e Google Tag Manager;</li>
           <li>Configuração do Google Meu Negócio (se aplicável).</li>
         </ul>`,
-      meta: `<p><strong>2.2 Setup Inicial (isento de cobrança adicional):</strong></p>
+      meta: head + `
         <ul>
           <li>Configuração do Gerenciador de Anúncios do Meta (campanhas, públicos, conjuntos de anúncios, orçamentos, Pixel personalizado);</li>
           <li>Criação de até 5 (cinco) campanhas com até 5 (cinco) conjuntos de anúncios cada, com mínimo de 3 (três) anúncios por conjunto;</li>
           <li>Construção e desenvolvimento estratégico de públicos-alvo, interesses e segmentações do negócio;</li>
           <li>Configuração de Website Smart Links (página de captura vinculada à campanha, hospedagem inclusa).</li>
         </ul>`,
-      youtube: `<p><strong>2.2 Setup Inicial (isento de cobrança adicional):</strong></p>
+      youtube: head + `
         <ul>
           <li>Configuração de campanhas YouTube Ads no Google Ads (TrueView In-Stream, Bumper Ads e Video Discovery);</li>
           <li>Pesquisa personalizada de canais, tópicos, palavras-chave e públicos personalizados;</li>
