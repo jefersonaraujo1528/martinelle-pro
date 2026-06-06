@@ -1,0 +1,4 @@
+project_id = "wtirdmwrttoxpljxsoci"
+
+[functions.autentique-proxy]
+verify_jwt = false
