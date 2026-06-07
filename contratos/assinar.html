@@ -215,13 +215,6 @@
     <p>Link inválido ou contrato não encontrado.</p>
   </div>
 
-  <!-- Sucesso pós-assinatura -->
-  <div class="sucesso" id="sucesso">
-    <div class="sucesso-icon">✅</div>
-    <h2>Contrato Assinado!</h2>
-    <p>Obrigado. O contrato foi assinado com sucesso e será enviado por e-mail.</p>
-    <button class="btn-pdf" id="btnBaixarPdf">⬇️ Baixar PDF do Contrato</button>
-  </div>
 
   <!-- Conteúdo principal -->
   <div id="conteudo" style="display:none">
@@ -231,20 +224,11 @@
     </div>
 
     <div class="assinar-section">
-      <div class="assinar-titulo">✍️ Pronto para Assinar?</div>
+      <div class="assinar-titulo">📄 Contrato pronto</div>
       <p class="assinar-instrucao">
-        Leia o contrato acima com atenção.<br/>
-        Ao clicar em assinar, você será direcionado para a plataforma <strong style="color:var(--gold)">Autentique</strong> onde a assinatura será registrada com validade jurídica.
+        Confira o contrato acima. Baixe o PDF para enviar ao cliente ou arquivar.
       </p>
-      <div class="prazo-box">
-        ⏱ Este contrato expira em <strong>48 horas</strong>
-      </div>
-      <button class="btn-assinar" id="btnAssinar" onclick="enviarParaAutentique()">
-        ✅ Assinar Contrato com Validade Jurídica
-      </button>
-      <p class="gerando-msg" id="gerandoMsg">
-        <span class="spinner-inline"></span> Gerando contrato e enviando para assinatura...
-      </p>
+      <button class="btn-pdf" id="btnBaixarPdf" onclick="gerarPDF()">⬇️ Baixar PDF do Contrato</button>
     </div>
 
   </div>
@@ -325,6 +309,14 @@
     const numContrato = `MRT-${new Date().getFullYear()}-${Math.floor(Math.random()*9000)+1000}`;
 
     document.getElementById('contratoBox').innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;border-bottom:3px solid #c9a84c;padding-bottom:14px;margin-bottom:20px">
+        <img src="./logo-martinelle.png" alt="Agência Martinelle" crossorigin="anonymous" style="height:66px;width:66px;object-fit:contain;flex-shrink:0" />
+        <div style="line-height:1.35">
+          <div style="font-size:1.15rem;font-weight:800;letter-spacing:0.5px;color:#0d0d0d">AGÊNCIA MARTINELLE</div>
+          <div style="font-size:0.72rem;color:#444">CNPJ 49.561.800/0001-70 · Teresina/PI</div>
+          <div style="font-size:0.72rem;color:#444">agenciamartinelle@gmail.com · Tráfego pago e performance</div>
+        </div>
+      </div>
       <h2>Contrato de Prestação de Serviços de Marketing Digital</h2>
       <p class="subtitulo">${plano.nome} · Nº ${numContrato}</p>
 
@@ -389,6 +381,7 @@
       <div class="clausula">
         <h3>7. Do Valor e Forma de Pagamento</h3>
         <p><strong>7.1</strong> Pela prestação dos serviços, o CONTRATANTE pagará à CONTRATADA a Taxa de Gerenciamento de <strong>R$ ${d.valor}/mês</strong>, com vencimento no dia <strong>${d.diaVencimento}</strong> de cada mês, mediante <strong>${pgtoTexto[d.pgto] || d.pgto}</strong>.</p>
+        ${totalContratoTexto(d.valor, d.duracao)}
         ${descontoTexto(d.cl_desconto, d.valor)}
         <p><strong>7.2</strong> O primeiro mês de gerenciamento será cobrado de forma proporcional à data de início do contrato, caso iniciado após o dia 1º do mês vigente.</p>
         <p><strong>7.3</strong> O atraso no pagamento implicará multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.</p>
@@ -405,6 +398,7 @@
       </div>
 
       ${exclusividadeTexto(d.cl_exclusividade)}
+      ${landPageTexto(d.cl_landpage)}
       ${extrasTexto(d.cl_extras, d.cl_obs)}
 
       <div class="clausula">
@@ -584,159 +578,56 @@
     return m[n] || n;
   }
 
-  async function enviarParaAutentique() {
-    const btn = document.getElementById('btnAssinar');
-    const msg = document.getElementById('gerandoMsg');
-    btn.disabled = true;
-    msg.classList.add('show');
-
-    try {
-      // 1. Gerar PDF do contrato
-      const contratoEl = document.getElementById('contratoBox');
-      const canvasImg = await html2canvas(contratoEl, { scale: 1.5, useCORS: true, backgroundColor: '#ffffff' });
-      const imgData = canvasImg.toDataURL('image/jpeg', 0.85);
-
-      const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const imgH = pageW * (canvasImg.height / canvasImg.width);
-      let remaining = imgH;
-      let first = true;
-      while (remaining > 0) {
-        if (!first) pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, first ? 0 : -(imgH - remaining), pageW, imgH);
-        remaining -= pageH;
-        first = false;
-      }
-
-      // 2. Converter PDF para base64 para envio via proxy
-      const pdfBase64 = pdf.output('datauristring').split(',')[1];
-
-      // 3. Preparar dados para o Autentique
-      const deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const planoNomes = { google: 'Google Ads Pro', meta: 'Meta Ads Pro', youtube: 'YouTube Ads Pro' };
-      const nomeContrato = `Contrato ${planoNomes[dadosContrato.plano] || dadosContrato.plano} — ${dadosContrato.nome}`;
-
-      const operations = JSON.stringify({
-        query: `mutation CreateDocument($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) {
-          createDocument(document: $document, signers: $signers, file: $file) {
-            id name signatures { public_id name email link { short_link } }
-          }
-        }`,
-        variables: {
-          document: {
-            name: nomeContrato,
-            message: `Olá ${dadosContrato.nome}! Seu contrato com a Agência Martinelle está pronto. Você tem 48 horas para assinar.`,
-            deadline_at: deadline,
-            reminder: 1,
-          },
-          signers: [
-            { email: dadosContrato.email, action: 'SIGN' },
-            { email: 'agenciamartinelle@gmail.com', action: 'SIGN' },
-          ],
-          file: null,
-        },
-      });
-
-      // 4. Envia pro assinador (Supabase Edge Function). O token fica no servidor —
-      //    nunca no navegador. Sem fallback direto pra não expor segredo.
-      const SUPA_FN = 'https://wtirdmwrttoxpljxsoci.supabase.co/functions/v1/autentique-proxy';
-      const SUPA_PUBKEY = 'sb_publishable_9UF6Ebv3mkxVP2x4kx-eZA_5dDPPuf0';
-      const proxyResp = await fetch(SUPA_FN, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPA_PUBKEY,
-          'Authorization': 'Bearer ' + SUPA_PUBKEY,
-        },
-        body: JSON.stringify({ operations, pdfBase64 }),
-      });
-      if (!proxyResp.ok) {
-        const t = await proxyResp.text().catch(() => '');
-        throw new Error('Assinador indisponível (' + proxyResp.status + '). ' + t.slice(0, 200));
-      }
-      const data = await proxyResp.json();
-
-      if (data.errors) throw new Error(data.errors[0].message);
-      if (data.error) throw new Error(data.error);
-
-      const signatures = data.data?.createDocument?.signatures;
-      if (!signatures) throw new Error('Resposta inesperada do Autentique. Verifique o token.');
-
-      const linkCliente = signatures.find(s => s.email === dadosContrato.email)?.link?.short_link;
-      if (!linkCliente) throw new Error('Link de assinatura não retornado pelo Autentique');
-
-      // 5. Enviar e-mail de boas-vindas via servidor local (silencioso se falhar)
-      try {
-        await fetch('http://localhost:3765/api/boas-vindas', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nomeCliente: dadosContrato.nome,
-            emailCliente: dadosContrato.email,
-            plano: dadosContrato.plano,
-            dataInicio: dadosContrato.dataInicio,
-            valor: dadosContrato.valor,
-          }),
-        });
-      } catch (e) { /* servidor local não está rodando — ignora */ }
-
-      // 6. Redirecionar para assinar no Autentique
-      window.location.href = linkCliente;
-
-    } catch (e) {
-      console.error(e);
-      alert('Erro ao processar: ' + e.message);
-      btn.disabled = false;
-      msg.classList.remove('show');
-    }
+  // Total do contrato = valor mensal × nº de meses (vazio se indeterminado)
+  function totalContratoTexto(valor, duracao) {
+    const n = parseInt(duracao || '0');
+    if (!n) return '';
+    const mensal = parseFloat(String(valor || '0').replace(/\./g, '').replace(',', '.')) || 0;
+    const total = (mensal * n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `<p><strong>7.1.1 Valor total do período contratado:</strong> ${n} (${porExtenso(String(n))}) meses × R$ ${valor}/mês = <strong>R$ ${total}</strong> (valor de referência da Taxa de Gerenciamento, sem considerar descontos de pontualidade ou juros de cartão, quando aplicáveis).</p>`;
   }
 
-  // Gerar PDF com assinatura embutida
-  async function gerarPDF(assinaturaDataURL, nomeAssinante) {
-    const btn = document.getElementById('btnBaixarPdf');
-    btn.textContent = 'Gerando PDF...';
+  // Cláusula de Land Page (bônus do anual ou adicional negociado)
+  function landPageTexto(cl) {
+    if (!cl || cl === 'nao') return '';
+    const tipo = cl === 'bonus'
+      ? 'concedida como <strong>BÔNUS</strong>, isenta de custo adicional,'
+      : 'contratada como <strong>serviço adicional</strong>, conforme negociado entre as Partes,';
+    return `<div class="clausula">
+        <h3>Da Land Page das Campanhas</h3>
+        <p>A CONTRATADA desenvolverá uma <strong>Landing Page (página de captura) focada nas campanhas de anúncios</strong> objeto deste contrato, ${tipo} com <strong>prazo de entrega de 30 (trinta) a 45 (quarenta e cinco) dias</strong> a contar do início do contrato e do fornecimento, pelo CONTRATANTE, das informações e materiais necessários.</p>
+        <p><strong>Parágrafo Único:</strong> O <strong>domínio</strong> (endereço do site) e a <strong>hospedagem</strong> da Landing Page são de <strong>responsabilidade e custeio exclusivos do CONTRATANTE</strong>. A CONTRATADA prestará a orientação técnica necessária à contratação, não respondendo, porém, pelos custos de domínio e hospedagem.</p>
+      </div>`;
+  }
 
+  // Gerar PDF do contrato (papel timbrado + nomes de assinatura já no documento)
+  async function gerarPDF() {
+    const btn = document.getElementById('btnBaixarPdf');
+    const orig = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Gerando PDF...'; }
     try {
       const contratoEl = document.getElementById('contratoBox');
-      // Adiciona assinatura temporariamente no DOM para captura
-      const sigArea = contratoEl.querySelectorAll('.sig-area');
-
       const canvas = await html2canvas(contratoEl, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
       const imgData = canvas.toDataURL('image/jpeg', 0.92);
-
       const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
-      const ratio = canvas.height / canvas.width;
-      const imgH = pageW * ratio;
-      let pos = 0;
-      let remaining = imgH;
-
-      while (remaining > 0) {
-        const sliceH = Math.min(remaining, pageH);
-        pdf.addImage(imgData, 'JPEG', 0, pos === 0 ? 0 : -(imgH - sliceH), pageW, imgH);
-        remaining -= pageH;
-        pos += pageH;
-        if (remaining > 0) pdf.addPage();
+      const imgH = pageW * (canvas.height / canvas.width);
+      let heightLeft = imgH, position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, pageW, imgH);
+      heightLeft -= pageH;
+      while (heightLeft > 0) {
+        position -= pageH;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, pageW, imgH);
+        heightLeft -= pageH;
       }
-
-      // Adicionar imagem da assinatura na última página
-      pdf.addPage();
-      pdf.setFontSize(12);
-      pdf.text('REGISTRO DE ASSINATURA DIGITAL', 20, 20);
-      pdf.setFontSize(9);
-      pdf.text(`Assinante: ${nomeAssinante}`, 20, 32);
-      pdf.text(`Data/hora: ${new Date().toLocaleString('pt-BR')}`, 20, 38);
-      pdf.text(`Documento: ${dadosContrato.tipoDoc} ${dadosContrato.documento}`, 20, 44);
-      pdf.addImage(assinaturaDataURL, 'PNG', 20, 52, 80, 30);
-
-      const nomeArquivo = `Contrato_Martinelle_${dadosContrato.nome.replace(/\s+/g,'_')}.pdf`;
+      const nomeArquivo = `Contrato_Martinelle_${(dadosContrato?.nome || 'cliente').replace(/\s+/g, '_')}.pdf`;
       pdf.save(nomeArquivo);
-    } catch(e) {
-      alert('Erro ao gerar PDF. Por favor, tire um print do contrato como alternativa.');
+    } catch (e) {
+      alert('Erro ao gerar PDF. Tente novamente ou tire um print do contrato.');
     } finally {
-      btn.textContent = '⬇️ Baixar PDF do Contrato';
+      if (btn) { btn.disabled = false; btn.textContent = orig || '\u2b07\ufe0f Baixar PDF do Contrato'; }
     }
   }
 

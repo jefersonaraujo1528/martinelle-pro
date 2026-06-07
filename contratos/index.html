@@ -343,6 +343,22 @@
       </div>
     </div>
 
+    <div class="form-row">
+      <div>
+        <label>Land Page das campanhas</label>
+        <select id="cl_landpage">
+          <option value="nao">Não incluir (padrão)</option>
+          <option value="bonus">Incluir como BÔNUS (plano anual)</option>
+          <option value="adicional">Incluir como adicional negociado</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <div style="font-size:0.72rem;color:var(--muted);line-height:1.4">
+          Foco nas campanhas · entrega em 30–45 dias · domínio e hospedagem por conta do cliente.
+        </div>
+      </div>
+    </div>
+
     <div class="form-row full">
       <div>
         <label>Serviços adicionais incluídos (opcional)</label>
@@ -421,6 +437,16 @@
     meta:    { '12': '1.500,00', '6': '1.700,00', '3': '1.900,00', '0': '1.900,00' },
     youtube: { '12': '4.000,00', '6': '4.400,00', '3': '4.800,00', '0': '4.800,00' },
   };
+  // YouTube Ads Pro é aceito SOMENTE no anual (12 meses). Google/Meta: 3, 6 ou 12.
+  function aplicarRegrasPlano() {
+    const planoEl = document.querySelector('[name=plano]:checked');
+    const durSel = document.getElementById('duracao');
+    const isYT = planoEl && planoEl.value === 'youtube';
+    Array.from(durSel.options).forEach(o => {
+      if (o.value && o.value !== '12') o.disabled = isYT;     // desabilita 3/6/indeterminado no YouTube
+    });
+    if (isYT) durSel.value = '12';
+  }
   function atualizarPreco() {
     const planoEl = document.querySelector('[name=plano]:checked');
     if (!planoEl) return;
@@ -431,7 +457,7 @@
     calcularJuros();
     calcularJurosMisto();
   }
-  document.querySelectorAll('[name=plano]').forEach(r => r.addEventListener('change', atualizarPreco));
+  document.querySelectorAll('[name=plano]').forEach(r => r.addEventListener('change', () => { aplicarRegrasPlano(); atualizarPreco(); }));
   document.getElementById('duracao').addEventListener('change', atualizarPreco);
 
   // Data padrão
@@ -529,6 +555,7 @@
       cl_reajuste: document.getElementById('cl_reajuste').value,
       cl_exclusividade: document.getElementById('cl_exclusividade').value,
       cl_aviso: document.getElementById('cl_aviso').value,
+      cl_landpage: document.getElementById('cl_landpage').value,
       cl_extras: document.getElementById('cl_extras').value.trim(),
       cl_obs: document.getElementById('cl_obs').value.trim(),
     };
