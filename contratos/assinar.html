@@ -619,7 +619,7 @@
       const operations = JSON.stringify({
         query: `mutation CreateDocument($document: DocumentInput!, $signers: [SignerInput!]!, $file: Upload!) {
           createDocument(document: $document, signers: $signers, file: $file) {
-            document { id name signers { email action link { short_link } } }
+            id name signatures { public_id name email link { short_link } }
           }
         }`,
         variables: {
@@ -659,10 +659,10 @@
       if (data.errors) throw new Error(data.errors[0].message);
       if (data.error) throw new Error(data.error);
 
-      const signers = data.data?.createDocument?.document?.signers;
-      if (!signers) throw new Error('Resposta inesperada do Autentique. Verifique o token.');
+      const signatures = data.data?.createDocument?.signatures;
+      if (!signatures) throw new Error('Resposta inesperada do Autentique. Verifique o token.');
 
-      const linkCliente = signers.find(s => s.email === dadosContrato.email)?.link?.short_link;
+      const linkCliente = signatures.find(s => s.email === dadosContrato.email)?.link?.short_link;
       if (!linkCliente) throw new Error('Link de assinatura não retornado pelo Autentique');
 
       // 5. Enviar e-mail de boas-vindas via servidor local (silencioso se falhar)
