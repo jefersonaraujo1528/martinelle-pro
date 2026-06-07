@@ -285,30 +285,24 @@
       meta:   { nome: 'Meta Ads Pro' },
       youtube:{ nome: 'YouTube Ads Pro' },
     };
+    // Helpers financeiros — cartão cobra o VALOR TOTAL (mensal × duração); juros do
+    // parcelamento são aplicados pela operadora/Asaas, nunca somados manualmente.
+    const _moeda = s => parseFloat(String(s||'0').replace(/\./g,'').replace(',','.')) || 0;
+    const _fmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const _meses = parseInt(d.duracao || '0') || 0;
+    const _total = _moeda(d.valor) * (_meses > 0 ? _meses : 1);
     const pgtoCartao = () => {
-      if (!d.parcelas || d.parcelas == '1') return 'cartão de crédito (1x sem juros)';
-      const taxa = parseFloat(d.taxaJuros||2.99)/100;
-      const n = parseInt(d.parcelas);
-      const val = parseFloat((d.valor||'0').replace('.','').replace(',','.'));
-      if (val && n > 1 && taxa > 0) {
-        const parc = val * (taxa * Math.pow(1+taxa,n)) / (Math.pow(1+taxa,n)-1);
-        return `cartão de crédito em ${n}x de R$ ${parc.toFixed(2).replace('.',',')} (taxa ${d.taxaJuros}% a.m.)`;
-      }
-      return `cartão de crédito em ${n}x`;
+      const n = parseInt(d.parcelas || '1') || 1;
+      if (n <= 1) return `cartão de crédito à vista, no valor total de R$ ${_fmt(_total)}`;
+      return `cartão de crédito em até ${n}x sobre o valor total de R$ ${_fmt(_total)} (parcelamento com juros aplicados pela operadora/Asaas)`;
     };
     const pgtoMisto = () => {
+      const ent = _moeda(d.entrada), rest = _total - ent;
+      const n = parseInt(d.parcelasMisto || '1') || 1;
       const base = `entrada de R$ ${d.entrada} via ${d.formEntrada}`;
-      if (!d.parcelasMisto || d.parcelasMisto == '1') return `${base} + restante em 1x no cartão`;
-      const taxa = parseFloat(d.taxaJurosMisto||2.99)/100;
-      const n = parseInt(d.parcelasMisto);
-      const ent = parseFloat((d.entrada||'0').replace('.','').replace(',','.'));
-      const val = parseFloat((d.valor||'0').replace('.','').replace(',','.'));
-      const rest = val - ent;
-      if (rest > 0 && n > 1 && taxa > 0) {
-        const parc = rest * (taxa * Math.pow(1+taxa,n)) / (Math.pow(1+taxa,n)-1);
-        return `${base} + ${n}x de R$ ${parc.toFixed(2).replace('.',',')} no cartão (taxa ${d.taxaJurosMisto}% a.m.)`;
-      }
-      return `${base} + restante em ${n}x no cartão`;
+      if (rest <= 0) return `${base} (quita o valor total de R$ ${_fmt(_total)})`;
+      if (n <= 1) return `${base} + restante de R$ ${_fmt(rest)} em 1x no cartão (valor total R$ ${_fmt(_total)})`;
+      return `${base} + restante de R$ ${_fmt(rest)} em até ${n}x no cartão (juros do parcelamento pela operadora/Asaas; valor total R$ ${_fmt(_total)})`;
     };
     const pgtoTexto = {
       boleto: 'boleto bancário',
@@ -600,7 +594,7 @@
     if (!n) return '';
     const mensal = parseFloat(String(valor || '0').replace(/\./g, '').replace(',', '.')) || 0;
     const total = (mensal * n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return `<p><strong>7.1.1 Valor total do período contratado:</strong> ${n} (${porExtenso(String(n))}) meses × R$ ${valor}/mês = <strong>R$ ${total}</strong> (valor de referência da Taxa de Gerenciamento, sem considerar descontos de pontualidade ou juros de cartão, quando aplicáveis).</p>`;
+    return `<p><strong>7.1.1 Valor total do período contratado:</strong> ${n} (${porExtenso(String(n))}) meses × R$ ${valor}/mês = <strong>R$ ${total}</strong>. Este é o valor de referência da Taxa de Gerenciamento e a base para pagamento à vista ou parcelado no cartão de crédito. Eventuais juros de parcelamento são aplicados pela operadora do cartão/Asaas no momento do checkout, não havendo acréscimo manual pela CONTRATADA. Descontos de pontualidade, quando aplicáveis, incidem sobre a parcela mensal.</p>`;
   }
 
   // Cláusula de Land Page (bônus do anual ou adicional negociado)

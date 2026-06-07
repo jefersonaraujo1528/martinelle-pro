@@ -196,24 +196,21 @@
 
     <!-- CARTÃO -->
     <div class="sub-fields" id="cartaoFields">
-      <div class="form-row">
+      <div class="form-row full">
         <div>
-          <label>Nº de parcelas</label>
+          <label>Nº de parcelas <span style="color:var(--muted);font-weight:400">— sobre o VALOR TOTAL do contrato (mensal × duração)</span></label>
           <select id="parcelas" onchange="calcularJuros()">
-            <option value="1">1x (sem juros)</option>
+            <option value="1">1x (à vista)</option>
             <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
             <option value="5">5x</option><option value="6">6x</option><option value="7">7x</option>
             <option value="8">8x</option><option value="9">9x</option><option value="10">10x</option>
             <option value="11">11x</option><option value="12">12x</option>
           </select>
         </div>
-        <div>
-          <label>Taxa de juros ao mês (%)</label>
-          <input type="number" id="taxaJuros" value="2.99" step="0.01" min="0" max="10" placeholder="2.99" oninput="calcularJuros()" />
-        </div>
       </div>
       <div class="juros-info">
-        <strong>Padrão Asaas:</strong> 2,99% ao mês · Você pode ajustar a taxa acima.
+        <strong>Cartão = valor total do contrato</strong> (mensal × duração), parcelado.
+        Os <strong>juros do parcelamento são aplicados pela operadora/Asaas</strong> no checkout — não somamos juros manualmente.
         <div class="juros-preview" id="jurosPreview"></div>
       </div>
     </div>
@@ -234,24 +231,21 @@
           </select>
         </div>
       </div>
-      <div class="form-row">
+      <div class="form-row full">
         <div>
-          <label>Restante no cartão — parcelas</label>
+          <label>Restante no cartão — parcelas <span style="color:var(--muted);font-weight:400">(valor total − entrada)</span></label>
           <select id="parcelasMisto" onchange="calcularJurosMisto()">
-            <option value="1">1x (sem juros)</option>
+            <option value="1">1x (à vista)</option>
             <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
             <option value="5">5x</option><option value="6">6x</option><option value="7">7x</option>
             <option value="8">8x</option><option value="9">9x</option><option value="10">10x</option>
             <option value="11">11x</option><option value="12">12x</option>
           </select>
         </div>
-        <div>
-          <label>Taxa de juros ao mês (%)</label>
-          <input type="number" id="taxaJurosMisto" value="2.99" step="0.01" min="0" max="10" placeholder="2.99" oninput="calcularJurosMisto()" />
-        </div>
       </div>
       <div class="juros-info">
-        <strong>Entrada agora + restante parcelado no cartão.</strong>
+        <strong>Entrada agora + restante do valor total parcelado no cartão.</strong>
+        Juros do parcelamento aplicados pela operadora/Asaas.
         <div class="juros-preview" id="jurosPreviewMisto"></div>
       </div>
     </div>
@@ -474,33 +468,44 @@
     this.value = v;
   });
 
-  // Cálculo de juros
-  function calcularJuros() {
-    const n = parseInt(document.getElementById('parcelas')?.value || 1);
-    const taxa = parseFloat(document.getElementById('taxaJuros')?.value || 0) / 100;
-    const valorStr = document.getElementById('valor').value.replace('.','').replace(',','.');
-    const valor = parseFloat(valorStr) || 0;
-    const el = document.getElementById('jurosPreview');
-    if (!el) return;
-    if (n <= 1 || taxa === 0) { el.textContent = ''; return; }
-    const parcela = valor * (taxa * Math.pow(1+taxa, n)) / (Math.pow(1+taxa, n) - 1);
-    const total = parcela * n;
-    el.textContent = `${n}x de R$ ${parcela.toFixed(2).replace('.',',')} = Total R$ ${total.toFixed(2).replace('.',',')}`;
+  // ===== LÓGICA FINANCEIRA CENTRALIZADA (regra 9) =====
+  // Toda regra de dinheiro passa por aqui. Sem juros manual — o parcelamento no
+  // cartão tem juros aplicados pela operadora/Asaas no checkout.
+  function parseMoeda(s) { return parseFloat(String(s || '0').replace(/\./g, '').replace(',', '.')) || 0; }
+  function fmtBR(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  // valor_total = valor_mensal × duração (meses). Indeterminado (0) = 1 mês de referência.
+  function calcFinanceiro() {
+    const mensal = parseMoeda(document.getElementById('valor').value);
+    const meses = parseInt(document.getElementById('duracao').value || '0') || 0;
+    const total = mensal * (meses > 0 ? meses : 1);
+    return { mensal, meses, total };
   }
 
+  // Preview do cartão: mostra o VALOR TOTAL e a divisão em parcelas (juros pela operadora)
+  function calcularJuros() {
+    const el = document.getElementById('jurosPreview');
+    if (!el) return;
+    const { meses, total } = calcFinanceiro();
+    const n = parseInt(document.getElementById('parcelas')?.value || '1') || 1;
+    if (total <= 0) { el.textContent = ''; return; }
+    const baseMeses = meses > 0 ? `${meses}m × mensal = ` : '';
+    el.textContent = n > 1
+      ? `Valor total: ${baseMeses}R$ ${fmtBR(total)} · ${n}x de R$ ${fmtBR(total / n)} no cartão (+ juros da operadora)`
+      : `Valor total: ${baseMeses}R$ ${fmtBR(total)} · à vista no cartão`;
+  }
+
+  // Preview do misto: restante = valor_total − entrada
   function calcularJurosMisto() {
-    const n = parseInt(document.getElementById('parcelasMisto')?.value || 1);
-    const taxa = parseFloat(document.getElementById('taxaJurosMisto')?.value || 0) / 100;
-    const entrada = parseFloat((document.getElementById('entrada')?.value||'0').replace('.','').replace(',','.')) || 0;
-    const valorStr = document.getElementById('valor').value.replace('.','').replace(',','.');
-    const valor = parseFloat(valorStr) || 0;
-    const restante = valor - entrada;
     const el = document.getElementById('jurosPreviewMisto');
-    if (!el || restante <= 0) return;
-    if (n <= 1 || taxa === 0) { el.textContent = `Restante: R$ ${restante.toFixed(2).replace('.',',')} em 1x`; return; }
-    const parcela = restante * (taxa * Math.pow(1+taxa, n)) / (Math.pow(1+taxa, n) - 1);
-    const total = parcela * n;
-    el.textContent = `Restante: ${n}x de R$ ${parcela.toFixed(2).replace('.',',')} = R$ ${total.toFixed(2).replace('.',',')}`;
+    if (!el) return;
+    const { total } = calcFinanceiro();
+    const entrada = parseMoeda(document.getElementById('entrada')?.value);
+    const restante = total - entrada;
+    const n = parseInt(document.getElementById('parcelasMisto')?.value || '1') || 1;
+    if (restante <= 0) { el.textContent = `Valor total: R$ ${fmtBR(total)} — entrada cobre o total (sem restante no cartão)`; return; }
+    el.textContent = n > 1
+      ? `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} · ${n}x de R$ ${fmtBR(restante / n)} (+ juros da operadora)`
+      : `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} em 1x no cartão`;
   }
 
   // Validação
@@ -515,6 +520,10 @@
     if (!document.querySelector('[name=tipoCliente]:checked')) return 'Selecione o tipo de cliente';
     if (!document.querySelector('[name=plano]:checked')) return 'Selecione um plano';
     if (!document.querySelector('[name=pgto]:checked')) return 'Selecione a forma de pagamento';
+    // Validação financeira (regra 8): mensal e total nunca podem ser zero/inválidos
+    const fin = calcFinanceiro();
+    if (fin.mensal <= 0) return 'Valor mensal inválido';
+    if (fin.total <= 0) return 'Valor total do contrato inválido (mensal × duração)';
     return null;
   }
 
@@ -540,12 +549,10 @@
       dataInicio: document.getElementById('dataInicio').value,
       duracao: document.getElementById('duracao').value,
       parcelas: pgto === 'cartao' ? document.getElementById('parcelas').value : '',
-      taxaJuros: pgto === 'cartao' ? document.getElementById('taxaJuros').value : '',
       // Pagamento misto (entrada + restante no cartão)
       entrada: pgto === 'misto' ? document.getElementById('entrada').value.trim() : '',
       formEntrada: pgto === 'misto' ? document.getElementById('formEntrada').value : '',
       parcelasMisto: pgto === 'misto' ? document.getElementById('parcelasMisto').value : '',
-      taxaJurosMisto: pgto === 'misto' ? document.getElementById('taxaJurosMisto').value : '',
       // Cláusulas personalizáveis
       cl_prazoMin: document.getElementById('cl_prazoMin').value,
       cl_multa: document.getElementById('cl_multa').value,
@@ -659,18 +666,26 @@
 
   function mostrarDadosAsaas(d) {
     const num = s => parseFloat((s||'0').replace(/\./g,'').replace(',','.')) || 0;
-    const parc = (v,n,t) => (n<=1||t<=0)?v:v*(t*Math.pow(1+t,n))/(Math.pow(1+t,n)-1);
     const fmt = v => 'R$ ' + v.toFixed(2).replace('.',',');
-    const valor = num(d.valor);
+    const valor = num(d.valor);                                  // valor mensal
+    const meses = parseInt(d.duracao || '0') || 0;
+    const total = valor * (meses > 0 ? meses : 1);               // valor_total = mensal × meses
 
+    // Boleto/PIX = cobrança mensal recorrente. Cartão = valor TOTAL do contrato parcelado.
     let cobranca = '';
-    if (d.pgto === 'boleto') cobranca = `Boleto — ${fmt(valor)}`;
-    else if (d.pgto === 'pix') cobranca = `PIX — ${fmt(valor)}`;
-    else if (d.pgto === 'dinheiro') cobranca = `Dinheiro/Espécie — ${fmt(valor)} (emitir recibo)`;
+    if (d.pgto === 'boleto') cobranca = `Boleto — ${fmt(valor)}/mês`;
+    else if (d.pgto === 'pix') cobranca = `PIX — ${fmt(valor)}/mês`;
+    else if (d.pgto === 'dinheiro') cobranca = `Dinheiro/Espécie — ${fmt(valor)}/mês (emitir recibo)`;
     else if (d.pgto === 'cartao') {
-      const n=parseInt(d.parcelas||1), t=parseFloat(d.taxaJuros||0)/100;
-      const p=parc(valor,n,t), total=p*n;
-      cobranca = n>1 ? `Cartão ${n}x de ${fmt(p)} = ${fmt(total)}` : `Cartão 1x — ${fmt(valor)}`;
+      const n = parseInt(d.parcelas || '1') || 1;
+      cobranca = n > 1
+        ? `Cartão (valor total ${fmt(total)}) em ${n}x de ${fmt(total / n)} — juros do parcelamento pela operadora`
+        : `Cartão 1x — valor total ${fmt(total)}`;
+    } else if (d.pgto === 'misto') {
+      const entrada = num(d.entrada), restante = total - entrada;
+      const n = parseInt(d.parcelasMisto || '1') || 1;
+      const restTxt = n > 1 ? `${n}x de ${fmt(restante / n)}` : `1x de ${fmt(restante)}`;
+      cobranca = `Entrada ${fmt(entrada)} (${d.formEntrada}) + restante ${fmt(restante)} no cartão (${restTxt}) — total ${fmt(total)}`;
     }
 
     const planoNome = d.plano==='google'?'Google Ads Pro':d.plano==='meta'?'Meta Ads Pro':'YouTube Ads Pro';
