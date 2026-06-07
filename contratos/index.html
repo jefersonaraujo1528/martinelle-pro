@@ -414,16 +414,25 @@
     });
   });
 
-  // Preço automático por plano — valor CHEIO (sem desconto de pontualidade)
-  // Google/Meta: R$1.500 cheio | R$1.200 c/ pontualidade
-  // YouTube: R$4.000 cheio | R$3.500 c/ pontualidade
-  document.querySelectorAll('[name=plano]').forEach(r => {
-    r.addEventListener('change', () => {
-      const p = { google:'1.500,00', meta:'1.500,00', youtube:'4.000,00' };
-      document.getElementById('valor').value = p[r.value] || '';
-      calcularJuros();
-    });
-  });
+  // Preço automático por PLANO + DURAÇÃO — valor CHEIO (antes do desconto de pontualidade).
+  // Quanto maior o compromisso, menor o mensal. Indeterminado = preço do 3 meses (sem compromisso).
+  const PRECOS = {
+    google:  { '12': '1.500,00', '6': '1.700,00', '3': '1.900,00', '0': '1.900,00' },
+    meta:    { '12': '1.500,00', '6': '1.700,00', '3': '1.900,00', '0': '1.900,00' },
+    youtube: { '12': '4.000,00', '6': '4.400,00', '3': '4.800,00', '0': '4.800,00' },
+  };
+  function atualizarPreco() {
+    const planoEl = document.querySelector('[name=plano]:checked');
+    if (!planoEl) return;
+    const tabela = PRECOS[planoEl.value];
+    if (!tabela) return;
+    const dur = document.getElementById('duracao').value;
+    document.getElementById('valor').value = tabela[dur] || tabela['12']; // sem duração → base anual
+    calcularJuros();
+    calcularJurosMisto();
+  }
+  document.querySelectorAll('[name=plano]').forEach(r => r.addEventListener('change', atualizarPreco));
+  document.getElementById('duracao').addEventListener('change', atualizarPreco);
 
   // Data padrão
   document.getElementById('dataInicio').value = new Date().toISOString().split('T')[0];
