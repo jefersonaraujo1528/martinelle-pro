@@ -263,7 +263,8 @@
     if (!encoded) { mostrarErro(); return; }
 
     try {
-      dadosContrato = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+      const b64 = encoded.replace(/-/g, '+').replace(/_/g, '/'); // aceita URL-safe e padrão
+      dadosContrato = JSON.parse(decodeURIComponent(escape(atob(b64))));
       renderizarContrato(dadosContrato);
       document.getElementById('loadingState').style.display = 'none';
       document.getElementById('conteudo').style.display = 'block';

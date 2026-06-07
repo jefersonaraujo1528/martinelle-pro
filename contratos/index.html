@@ -372,6 +372,7 @@
       <h2>Contrato Gerado!</h2>
       <p style="margin-bottom:12px">Mande o link para o cliente assinar pelo WhatsApp:</p>
       <div class="link-box" id="linkBox" onclick="copiarLink()"></div>
+      <button class="btn-copiar" style="background:#25D366;color:#fff" onclick="enviarWhatsApp()">📲 Enviar no WhatsApp do cliente</button>
       <button class="btn-copiar" onclick="copiarLink()">📋 Copiar Link do Contrato</button>
       <p class="copiado" id="copiado">✔ Copiado!</p>
 
@@ -524,7 +525,8 @@
     };
 
     // Codifica em base64 — funciona em file:// (local) e https:// (Netlify)
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(dados))));
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(dados))))
+      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); // URL-safe p/ WhatsApp
     const baseUrl = location.href.replace(/\/[^/]*(\?.*)?$/, '');
     const link = `${baseUrl}/assinar.html?d=${encoded}`;
 
@@ -532,6 +534,15 @@
     document.getElementById('linkBox').textContent = link;
     criarNoAsaas(dados); // tenta automático, fallback para dados manuais
     document.getElementById('modalSucesso').classList.add('show');
+  }
+
+  function enviarWhatsApp() {
+    const link = document.getElementById('linkBox').textContent;
+    const tel = (dadosUltimo?.telefone || '').replace(/\D/g, '');
+    const nome = dadosUltimo?.nome || '';
+    const msg = `Olá ${nome}! Tudo bem? 😊\n\nSegue o contrato da *Agência Martinelle* para sua assinatura digital (link válido por 48h):\n\n${link}\n\nÉ rápido e 100% online. Qualquer dúvida, estou à disposição! 🚀`;
+    const num = tel.length >= 10 ? '55' + tel : '';
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
   function copiarLink() {
