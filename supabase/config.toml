@@ -2,3 +2,6 @@ project_id = "wtirdmwrttoxpljxsoci"
 
 [functions.autentique-proxy]
 verify_jwt = false
+
+[functions.asaas-cobranca]
+verify_jwt = false
