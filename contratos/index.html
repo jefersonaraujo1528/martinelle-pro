@@ -200,6 +200,7 @@
         <div>
           <label>Nº de parcelas <span style="color:var(--muted);font-weight:400">— sobre o VALOR TOTAL do contrato (mensal × duração)</span></label>
           <select id="parcelas" onchange="calcularJuros()">
+            <option value="">Cliente escolhe no checkout (divide à vontade)</option>
             <option value="1">1x (à vista)</option>
             <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
             <option value="5">5x</option><option value="6">6x</option><option value="7">7x</option>
@@ -235,6 +236,7 @@
         <div>
           <label>Restante no cartão — parcelas <span style="color:var(--muted);font-weight:400">(valor total − entrada)</span></label>
           <select id="parcelasMisto" onchange="calcularJurosMisto()">
+            <option value="">Cliente escolhe no checkout (divide à vontade)</option>
             <option value="1">1x (à vista)</option>
             <option value="2">2x</option><option value="3">3x</option><option value="4">4x</option>
             <option value="5">5x</option><option value="6">6x</option><option value="7">7x</option>
@@ -486,9 +488,14 @@
     const el = document.getElementById('jurosPreview');
     if (!el) return;
     const { meses, total } = calcFinanceiro();
-    const n = parseInt(document.getElementById('parcelas')?.value || '1') || 1;
+    const raw = document.getElementById('parcelas')?.value || '';   // '' = cliente escolhe
+    const n = parseInt(raw) || 1;
     if (total <= 0) { el.textContent = ''; return; }
     const baseMeses = meses > 0 ? `${meses}m × mensal = ` : '';
+    if (raw === '') {
+      el.textContent = `Valor total: ${baseMeses}R$ ${fmtBR(total)} · vai cheio pro Asaas — cliente divide à vontade no checkout (juros da operadora)`;
+      return;
+    }
     el.textContent = n > 1
       ? `Valor total: ${baseMeses}R$ ${fmtBR(total)} · ${n}x de R$ ${fmtBR(total / n)} no cartão (+ juros da operadora)`
       : `Valor total: ${baseMeses}R$ ${fmtBR(total)} · à vista no cartão`;
@@ -501,8 +508,13 @@
     const { total } = calcFinanceiro();
     const entrada = parseMoeda(document.getElementById('entrada')?.value);
     const restante = total - entrada;
-    const n = parseInt(document.getElementById('parcelasMisto')?.value || '1') || 1;
+    const raw = document.getElementById('parcelasMisto')?.value || '';   // '' = cliente escolhe
+    const n = parseInt(raw) || 1;
     if (restante <= 0) { el.textContent = `Valor total: R$ ${fmtBR(total)} — entrada cobre o total (sem restante no cartão)`; return; }
+    if (raw === '') {
+      el.textContent = `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} no cartão · cliente divide à vontade no checkout (juros da operadora)`;
+      return;
+    }
     el.textContent = n > 1
       ? `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} · ${n}x de R$ ${fmtBR(restante / n)} (+ juros da operadora)`
       : `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} em 1x no cartão`;

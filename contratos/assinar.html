@@ -292,15 +292,19 @@
     const _meses = parseInt(d.duracao || '0') || 0;
     const _total = _moeda(d.valor) * (_meses > 0 ? _meses : 1);
     const pgtoCartao = () => {
-      const n = parseInt(d.parcelas || '1') || 1;
+      const raw = d.parcelas || '';                 // '' = cliente escolhe no checkout
+      const n = parseInt(raw) || 1;
+      if (raw === '') return `cartão de crédito, no valor total de R$ ${_fmt(_total)}, com o parcelamento a critério do CONTRATANTE no momento do pagamento (juros do parcelamento aplicados pela operadora/Asaas)`;
       if (n <= 1) return `cartão de crédito à vista, no valor total de R$ ${_fmt(_total)}`;
       return `cartão de crédito em até ${n}x sobre o valor total de R$ ${_fmt(_total)} (parcelamento com juros aplicados pela operadora/Asaas)`;
     };
     const pgtoMisto = () => {
       const ent = _moeda(d.entrada), rest = _total - ent;
-      const n = parseInt(d.parcelasMisto || '1') || 1;
+      const raw = d.parcelasMisto || '';            // '' = cliente escolhe no checkout
+      const n = parseInt(raw) || 1;
       const base = `entrada de R$ ${d.entrada} via ${d.formEntrada}`;
       if (rest <= 0) return `${base} (quita o valor total de R$ ${_fmt(_total)})`;
+      if (raw === '') return `${base} + restante de R$ ${_fmt(rest)} no cartão, com o parcelamento a critério do CONTRATANTE (juros pela operadora/Asaas; valor total R$ ${_fmt(_total)})`;
       if (n <= 1) return `${base} + restante de R$ ${_fmt(rest)} em 1x no cartão (valor total R$ ${_fmt(_total)})`;
       return `${base} + restante de R$ ${_fmt(rest)} em até ${n}x no cartão (juros do parcelamento pela operadora/Asaas; valor total R$ ${_fmt(_total)})`;
     };
