@@ -314,6 +314,7 @@
       pix: 'PIX (chave: agenciamartinelle@gmail.com)',
       dinheiro: 'dinheiro/espécie, mediante emissão de recibo pelo valor pago',
       cartao: pgtoCartao(),
+      misto: pgtoMisto(),
     };
     const plano = planos[d.plano] || { nome: d.plano };
     const dataInicio = formatarData(d.dataInicio);
