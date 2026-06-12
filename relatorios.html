@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Relatórios de Tráfego — Agência Martinelle</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+/* ============ BASE (tema escuro — painel interno) ============ */
+:root{
+  --bg:#0e0f14; --bg2:#161821; --bg3:#1e2130; --line:#2a2e42;
+  --tx:#e8eaf2; --tx2:#9aa0b5; --tx3:#6a7088;
+  --roxo:#6c63ff; --verde:#43d9ad; --verm:#ff5d6c; --amar:#ffb84d; --azul:#4da3ff;
+  --grad:linear-gradient(135deg,#6c63ff,#43d9ad);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;min-height:100vh}
+button{font-family:inherit;cursor:pointer;border:none}
+input,select,textarea{font-family:inherit;font-size:14px;background:var(--bg);border:1px solid var(--line);color:var(--tx);border-radius:9px;padding:9px 11px;width:100%;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--roxo)}
+textarea{resize:vertical;min-height:70px;line-height:1.5}
+a{color:var(--roxo)}
+::placeholder{color:var(--tx3)}
+.hide{display:none!important}
+
+/* ============ TOPBAR ============ */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(14,15,20,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{width:38px;height:38px;border-radius:11px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;color:#fff;flex-shrink:0}
+.brand b{font-size:15px;display:block}
+.brand span{font-size:11.5px;color:var(--tx2)}
+.nav{display:flex;gap:6px;margin-left:10px}
+.nav button{background:transparent;color:var(--tx2);padding:8px 14px;border-radius:9px;font-size:13.5px;font-weight:600}
+.nav button.on{background:var(--bg3);color:var(--tx)}
+.spacer{flex:1}
+.sync-pill{display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 11px;border-radius:99px;border:1px solid var(--line);color:var(--tx2)}
+.s-ok{border-color:#2c4f43;color:var(--verde)}
+.s-sync{border-color:#3a3760;color:var(--roxo)}
+.s-err{border-color:#5a2e35;color:var(--verm)}
+
+/* ============ LAYOUT ============ */
+.wrap{max-width:1060px;margin:0 auto;padding:22px 18px 80px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
+h2.sec{font-size:18px;margin:6px 0 14px}
+.muted{color:var(--tx2);font-size:13px}
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:16px}
+
+/* botões */
+.btn{background:var(--bg3);color:var(--tx);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{filter:brightness(1.15)}
+.btn-p{background:var(--grad);color:#fff}
+.btn-g{background:transparent;border:1px solid var(--line);color:var(--tx2)}
+.btn-d{background:#3a1d24;color:var(--verm)}
+.btn-sm{padding:6px 11px;font-size:12.5px;border-radius:8px}
+
+/* stats topo */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+@media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+.stat{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.stat b{font-size:24px;display:block}
+.stat span{font-size:12px;color:var(--tx2)}
+
+/* lista de relatórios / clientes */
+.item{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:10px;display:flex;gap:13px;align-items:center;flex-wrap:wrap}
+.item .av{width:42px;height:42px;border-radius:11px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:var(--verde);flex-shrink:0}
+.item .info{flex:1;min-width:170px}
+.item .info b{display:block;font-size:15px}
+.item .info span{font-size:12.5px;color:var(--tx2)}
+.badge{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:99px;margin-right:5px;letter-spacing:.3px}
+.b-meta{background:#1a2a4a;color:#6fa8ff}
+.b-google{background:#3a2a14;color:#ffb84d}
+.b-ig{background:#3a1a35;color:#ff6fd8}
+.b-med{background:#16323a;color:#4dd0e1}
+.b-loc{background:#243a16;color:#9ccc65}
+
+/* ============ EDITOR ============ */
+.etabs{display:flex;gap:6px;margin:14px 0;flex-wrap:wrap}
+.etabs button{background:var(--bg2);border:1px solid var(--line);color:var(--tx2);padding:9px 15px;border-radius:10px;font-size:13.5px;font-weight:600}
+.etabs button.on{background:var(--bg3);color:var(--tx);border-color:var(--roxo)}
+.etabs button.off-canal{opacity:.45}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:11px}
+.fld label{display:block;font-size:11.5px;color:var(--tx2);margin-bottom:5px;font-weight:600}
+.deriv{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.chip{background:var(--bg3);border:1px solid var(--line);padding:6px 11px;border-radius:9px;font-size:12px;color:var(--tx2)}
+.chip b{color:var(--verde);margin-left:4px}
+.colhead{display:flex;align-items:center;gap:9px;margin:18px 0 10px;font-size:13px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.5px}
+.colhead::after{content:'';flex:1;height:1px;background:var(--line)}
+.paste{background:#14161f;border:1px dashed var(--line);border-radius:12px;padding:13px;margin-bottom:15px}
+.paste textarea{min-height:54px;font-size:12.5px;background:var(--bg)}
+.switch{display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:14px;font-weight:600}
+.switch .tk{width:38px;height:21px;border-radius:99px;background:var(--bg3);border:1px solid var(--line);position:relative;transition:.15s}
+.switch .tk::after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:var(--tx3);transition:.15s}
+.switch.on .tk{background:var(--grad);border-color:transparent}
+.switch.on .tk::after{left:19px;background:#fff}
+
+/* ============ LOGIN ============ */
+.gate{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:20px}
+.gate .logo{width:60px;height:60px;font-size:28px;border-radius:17px}
+.gate input{max-width:260px;text-align:center;font-size:16px}
+
+/* ============ TOAST / MODAL ============ */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--line);padding:11px 19px;border-radius:11px;font-size:13.5px;z-index:300;opacity:0;transition:.25s;pointer-events:none;max-width:90vw}
+.toast.show{opacity:1}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:30px 14px;overflow-y:auto}
+.overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:22px;max-width:520px;width:100%}
+.modal h3{margin-bottom:16px;font-size:17px}
+
+/* ============ RELATÓRIO (tema claro — visão do cliente) ============ */
+#viewReport{background:#eef0f5;color:#1d2333;min-height:100vh}
+.rep-actions{position:sticky;top:0;z-index:60;background:#11131a;padding:11px 16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.rep{max-width:830px;margin:0 auto;background:#fff}
+.pg{padding:46px 52px;page-break-after:always;background:#fff}
+@media(max-width:640px){.pg{padding:28px 20px}}
+.r-capa{background:linear-gradient(150deg,#15172b 0%,#232a55 55%,#1b4a40 100%);color:#fff;min-height:540px;display:flex;flex-direction:column;justify-content:space-between}
+.r-capa .rlogo{width:64px;height:64px;border-radius:18px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:30px}
+.r-capa h1{font-size:34px;line-height:1.18;margin:14px 0 8px}
+.r-capa .per{font-size:16px;opacity:.85}
+.r-capa .cli{font-size:21px;font-weight:700;margin-top:34px}
+.r-capa .rfoot{font-size:12.5px;opacity:.7;line-height:1.7}
+.rb{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.6px;padding:5px 12px;border-radius:99px;margin:18px 8px 0 0;background:rgba(255,255,255,.14)}
+.r-h2{font-size:20px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:9px}
+.r-h2 .dot{width:11px;height:11px;border-radius:3px;background:var(--grad);flex-shrink:0}
+.r-sub{font-size:12.5px;color:#7a8099;margin-bottom:20px}
+.r-resumo{font-size:14.5px;line-height:1.75;color:#39405c;background:#f5f6fa;border-left:4px solid #6c63ff;padding:16px 18px;border-radius:0 10px 10px 0;white-space:pre-wrap}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin:6px 0 8px}
+@media(max-width:640px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{border:1px solid #e3e6ef;border-radius:12px;padding:13px 14px;background:#fbfbfd}
+.kpi .kl{font-size:10.5px;font-weight:700;color:#7a8099;text-transform:uppercase;letter-spacing:.4px}
+.kpi .kv{font-size:20px;font-weight:800;margin:3px 0 2px;color:#1d2333}
+.kpi .kd{font-size:11.5px;font-weight:700}
+.up{color:#0d9d6d}.down{color:#e2455a}.neutro{color:#8a90a6}
+.r-tbl{width:100%;border-collapse:collapse;font-size:12.8px;margin-top:8px}
+.r-tbl th{text-align:left;font-size:10.8px;text-transform:uppercase;letter-spacing:.4px;color:#7a8099;padding:8px 10px;border-bottom:2px solid #e3e6ef}
+.r-tbl td{padding:8px 10px;border-bottom:1px solid #eef0f5}
+.r-tbl td:nth-child(n+2),.r-tbl th:nth-child(n+2){text-align:right}
+.funil{margin:10px 0}
+.fstep{display:flex;align-items:center;gap:12px;margin-bottom:7px}
+.fstep .fl{width:170px;font-size:12.3px;font-weight:600;color:#525a77;text-align:right;flex-shrink:0}
+.fstep .fbar{height:30px;border-radius:7px;background:var(--grad);display:flex;align-items:center;justify-content:flex-end;padding:0 10px;color:#fff;font-size:12px;font-weight:700;min-width:52px}
+.fstep .fp{font-size:11px;color:#8a90a6;width:84px;flex-shrink:0}
+.an-bloco{border:1px solid #e3e6ef;border-radius:12px;padding:16px 18px;margin-bottom:13px}
+.an-bloco h4{font-size:14px;margin-bottom:9px;display:flex;gap:8px;align-items:center}
+.an-bloco ul{margin-left:19px}
+.an-bloco li{font-size:13.4px;line-height:1.65;color:#39405c;margin-bottom:6px}
+.an-dest{background:#f1faf6;border-color:#bfe8d6}
+.an-aten{background:#fdf7ee;border-color:#f3ddb5}
+.an-reco{background:#f3f2fd;border-color:#d5d1f5}
+.passos li{font-size:13.8px;line-height:1.7;color:#39405c;margin-bottom:9px}
+.charts2{display:grid;grid-template-columns:1fr 1.25fr;gap:22px;align-items:center}
+@media(max-width:640px){.charts2{grid-template-columns:1fr}}
+.cbox{position:relative}
+.cbox h5{font-size:12.5px;color:#525a77;margin-bottom:8px;text-align:center}
+.evo{margin-top:6px}
+.evo-l{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.evo-l .el{width:140px;font-size:12.3px;font-weight:600;color:#525a77;text-align:right;flex-shrink:0}
+.evo-l .ebars{flex:1}
+.evo-l .eb{height:17px;border-radius:5px;margin-bottom:3px;display:flex;align-items:center;padding:0 8px;font-size:10.6px;font-weight:700;color:#fff;min-width:46px}
+.eb-at{background:linear-gradient(90deg,#6c63ff,#43d9ad)}
+.eb-an{background:#c3c8d9}
+.r-rodape{background:#15172b;color:#fff;text-align:center;padding:50px 40px}
+.r-rodape .rlogo{width:54px;height:54px;border-radius:15px;background:var(--grad);display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:25px;margin-bottom:14px}
+.r-rodape p{font-size:13px;opacity:.8;line-height:1.8}
+@media print{.rep-actions,.topbar{display:none!important}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="gate" id="gate">
+  <div class="logo">M</div>
+  <div style="text-align:center"><b style="font-size:17px">Relatórios de Tráfego</b><br><span class="muted">Agência Martinelle</span></div>
+  <input type="password" id="gatePass" placeholder="Senha da equipe" onkeydown="if(event.key==='Enter')tryLogin()">
+  <button class="btn btn-p" onclick="tryLogin()">Entrar</button>
+  <div class="muted" id="gateMsg"></div>
+</div>
+
+<!-- ============ TOPBAR ============ -->
+<div class="topbar hide" id="topbar">
+  <div class="logo">M</div>
+  <div class="brand"><b>Relatórios de Tráfego</b><span>Agência Martinelle</span></div>
+  <div class="nav">
+    <button id="navRel" class="on" onclick="go('home')">📊 Relatórios</button>
+    <button id="navCli" onclick="go('clientes')">👥 Clientes</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="sync-pill s-ok" id="syncPill"><span>☁️</span><span class="sync-label">Nuvem</span></div>
+</div>
+
+<!-- ============ HOME ============ -->
+<div class="wrap hide" id="viewHome">
+  <div class="stats">
+    <div class="stat"><b id="stCli">0</b><span>clientes ativos</span></div>
+    <div class="stat"><b id="stRel">0</b><span>relatórios criados</span></div>
+    <div class="stat"><b id="stMes">0</b><span>relatórios este mês</span></div>
+  </div>
+  <div class="row" style="justify-content:space-between;margin-bottom:14px">
+    <h2 class="sec" style="margin:0">Relatórios</h2>
+    <button class="btn btn-p" onclick="novoRelatorio()">+ Novo relatório</button>
+  </div>
+  <div id="listaRel"></div>
+</div>
+
+<!-- ============ CLIENTES ============ -->
+<div class="wrap hide" id="viewClientes">
+  <div class="row" style="justify-content:space-between;margin-bottom:14px">
+    <h2 class="sec" style="margin:0">Clientes</h2>
+    <button class="btn btn-p" onclick="abrirCliente(null)">+ Novo cliente</button>
+  </div>
+  <div id="listaCli"></div>
+</div>
+
+<!-- ============ EDITOR ============ -->
+<div class="wrap hide" id="viewEditor">
+  <div class="row" style="justify-content:space-between;margin-bottom:12px">
+    <button class="btn btn-g" onclick="go('home')">← Voltar</button>
+    <div class="row">
+      <button class="btn" onclick="renderEditor()">↺ Atualizar cálculos</button>
+      <button class="btn btn-p" onclick="verRelatorio(cur.id)">👁 Visualizar relatório</button>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="fgrid" style="grid-template-columns:2fr 1fr 1fr 1fr">
+      <div class="fld"><label>Cliente</label><select id="eCliente" onchange="cur.clientId=this.value;salvarCur()"></select></div>
+      <div class="fld"><label>Tipo</label><select id="eTipo" onchange="cur.tipo=this.value;salvarCur()">
+        <option value="mensal">Mensal</option><option value="quinzenal">Quinzenal</option><option value="semanal">Semanal</option><option value="custom">Personalizado</option></select></div>
+      <div class="fld"><label>Período — de</label><input type="date" id="eDe" onchange="cur.de=this.value;sugerirAnterior();salvarCur()"></div>
+      <div class="fld"><label>Período — até</label><input type="date" id="eAte" onchange="cur.ate=this.value;sugerirAnterior();salvarCur()"></div>
+    </div>
+    <div class="muted" style="margin-top:9px" id="eCompara"></div>
+  </div>
+
+  <div class="etabs" id="etabs"></div>
+  <div class="card" id="etabBody"></div>
+</div>
+
+<!-- ============ RELATÓRIO FINAL ============ -->
+<div class="hide" id="viewReport">
+  <div class="rep-actions" id="repActions">
+    <button class="btn btn-g btn-sm" onclick="go(modoShare?'share-only':'home')" id="btnVoltarRep">← Voltar</button>
+    <div class="spacer"></div>
+    <button class="btn btn-sm" onclick="copiarLink()" id="btnLink">🔗 Copiar link</button>
+    <button class="btn btn-sm" onclick="zapLink()" id="btnZap">💬 WhatsApp</button>
+    <button class="btn btn-p btn-sm" onclick="baixarPDF()">⬇ Baixar PDF</button>
+  </div>
+  <div class="rep" id="repBody"></div>
+</div>
+
+<!-- ============ MODAL CLIENTE ============ -->
+<div class="overlay" id="cliOverlay">
+  <div class="modal">
+    <h3 id="cliTitulo">Novo cliente</h3>
+    <div class="grid2">
+      <div class="fld"><label>Nome do cliente / clínica</label><input id="cNome" placeholder="Ex.: Clínica Delucia"></div>
+      <div class="fld"><label>Segmento</label><select id="cNicho">
+        <option value="local">Negócio local</option>
+        <option value="medico">Médico / Saúde</option>
+        <option value="ecommerce">E-commerce</option>
+        <option value="outro">Outro</option></select></div>
+      <div class="fld"><label>Objetivo principal</label><select id="cObjetivo">
+        <option value="leads">Leads / Agendamentos</option>
+        <option value="whatsapp">Conversas no WhatsApp</option>
+        <option value="vendas">Vendas (e-commerce)</option>
+        <option value="trafego">Tráfego / Reconhecimento</option></select></div>
+      <div class="fld"><label>Cidade</label><input id="cCidade" placeholder="Teresina - PI"></div>
+    </div>
+    <div class="fld" style="margin-top:12px"><label>Observações (oferta, ticket médio, metas...)</label><textarea id="cObs"></textarea></div>
+    <div class="row" style="justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-d hide" id="cExcluir" onclick="excluirCliente()">Excluir</button>
+      <button class="btn btn-g" onclick="fecharModal('cliOverlay')">Cancelar</button>
+      <button class="btn btn-p" onclick="salvarCliente()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   ⚙️ CONFIGURAÇÃO
+============================================================ */
+const TEAM_PASSWORD = '28082019';
+const SUPA_URL = 'https://wtirdmwrttoxpljxsoci.supabase.co';
+const SUPA_KEY = 'sb_publishable_9UF6Ebv3mkxVP2x4kx-eZA_5dDPPuf0';
+const TABELA   = 'medicos';            // mesma tabela do Prospector — cada app usa uma linha
+const STATE_ID = 'relatorios_state';
+const AUTH_KEY = 'martinelle_auth';
+const LS_KEY   = 'mart_relatorios_v1';
+
+const AGENCIA = {
+  nome:'Agência Martinelle',
+  tagline:'Tráfego pago e performance',
+  cnpj:'49.561.800/0001-70',
+  email:'agenciamartinelle@gmail.com',
+  cidade:'Teresina - PI',
+  responsavel:'Jeferson Martinelle'
+};
+
+/* ============================================================
+   📐 MÉTRICAS — definição dos campos por canal
+============================================================ */
+const CAMPOS = {
+  meta: [
+    {k:'investimento', l:'Valor investido (R$)', t:'moeda'},
+    {k:'alcance',      l:'Alcance', t:'int'},
+    {k:'impressoes',   l:'Impressões', t:'int'},
+    {k:'cliques',      l:'Cliques no link', t:'int'},
+    {k:'lp',           l:'Visualizações da página', t:'int'},
+    {k:'leads',        l:'Leads / Conversas', t:'int'},
+    {k:'compras',      l:'Compras / Vendas', t:'int'},
+    {k:'valorCompras', l:'Valor das vendas (R$)', t:'moeda'},
+  ],
+  google: [
+    {k:'investimento', l:'Valor investido (R$)', t:'moeda'},
+    {k:'impressoes',   l:'Impressões', t:'int'},
+    {k:'cliques',      l:'Cliques', t:'int'},
+    {k:'conversoes',   l:'Conversões / Leads', t:'int'},
+    {k:'ligacoes',     l:'Ligações', t:'int'},
+    {k:'valorConv',    l:'Valor das conversões (R$)', t:'moeda'},
+    {k:'parcelaImpr',  l:'Parcela de impressões (%)', t:'pct'},
+  ]
+};
+const CANAL_NOME = {meta:'Meta Ads', google:'Google Ads'};
+
+// métricas derivadas: [chave, label, formato, inverso? (menor = melhor)]
+const DERIVADAS = {
+  meta: [
+    ['ctr','CTR','pct',false],['cpc','CPC','moeda',true],['cpm','CPM','moeda',true],
+    ['freq','Frequência','dec',true],['connect','Cliques → Página','pct',false],
+    ['cpl','Custo por Lead','moeda',true],['txconv','Conversão da página','pct',false],
+    ['cpa','Custo por Venda','moeda',true],['roas','ROAS','dec',false],['ticket','Ticket médio','moeda',false]
+  ],
+  google: [
+    ['ctr','CTR','pct',false],['cpc','CPC','moeda',true],['cpm','CPM','moeda',true],
+    ['cpl','Custo por Conversão','moeda',true],['roas','ROAS','dec',false]
+  ]
+};
+
+/* Benchmarks de mercado (Brasil, 2025) — base do manual Martinelle */
+const BENCH = {
+  meta:   { ctrRuim:0.7, ctrMedio:1.0, ctrOtimo:3.0, freqAlerta:3.5, connectMin:70, txconvMin:2,
+            cpl:{medico:[40,100], local:[10,40], ecommerce:[15,60], outro:[15,60]} },
+  google: { ctrRuim:3.0, ctrMedio:6.66, ctrOtimo:8.0, parcelaMin:50,
+            cpl:{medico:[60,150], local:[15,60], ecommerce:[20,80], outro:[20,80]} }
+};
+
+/* ============================================================
+   💾 ESTADO + NUVEM (mesmo padrão do Prospector)
+============================================================ */
+let S = { clients:[], reports:[] };
+let cur = null;          // relatório em edição
+let etab = 'meta';       // aba ativa do editor
+let modoShare = false;   // aberto via link ?ver=
+let cloudReady=false, lastCloudStamp=null, pushTimer=null, charts=[];
+
+function load(){ try{ const d = JSON.parse(localStorage.getItem(LS_KEY)); if(d && d.reports) S = d; }catch(e){} }
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(S)); schedulePush(); }
+
+function supaHeaders(extra){
+  return Object.assign({'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json'}, extra||{});
+}
+async function cloudLoad(){
+  const r = await fetch(`${SUPA_URL}/rest/v1/${TABELA}?id=eq.${STATE_ID}&select=data,updated_at`,{headers:supaHeaders()});
+  if(!r.ok) throw new Error('cloud load '+r.status);
+  const rows = await r.json();
+  if(rows.length){ lastCloudStamp = rows[0].updated_at; return rows[0].data; }
+  return null;
+}
+async function cloudPush(){
+  const body = [{id:STATE_ID, data:S, updated_at:new Date().toISOString()}];
+  const r = await fetch(`${SUPA_URL}/rest/v1/${TABELA}?on_conflict=id`,{
+    method:'POST', headers:supaHeaders({'Prefer':'resolution=merge-duplicates,return=representation'}), body:JSON.stringify(body)});
+  if(!r.ok) throw new Error('cloud push '+r.status);
+  const rows = await r.json(); if(rows.length) lastCloudStamp = rows[0].updated_at;
+}
+function schedulePush(){
+  if(!cloudReady) return;
+  setSync('sync'); clearTimeout(pushTimer);
+  pushTimer = setTimeout(()=>cloudPush().then(()=>setSync('ok')).catch(e=>{console.warn(e);setSync('err');}), 700);
+}
+async function cloudPoll(){
+  if(!cloudReady || cur) return;   // não atropela quem está editando
+  try{
+    const r = await fetch(`${SUPA_URL}/rest/v1/${TABELA}?id=eq.${STATE_ID}&select=updated_at`,{headers:supaHeaders()});
+    if(!r.ok) return;
+    const rows = await r.json();
+    if(rows.length && rows[0].updated_at !== lastCloudStamp){
+      const data = await cloudLoad();
+      if(data){ S = data; localStorage.setItem(LS_KEY, JSON.stringify(S)); renderHome(); renderClientes(); setSync('ok'); }
+    }
+  }catch(e){ setSync('err'); }
+}
+function setSync(st){
+  const el = document.getElementById('syncPill'); if(!el) return;
+  const map = {ok:['☁️','Salvo na nuvem','s-ok'], sync:['🔄','Salvando...','s-sync'], err:['⚠️','Sem conexão','s-err']};
+  const [i,l,c] = map[st]||map.ok;
+  el.className = 'sync-pill '+c; el.innerHTML = `<span>${i}</span><span class="sync-label">${l}</span>`;
+}
+async function cloudBoot(){
+  setSync('sync');
+  try{
+    const data = await cloudLoad();
+    if(data && (data.reports?.length || data.clients?.length)){
+      S = data; localStorage.setItem(LS_KEY, JSON.stringify(S));
+    } else { cloudReady = true; await cloudPush(); }
+    cloudReady = true; setSync('ok');
+  }catch(e){ console.warn('Nuvem indisponível:', e); cloudReady = true; setSync('err'); }
+  renderHome(); renderClientes();
+  setInterval(cloudPoll, 30000);
+}
+
+/* ============================================================
+   🔧 HELPERS
+============================================================ */
+const $ = id => document.getElementById(id);
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._x); t._x=setTimeout(()=>t.classList.remove('show'),2600); }
+function esc(s){ return String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+// aceita "50.881,17", "50881,17", "50881.17", "R$ 1.234", "598.421" (milhar pt-BR), "6,66%"
+function parseNum(v){
+  if(v==null || v==='') return null;
+  if(typeof v === 'number') return v;
+  let s = String(v).replace(/[r$\s%]/gi,'');
+  if(!s) return null;
+  if(s.includes(',') && s.includes('.')) s = s.replace(/\./g,'').replace(',','.');
+  else if(s.includes(',')) s = s.replace(',','.');
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,'');   // 598.421 = milhar
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+}
+function fmtMoeda(n){ return n==null?'—':'R$ '+n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtInt(n){ return n==null?'—':Math.round(n).toLocaleString('pt-BR'); }
+function fmtPct(n){ return n==null?'—':n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%'; }
+function fmtDec(n){ return n==null?'—':n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtVal(n, t){ return t==='moeda'?fmtMoeda(n) : t==='pct'?fmtPct(n) : t==='dec'?fmtDec(n) : fmtInt(n); }
+function fmtData(iso){ if(!iso) return '—'; const [a,m,d] = iso.split('-'); return `${d}/${m}/${a}`; }
+function cliente(id){ return S.clients.find(c=>c.id===id); }
+function nomeCliente(id){ const c = cliente(id); return c ? c.nome : '(sem cliente)'; }
+
+/* ============================================================
+   🧮 MÉTRICAS DERIVADAS
+============================================================ */
+function calcDerivadas(canal, d){
+  if(!d) return {};
+  const v = k => parseNum(d[k]);
+  const div = (a,b) => (a!=null && b!=null && b>0) ? a/b : null;
+  const inv = v('investimento'), imp = v('impressoes'), cli = v('cliques');
+  const out = {};
+  out.ctr = div(cli, imp) != null ? div(cli,imp)*100 : null;
+  out.cpc = div(inv, cli);
+  out.cpm = div(inv, imp) != null ? div(inv,imp)*1000 : null;
+  if(canal==='meta'){
+    const alc = v('alcance'), lp = v('lp'), leads = v('leads'), comp = v('compras'), vc = v('valorCompras');
+    out.freq = div(imp, alc);
+    out.connect = div(lp, cli) != null ? div(lp,cli)*100 : null;
+    out.cpl = div(inv, leads);
+    out.txconv = div(leads, lp) != null ? div(leads,lp)*100 : null;
+    out.cpa = div(inv, comp);
+    out.roas = div(vc, inv);
+    out.ticket = div(vc, comp);
+  } else {
+    const convTotal = (parseNum(d.conversoes)||0) + (parseNum(d.ligacoes)||0);
+    out.cpl = convTotal>0 && inv!=null ? inv/convTotal : null;
+    out.roas = div(v('valorConv'), inv);
+  }
+  return out;
+}
+function variacao(atual, anterior){
+  if(atual==null || anterior==null || anterior===0) return null;
+  return (atual-anterior)/anterior*100;
+}
+function leadsTotais(canal, d){
+  if(!d) return null;
+  if(canal==='meta') return parseNum(d.leads);
+  const t = (parseNum(d.conversoes)||0) + (parseNum(d.ligacoes)||0);
+  return t>0 ? t : null;
+}
+
+/* ============================================================
+   🤖 ANÁLISE AUTOMÁTICA (regras + benchmarks — sem IA)
+============================================================ */
+function gerarAnalise(rep){
+  const cli = cliente(rep.clientId) || {nicho:'outro', objetivo:'leads'};
+  const dest=[], aten=[], reco=[], passos=[];
+
+  ['meta','google'].forEach(canal=>{
+    const c = rep.canais[canal];
+    if(!c || !c.ativo) return;
+    const N = CANAL_NOME[canal], B = BENCH[canal];
+    const at = c.atual||{}, an = c.anterior||{};
+    const d = calcDerivadas(canal, at), dAnt = calcDerivadas(canal, an);
+    const leads = leadsTotais(canal, at), leadsAnt = leadsTotais(canal, an);
+
+    // --- CTR ---
+    if(d.ctr != null){
+      if(d.ctr >= B.ctrOtimo) dest.push(`${N}: CTR de ${fmtPct(d.ctr)} — acima da faixa de excelência do mercado (${fmtPct(B.ctrOtimo)}). Os anúncios estão chamando atenção do público certo.`);
+      else if(d.ctr < B.ctrRuim){
+        aten.push(`${N}: CTR de ${fmtPct(d.ctr)} está abaixo da referência de mercado (média ${fmtPct(B.ctrMedio)}). O anúncio está sendo visto, mas pouco clicado.`);
+        reco.push(`${N}: testar novos criativos e ângulos de copy — variações de headline, primeira imagem e chamada — para recuperar o CTR.`);
+      }
+    }
+    // --- CPL vs benchmark do nicho ---
+    if(d.cpl != null){
+      const faixa = B.cpl[cli.nicho] || B.cpl.outro;
+      if(d.cpl <= faixa[1] && d.cpl >= faixa[0]*0.3) dest.push(`${N}: custo por lead de ${fmtMoeda(d.cpl)} dentro da faixa saudável do mercado (${fmtMoeda(faixa[0])}–${fmtMoeda(faixa[1])}).`);
+      else if(d.cpl > faixa[1]){
+        aten.push(`${N}: custo por lead de ${fmtMoeda(d.cpl)} acima da referência do segmento (${fmtMoeda(faixa[0])}–${fmtMoeda(faixa[1])}).`);
+        reco.push(`${N}: refinar segmentação e revisar a oferta da campanha para trazer o custo por lead de volta à faixa saudável.`);
+      }
+    }
+    // --- variação vs período anterior ---
+    if(leads!=null && leadsAnt!=null){
+      const vL = variacao(leads, leadsAnt);
+      if(vL >= 10) dest.push(`${N}: resultados cresceram ${fmtDec(vL)}% — de ${fmtInt(leadsAnt)} para ${fmtInt(leads)} leads no período.`);
+      else if(vL <= -10) aten.push(`${N}: queda de ${fmtDec(Math.abs(vL))}% nos leads em relação ao período anterior (${fmtInt(leadsAnt)} → ${fmtInt(leads)}).`);
+    }
+    if(d.cpl!=null && dAnt.cpl!=null){
+      const vC = variacao(d.cpl, dAnt.cpl);
+      if(vC <= -10) dest.push(`${N}: custo por lead caiu ${fmtDec(Math.abs(vC))}% (${fmtMoeda(dAnt.cpl)} → ${fmtMoeda(d.cpl)}). A campanha está mais eficiente.`);
+      else if(vC >= 20){
+        aten.push(`${N}: custo por lead subiu ${fmtDec(vC)}% (${fmtMoeda(dAnt.cpl)} → ${fmtMoeda(d.cpl)}).`);
+        reco.push(`${N}: investigar a alta do custo por lead — conferir saturação do público, leilão mais caro no período e desempenho por conjunto.`);
+      }
+    }
+    // --- regras específicas do Meta ---
+    if(canal==='meta'){
+      if(d.freq != null && d.freq > B.freqAlerta){
+        aten.push(`Meta Ads: frequência de ${fmtDec(d.freq)} — o mesmo público está vendo o anúncio muitas vezes, sinal de saturação.`);
+        reco.push(`Meta Ads: renovar criativos e/ou ampliar o público para reduzir a frequência e evitar fadiga do anúncio.`);
+      }
+      if(d.connect != null && d.connect < B.connectMin){
+        aten.push(`Meta Ads: só ${fmtPct(d.connect)} dos cliques viraram visualização da página (referência: 70%+). Há perda entre o clique e o site.`);
+        reco.push(`Meta Ads: verificar a velocidade de carregamento da página de destino, principalmente no celular.`);
+      }
+      if(d.txconv != null && d.txconv < B.txconvMin && parseNum(at.lp) > 200){
+        reco.push(`Meta Ads: a taxa de conversão da página está em ${fmtPct(d.txconv)} — revisar oferta, prova social e chamada para ação da landing page.`);
+      }
+      if(parseNum(at.compras) > 0 && (parseNum(at.valorCompras)||0) === 0){
+        aten.push(`Meta Ads: há ${fmtInt(parseNum(at.compras))} compras registradas mas valor R$ 0,00 — o pixel não está enviando o valor da compra.`);
+        reco.push(`Meta Ads: configurar o parâmetro de valor no evento Purchase do pixel para medir o ROAS real das campanhas.`);
+      }
+      if(d.roas != null && d.roas > 0){
+        if(d.roas >= 4) dest.push(`Meta Ads: ROAS de ${fmtDec(d.roas)} — cada R$ 1 investido retornou ${fmtMoeda(d.roas)} em vendas.`);
+        else if(d.roas < 2 && cli.nicho==='ecommerce') aten.push(`Meta Ads: ROAS de ${fmtDec(d.roas)} abaixo do ponto de equilíbrio típico de e-commerce (2,0+).`);
+      }
+    }
+    // --- regras específicas do Google ---
+    if(canal==='google'){
+      const pi = parseNum(at.parcelaImpr);
+      if(pi != null && pi < B.parcelaMin){
+        reco.push(`Google Ads: parcela de impressões em ${fmtPct(pi)} — há demanda sendo perdida. Avaliar aumento de orçamento ou melhoria do índice de qualidade para capturar mais buscas.`);
+      }
+      if(parseNum(at.ligacoes) > 0) dest.push(`Google Ads: ${fmtInt(parseNum(at.ligacoes))} ligações geradas diretamente pelos anúncios — contato de altíssima intenção.`);
+    }
+  });
+
+  // --- público ---
+  const pub = rep.publico||{};
+  if(pub.idades && pub.idades.some(x=>parseNum(x.pct)>0)){
+    const top = [...pub.idades].sort((a,b)=>(parseNum(b.pct)||0)-(parseNum(a.pct)||0))[0];
+    if(top && parseNum(top.pct) >= 30) dest.push(`Público: a faixa ${top.faixa} concentra ${fmtDec(parseNum(top.pct))}% dos resultados — é o coração do público; criativos e ofertas devem falar com essa faixa.`);
+  }
+  if(parseNum(pub.fem) >= 65) dest.push(`Público: ${fmtDec(parseNum(pub.fem))}% dos resultados vêm de mulheres — vale direcionar a comunicação visual e a copy para esse perfil.`);
+  if(parseNum(pub.fem) > 0 && parseNum(pub.fem) <= 35) dest.push(`Público: ${fmtDec(100-parseNum(pub.fem))}% dos resultados vêm de homens — vale direcionar a comunicação para esse perfil.`);
+
+  // --- próximos passos padrão ---
+  if(reco.length) passos.push(...reco.slice(0,3).map(r=>r.replace(/^[^:]+: /,'').replace(/^./,c=>c.toUpperCase())));
+  passos.push('Manter o acompanhamento diário das campanhas com otimizações de lance e orçamento.');
+  passos.push('Reunião de alinhamento para revisar este relatório e definir as prioridades do próximo período.');
+
+  if(!dest.length) dest.push('Campanhas ativas e entregando com estabilidade no período.');
+
+  return { destaques:dest.join('\n'), atencao:aten.join('\n'), recomendacoes:reco.join('\n'), proximos:passos.join('\n') };
+}
+
+function gerarResumo(rep){
+  const cli = cliente(rep.clientId)||{};
+  let invTotal=0, leadsTot=0, frases=[];
+  ['meta','google'].forEach(canal=>{
+    const c = rep.canais[canal]; if(!c||!c.ativo) return;
+    invTotal += parseNum(c.atual?.investimento)||0;
+    leadsTot += leadsTotais(canal, c.atual)||0;
+  });
+  frases.push(`No período de ${fmtData(rep.de)} a ${fmtData(rep.ate)}, investimos ${fmtMoeda(invTotal)} em mídia paga${leadsTot?` e geramos ${fmtInt(leadsTot)} ${cli.objetivo==='vendas'?'conversões':'leads/contatos'}`:''}.`);
+  const cplG = leadsTot>0 ? invTotal/leadsTot : null;
+  if(cplG) frases.push(`O custo médio por resultado ficou em ${fmtMoeda(cplG)}.`);
+  frases.push('Abaixo estão os números completos de cada canal, a análise do que funcionou e as prioridades para o próximo período.');
+  return frases.join(' ');
+}
+
+/* ============================================================
+   📋 IMPORTAR COLANDO (Reportei / Gerenciador / Google)
+============================================================ */
+const ROTULOS = {
+  meta: {
+    investimento:['valor investido','valor gasto','investimento','total gasto'],
+    alcance:['alcance total','alcance'],
+    impressoes:['impressões totais','impressões','impressoes'],
+    cliques:['total de cliques no link','cliques no link','cliques (link)','cliques'],
+    lp:['visualizações da landing page','visualizações da página de destino','visualizacoes da landing'],
+    leads:['conversas iniciadas','leads','cadastros','mensagens iniciadas','resultados'],
+    compras:['compras'],
+    valorCompras:['valor total das compras','valor de conversão das compras','valor das compras'],
+  },
+  google: {
+    investimento:['valor investido','custo total','investimento','custo'],
+    impressoes:['impressões','impressoes','impr.'],
+    cliques:['cliques'],
+    conversoes:['conversões','conversoes'],
+    ligacoes:['ligações','chamadas telefônicas','ligacoes'],
+    valorConv:['valor da conversão','valor de conversão','valor conv.'],
+    parcelaImpr:['parcela de impressões','parcela de impressão','impression share'],
+  }
+};
+function parseColado(texto, canal){
+  const blob = texto.split(/\n+/).map(l=>l.trim()).filter(Boolean).join('\n').toLowerCase();
+  const res = {atual:{}, anterior:{}};
+  const defs = ROTULOS[canal];
+  // posições de TODOS os rótulos conhecidos — o trecho de cada métrica
+  // termina onde começa a próxima, para não invadir a métrica seguinte
+  const todosNomes = Object.values(defs).flat()
+    .concat(['ctr','cpm','cpc','custo por compra','custo por conversão','frequência','roas','adições ao carrinho','finalizações de compra']);
+  const marcas = [];
+  todosNomes.forEach(n=>{ let i = blob.indexOf(n); if(i>-1) marcas.push(i); });
+  marcas.sort((a,b)=>a-b);
+  const reNum = /r?\$?\s*-?\d{1,3}(?:\.\d{3})*(?:,\d+)?|r?\$?\s*-?\d+(?:[.,]\d+)?/gi;
+  Object.entries(defs).forEach(([campo, nomes])=>{
+    for(const nome of nomes){
+      const i = blob.indexOf(nome);
+      if(i === -1) continue;
+      const fim = i + nome.length;
+      const proxima = marcas.find(m=>m>fim);
+      const trecho = blob.slice(fim, Math.min(proxima ?? fim+220, fim+220));
+      const prevIdx = trecho.indexOf('no período anterior');
+      const nums = [...trecho.matchAll(reNum)].map(m=>({v:m[0], pos:m.index}));
+      if(!nums.length) continue;
+      // 1º número = valor atual; o último antes de "no período anterior" = comparação
+      res.atual[campo] = parseNum(nums[0].v);
+      if(prevIdx > -1){
+        const antes = nums.filter(n=>n.pos < prevIdx);
+        if(antes.length) res.anterior[campo] = parseNum(antes[antes.length-1].v);
+      }
+      break;
+    }
+  });
+  return res;
+}
+function importarColado(canal){
+  const txt = $('paste_'+canal).value;
+  if(!txt.trim()) return toast('Cole o texto do relatório primeiro');
+  const r = parseColado(txt, canal);
+  const nA = Object.keys(r.atual).length, nP = Object.keys(r.anterior).length;
+  if(!nA) return toast('Não encontrei números reconhecíveis — confira o texto colado');
+  cur.canais[canal].atual = Object.assign({}, cur.canais[canal].atual, r.atual);
+  if(nP) cur.canais[canal].anterior = Object.assign({}, cur.canais[canal].anterior, r.anterior);
+  salvarCur(); renderEditor();
+  toast(`✓ Importado: ${nA} métricas do período atual${nP?` + ${nP} do anterior`:''}`);
+}
+
+/* ============================================================
+   🔐 LOGIN
+============================================================ */
+function tryLogin(){
+  if($('gatePass').value === TEAM_PASSWORD){
+    localStorage.setItem(AUTH_KEY, '1');
+    $('gate').classList.add('hide'); $('topbar').classList.remove('hide');
+    go('home'); cloudBoot();
+  } else $('gateMsg').textContent = 'Senha incorreta';
+}
+
+/* ============================================================
+   🧭 NAVEGAÇÃO
+============================================================ */
+function go(view){
+  charts.forEach(c=>c.destroy()); charts=[];
+  ['viewHome','viewClientes','viewEditor','viewReport'].forEach(v=>$(v).classList.add('hide'));
+  $('navRel').classList.toggle('on', view==='home');
+  $('navCli').classList.toggle('on', view==='clientes');
+  if(view==='home'){ cur=null; renderHome(); $('viewHome').classList.remove('hide'); }
+  if(view==='clientes'){ cur=null; renderClientes(); $('viewClientes').classList.remove('hide'); }
+  if(view==='editor'){ $('viewEditor').classList.remove('hide'); }
+  if(view==='report'){ $('viewReport').classList.remove('hide'); window.scrollTo(0,0); }
+  if(view==='share-only'){ history.back(); }
+}
+
+/* ============================================================
+   👥 CLIENTES
+============================================================ */
+let editandoCli = null;
+function renderClientes(){
+  const el = $('listaCli');
+  if(!S.clients.length){ el.innerHTML = `<div class="card muted">Nenhum cliente ainda. Cadastre o primeiro para começar os relatórios.</div>`; return; }
+  el.innerHTML = S.clients.map(c=>{
+    const n = S.reports.filter(r=>r.clientId===c.id).length;
+    return `<div class="item">
+      <div class="av">${esc((c.nome||'?')[0].toUpperCase())}</div>
+      <div class="info"><b>${esc(c.nome)}</b>
+        <span><span class="badge ${c.nicho==='medico'?'b-med':'b-loc'}">${({medico:'MÉDICO',local:'LOCAL',ecommerce:'E-COMMERCE',outro:'OUTRO'})[c.nicho]||'—'}</span>
+        ${esc(c.cidade||'')} · ${n} relatório${n===1?'':'s'}</span></div>
+      <button class="btn btn-sm" onclick="abrirCliente('${c.id}')">✏️ Editar</button>
+      <button class="btn btn-p btn-sm" onclick="novoRelatorio('${c.id}')">+ Relatório</button>
+    </div>`;
+  }).join('');
+}
+function abrirCliente(id){
+  editandoCli = id;
+  const c = id ? cliente(id) : null;
+  $('cliTitulo').textContent = c ? 'Editar cliente' : 'Novo cliente';
+  $('cNome').value = c?.nome||''; $('cNicho').value = c?.nicho||'local';
+  $('cObjetivo').value = c?.objetivo||'leads'; $('cCidade').value = c?.cidade||'';
+  $('cObs').value = c?.obs||'';
+  $('cExcluir').classList.toggle('hide', !c);
+  $('cliOverlay').classList.add('show');
+}
+function salvarCliente(){
+  const nome = $('cNome').value.trim();
+  if(!nome) return toast('Dê um nome ao cliente');
+  const dados = {nome, nicho:$('cNicho').value, objetivo:$('cObjetivo').value, cidade:$('cCidade').value.trim(), obs:$('cObs').value.trim()};
+  if(editandoCli){ Object.assign(cliente(editandoCli), dados); }
+  else S.clients.push(Object.assign({id:uid()}, dados));
+  save(); fecharModal('cliOverlay'); renderClientes(); renderHome(); toast('✓ Cliente salvo');
+}
+function excluirCliente(){
+  if(!confirm('Excluir este cliente? Os relatórios dele também serão removidos.')) return;
+  S.reports = S.reports.filter(r=>r.clientId!==editandoCli);
+  S.clients = S.clients.filter(c=>c.id!==editandoCli);
+  save(); fecharModal('cliOverlay'); renderClientes(); renderHome();
+}
+function fecharModal(id){ $(id).classList.remove('show'); }
+
+/* ============================================================
+   🏠 HOME
+============================================================ */
+function renderHome(){
+  $('stCli').textContent = S.clients.length;
+  $('stRel').textContent = S.reports.length;
+  const agora = new Date(), mes = agora.getMonth(), ano = agora.getFullYear();
+  $('stMes').textContent = S.reports.filter(r=>{ const d = new Date(r.criadoEm); return d.getMonth()===mes && d.getFullYear()===ano; }).length;
+  const el = $('listaRel');
+  if(!S.reports.length){
+    el.innerHTML = `<div class="card" style="text-align:center;padding:36px">
+      <div style="font-size:34px;margin-bottom:8px">📊</div>
+      <b>Nenhum relatório ainda</b>
+      <div class="muted" style="margin:8px 0 16px">Cadastre um cliente e crie o primeiro relatório.<br>Você pode digitar os números ou simplesmente colar o texto do gerenciador de anúncios.</div>
+      <button class="btn btn-p" onclick="novoRelatorio()">+ Criar primeiro relatório</button></div>`;
+    return;
+  }
+  const ord = [...S.reports].sort((a,b)=>(b.criadoEm||0)-(a.criadoEm||0));
+  el.innerHTML = ord.map(r=>{
+    const canais = ['meta','google'].filter(c=>r.canais[c]?.ativo);
+    return `<div class="item">
+      <div class="av">📊</div>
+      <div class="info"><b>${esc(nomeCliente(r.clientId))}</b>
+        <span>${fmtData(r.de)} a ${fmtData(r.ate)} · ${canais.map(c=>`<span class="badge ${c==='meta'?'b-meta':'b-google'}">${CANAL_NOME[c].toUpperCase()}</span>`).join('')}${r.social?.ativo?'<span class="badge b-ig">INSTAGRAM</span>':''}</span></div>
+      <button class="btn btn-sm" onclick="editarRelatorio('${r.id}')">✏️ Editar</button>
+      <button class="btn btn-sm" onclick="verRelatorio('${r.id}')">👁 Ver</button>
+      <button class="btn btn-sm" title="Cria o relatório do período seguinte: os números atuais viram 'período anterior'" onclick="proximoPeriodo('${r.id}')">📅 Próximo período</button>
+      <button class="btn btn-d btn-sm" onclick="excluirRelatorio('${r.id}')">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   ✏️ EDITOR DE RELATÓRIO
+============================================================ */
+function relatorioVazio(clientId){
+  const hoje = new Date();
+  const prim = new Date(hoje.getFullYear(), hoje.getMonth()-1, 1);
+  const ult  = new Date(hoje.getFullYear(), hoje.getMonth(), 0);
+  const iso = d => d.toISOString().slice(0,10);
+  return {
+    id:uid(), clientId:clientId||S.clients[0]?.id||'', tipo:'mensal',
+    de:iso(prim), ate:iso(ult), deAnt:'', ateAnt:'',
+    canais:{ meta:{ativo:true, atual:{}, anterior:{}, obs:''}, google:{ativo:false, atual:{}, anterior:{}, obs:''} },
+    publico:{ fem:'', idades:[{faixa:'18-24',pct:''},{faixa:'25-34',pct:''},{faixa:'35-44',pct:''},{faixa:'45-54',pct:''},{faixa:'55-64',pct:''},{faixa:'65+',pct:''}], locais:'', topAnuncios:'' },
+    social:{ ativo:false, seguidores:'', seguidoresAnt:'', alcanceIG:'', interacoes:'', visitas:'', obs:'' },
+    analise:{ resumo:'', destaques:'', atencao:'', recomendacoes:'', proximos:'' },
+    criadoEm:Date.now()
+  };
+}
+function novoRelatorio(clientId){
+  if(!S.clients.length){ toast('Cadastre um cliente primeiro'); go('clientes'); abrirCliente(null); return; }
+  cur = relatorioVazio(clientId);
+  S.reports.push(cur); save();
+  sugerirAnterior(); etab='meta';
+  renderEditor(); go('editor');
+}
+function editarRelatorio(id){
+  cur = S.reports.find(r=>r.id===id); if(!cur) return;
+  etab = cur.canais.meta?.ativo ? 'meta' : 'google';
+  renderEditor(); go('editor');
+}
+function excluirRelatorio(id){
+  if(!confirm('Excluir este relatório?')) return;
+  S.reports = S.reports.filter(r=>r.id!==id); save(); renderHome(); toast('Relatório excluído');
+}
+// duplica para o período seguinte: atual → anterior, campos atuais limpos
+function proximoPeriodo(id){
+  const base = S.reports.find(r=>r.id===id); if(!base) return;
+  const novo = JSON.parse(JSON.stringify(base));
+  novo.id = uid(); novo.criadoEm = Date.now(); novo.publicadoId = null;
+  // desloca o período
+  const de = new Date(base.de+'T12:00'), ate = new Date(base.ate+'T12:00');
+  const dias = Math.round((ate-de)/86400000)+1;
+  const nDe = new Date(ate); nDe.setDate(nDe.getDate()+1);
+  const nAte = new Date(nDe); nAte.setDate(nAte.getDate()+dias-1);
+  if(base.tipo==='mensal'){
+    const m = new Date(ate.getFullYear(), ate.getMonth()+1, 1);
+    novo.de = m.toISOString().slice(0,10);
+    novo.ate = new Date(m.getFullYear(), m.getMonth()+1, 0).toISOString().slice(0,10);
+  } else {
+    novo.de = nDe.toISOString().slice(0,10); novo.ate = nAte.toISOString().slice(0,10);
+  }
+  novo.deAnt = base.de; novo.ateAnt = base.ate;
+  ['meta','google'].forEach(c=>{
+    novo.canais[c].anterior = JSON.parse(JSON.stringify(base.canais[c].atual||{}));
+    novo.canais[c].atual = {};
+  });
+  novo.analise = { resumo:'', destaques:'', atencao:'', recomendacoes:'', proximos:'' };
+  S.reports.push(novo); save();
+  cur = novo; etab = novo.canais.meta?.ativo ? 'meta':'google';
+  renderEditor(); go('editor');
+  toast('✓ Período seguinte criado — números antigos já entraram como comparação');
+}
+function salvarCur(){ if(!cur) return; cur.atualizadoEm = Date.now(); save(); }
+function sugerirAnterior(){
+  if(!cur || !cur.de || !cur.ate) return;
+  if(!cur.deAnt){
+    const de = new Date(cur.de+'T12:00'), ate = new Date(cur.ate+'T12:00');
+    const mesCheio = de.getDate()===1 && ate.getMonth()===de.getMonth() && ate.getDate()===new Date(ate.getFullYear(), ate.getMonth()+1, 0).getDate();
+    if(cur.tipo==='mensal' && mesCheio){
+      // mês-calendário anterior completo
+      const aDe = new Date(de.getFullYear(), de.getMonth()-1, 1);
+      const aAte = new Date(de.getFullYear(), de.getMonth(), 0);
+      cur.deAnt = aDe.toISOString().slice(0,10); cur.ateAnt = aAte.toISOString().slice(0,10);
+    } else {
+      const dias = Math.round((ate-de)/86400000)+1;
+      const aAte = new Date(de); aAte.setDate(aAte.getDate()-1);
+      const aDe = new Date(aAte); aDe.setDate(aDe.getDate()-dias+1);
+      cur.deAnt = aDe.toISOString().slice(0,10); cur.ateAnt = aAte.toISOString().slice(0,10);
+    }
+  }
+  $('eCompara').textContent = `Comparando com o período anterior: ${fmtData(cur.deAnt)} a ${fmtData(cur.ateAnt)}`;
+}
+
+function renderEditor(){
+  if(!cur) return;
+  // cabeçalho
+  $('eCliente').innerHTML = S.clients.map(c=>`<option value="${c.id}" ${c.id===cur.clientId?'selected':''}>${esc(c.nome)}</option>`).join('');
+  $('eTipo').value = cur.tipo; $('eDe').value = cur.de; $('eAte').value = cur.ate;
+  sugerirAnterior();
+  // abas
+  const tabs = [
+    ['meta','Ⓜ️ Meta Ads', cur.canais.meta.ativo],
+    ['google','🔍 Google Ads', cur.canais.google.ativo],
+    ['publico','👥 Público', true],
+    ['social','📸 Instagram', cur.social.ativo],
+    ['analise','🤖 Análise', true],
+  ];
+  $('etabs').innerHTML = tabs.map(([k,l,on])=>`<button class="${etab===k?'on':''} ${!on&&(k==='meta'||k==='google'||k==='social')?'off-canal':''}" onclick="etab='${k}';renderEditor()">${l}</button>`).join('');
+  const body = $('etabBody');
+  if(etab==='meta' || etab==='google') body.innerHTML = htmlCanal(etab);
+  if(etab==='publico') body.innerHTML = htmlPublico();
+  if(etab==='social') body.innerHTML = htmlSocial();
+  if(etab==='analise') body.innerHTML = htmlAnalise();
+}
+function htmlCanal(canal){
+  const c = cur.canais[canal];
+  const d = calcDerivadas(canal, c.atual);
+  const chips = DERIVADAS[canal].map(([k,l,t])=> d[k]!=null?`<span class="chip">${l}<b>${fmtVal(d[k],t)}</b></span>`:'').join('');
+  return `
+  <label class="switch ${c.ativo?'on':''}" onclick="cur.canais['${canal}'].ativo=!cur.canais['${canal}'].ativo;salvarCur();renderEditor()">
+    <span class="tk"></span> Incluir ${CANAL_NOME[canal]} neste relatório</label>
+  ${!c.ativo?'':`
+  <div class="paste" style="margin-top:15px">
+    <div class="muted" style="margin-bottom:8px">⚡ <b>Importação rápida:</b> copie o texto do relatório (Gerenciador, Reportei, print convertido...) e cole aqui — os campos são preenchidos sozinhos, inclusive o período anterior.</div>
+    <textarea id="paste_${canal}" placeholder="Cole aqui o texto com as métricas de ${CANAL_NOME[canal]}..."></textarea>
+    <div style="margin-top:8px"><button class="btn btn-sm" onclick="importarColado('${canal}')">⚡ Preencher campos</button></div>
+  </div>
+  <div class="colhead">Período atual (${fmtData(cur.de)} a ${fmtData(cur.ate)})</div>
+  <div class="fgrid">${CAMPOS[canal].map(f=>`
+    <div class="fld"><label>${f.l}</label>
+    <input value="${c.atual[f.k]??''}" placeholder="—" oninput="cur.canais['${canal}'].atual['${f.k}']=this.value;salvarCur()" onblur="renderEditor()"></div>`).join('')}
+  </div>
+  <div class="colhead">Período anterior (comparação — opcional)</div>
+  <div class="fgrid">${CAMPOS[canal].map(f=>`
+    <div class="fld"><label>${f.l}</label>
+    <input value="${c.anterior[f.k]??''}" placeholder="—" oninput="cur.canais['${canal}'].anterior['${f.k}']=this.value;salvarCur()"></div>`).join('')}
+  </div>
+  ${chips?`<div class="colhead">Calculado automaticamente</div><div class="deriv">${chips}</div>`:''}
+  <div class="fld" style="margin-top:16px"><label>Observações do canal (aparecem no relatório)</label>
+    <textarea oninput="cur.canais['${canal}'].obs=this.value;salvarCur()">${esc(c.obs||'')}</textarea></div>`}`;
+}
+function htmlPublico(){
+  const p = cur.publico;
+  return `
+  <div class="muted" style="margin-bottom:14px">Dados demográficos (aba "Detalhamento" do Gerenciador ou "Público" do Google Ads). Preencha o que tiver — o que ficar vazio não aparece no relatório.</div>
+  <div class="colhead">Gênero</div>
+  <div class="fgrid" style="max-width:420px">
+    <div class="fld"><label>Mulheres (%)</label><input value="${p.fem??''}" placeholder="ex.: 64" oninput="cur.publico.fem=this.value;salvarCur()"></div>
+    <div class="fld"><label>Homens (%)</label><input value="${p.fem!==''&&p.fem!=null?Math.max(0,100-(parseNum(p.fem)||0)).toLocaleString('pt-BR'):''}" disabled></div>
+  </div>
+  <div class="colhead">Faixas etárias (% dos resultados)</div>
+  <div class="fgrid">${p.idades.map((x,i)=>`
+    <div class="fld"><label>${x.faixa} anos</label><input value="${x.pct??''}" placeholder="—" oninput="cur.publico.idades[${i}].pct=this.value;salvarCur()"></div>`).join('')}
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="fld"><label>Principais localizações (uma por linha)</label>
+      <textarea placeholder="Teresina — 62%&#10;Timon — 14%" oninput="cur.publico.locais=this.value;salvarCur()">${esc(p.locais||'')}</textarea></div>
+    <div class="fld"><label>Melhores anúncios / campanhas (um por linha)</label>
+      <textarea placeholder="[VD] Agendamento — 41 leads — CPL R$ 38&#10;[IMG] Prova social — 22 leads" oninput="cur.publico.topAnuncios=this.value;salvarCur()">${esc(p.topAnuncios||'')}</textarea></div>
+  </div>`;
+}
+function htmlSocial(){
+  const s = cur.social;
+  return `
+  <label class="switch ${s.ativo?'on':''}" onclick="cur.social.ativo=!cur.social.ativo;salvarCur();renderEditor()">
+    <span class="tk"></span> Incluir seção de Instagram neste relatório</label>
+  ${!s.ativo?'':`
+  <div class="muted" style="margin:12px 0">Complemento ao tráfego: como o perfil recebeu o público dos anúncios. Dados em "Insights" do Instagram.</div>
+  <div class="fgrid">
+    <div class="fld"><label>Seguidores (atual)</label><input value="${s.seguidores??''}" oninput="cur.social.seguidores=this.value;salvarCur()"></div>
+    <div class="fld"><label>Seguidores (período anterior)</label><input value="${s.seguidoresAnt??''}" oninput="cur.social.seguidoresAnt=this.value;salvarCur()"></div>
+    <div class="fld"><label>Contas alcançadas</label><input value="${s.alcanceIG??''}" oninput="cur.social.alcanceIG=this.value;salvarCur()"></div>
+    <div class="fld"><label>Interações</label><input value="${s.interacoes??''}" oninput="cur.social.interacoes=this.value;salvarCur()"></div>
+    <div class="fld"><label>Visitas ao perfil</label><input value="${s.visitas??''}" oninput="cur.social.visitas=this.value;salvarCur()"></div>
+  </div>
+  <div class="fld" style="margin-top:14px"><label>Observações e melhorias sugeridas para o perfil (aparecem no relatório)</label>
+    <textarea placeholder="Ex.: destacar os destaques de antes/depois; responder comentários em até 1h; fixar post de prova social..." oninput="cur.social.obs=this.value;salvarCur()">${esc(s.obs||'')}</textarea></div>`}`;
+}
+function htmlAnalise(){
+  const a = cur.analise;
+  return `
+  <div class="row" style="justify-content:space-between;margin-bottom:14px">
+    <div class="muted">A análise é gerada pelas regras de benchmark do manual Martinelle — e você pode editar tudo antes de enviar.</div>
+    <button class="btn btn-p" onclick="rodarAnalise()">🤖 Gerar análise automática</button>
+  </div>
+  <div class="fld"><label>Resumo executivo (abre o relatório)</label>
+    <textarea style="min-height:90px" oninput="cur.analise.resumo=this.value;salvarCur()">${esc(a.resumo||'')}</textarea></div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="fld"><label>✅ Destaques do período (um por linha)</label>
+      <textarea style="min-height:130px" oninput="cur.analise.destaques=this.value;salvarCur()">${esc(a.destaques||'')}</textarea></div>
+    <div class="fld"><label>⚠️ Pontos de atenção (um por linha)</label>
+      <textarea style="min-height:130px" oninput="cur.analise.atencao=this.value;salvarCur()">${esc(a.atencao||'')}</textarea></div>
+    <div class="fld"><label>🚀 Recomendações de otimização (uma por linha)</label>
+      <textarea style="min-height:130px" oninput="cur.analise.recomendacoes=this.value;salvarCur()">${esc(a.recomendacoes||'')}</textarea></div>
+    <div class="fld"><label>🗓 Próximos passos (um por linha)</label>
+      <textarea style="min-height:130px" oninput="cur.analise.proximos=this.value;salvarCur()">${esc(a.proximos||'')}</textarea></div>
+  </div>`;
+}
+function rodarAnalise(){
+  const temDados = ['meta','google'].some(c=>cur.canais[c].ativo && Object.values(cur.canais[c].atual||{}).some(v=>v!=='' && v!=null));
+  if(!temDados) return toast('Preencha os números de pelo menos um canal primeiro');
+  const a = gerarAnalise(cur);
+  cur.analise = Object.assign(cur.analise, a, {resumo: gerarResumo(cur)});
+  salvarCur(); renderEditor();
+  toast('✓ Análise gerada — revise e ajuste como quiser');
+}
+
+/* ============================================================
+   📄 RELATÓRIO FINAL (visão do cliente)
+============================================================ */
+function verRelatorio(id){
+  const rep = S.reports.find(r=>r.id===id) || cur;
+  if(!rep) return;
+  cur = rep;
+  go('report');   // antes de montar — o go() limpa os gráficos anteriores
+  montarRelatorio(rep, cliente(rep.clientId));
+}
+function deltaHtml(atual, anterior, inverso){
+  const v = variacao(atual, anterior);
+  if(v==null) return '<span class="kd neutro">—</span>';
+  const seta = v>0 ? '▲' : '▼';
+  const cls = inverso==null ? 'neutro' : (inverso ? v<0 : v>0) ? 'up' : 'down';
+  return `<span class="kd ${cls}">${seta} ${Math.abs(v).toLocaleString('pt-BR',{maximumFractionDigits:1})}% vs anterior</span>`;
+}
+function montarRelatorio(rep, cli){
+  cli = cli || {nome:'Cliente', nicho:'outro', objetivo:'leads'};
+  const tipoNome = {mensal:'Relatório Mensal', quinzenal:'Relatório Quinzenal', semanal:'Relatório Semanal', custom:'Relatório de Desempenho'}[rep.tipo]||'Relatório';
+  const canaisAtivos = ['meta','google'].filter(c=>rep.canais[c]?.ativo);
+  let html = '';
+
+  /* ---- CAPA ---- */
+  html += `<div class="pg r-capa">
+    <div>
+      <div class="rlogo">M</div>
+      <h1>${tipoNome}<br>de Tráfego Pago</h1>
+      <div class="per">${fmtData(rep.de)} a ${fmtData(rep.ate)}</div>
+      <div class="cli">${esc(cli.nome)}</div>
+      <div>${canaisAtivos.map(c=>`<span class="rb">${CANAL_NOME[c].toUpperCase()}</span>`).join('')}${rep.social?.ativo?'<span class="rb">INSTAGRAM</span>':''}</div>
+    </div>
+    <div class="rfoot">${AGENCIA.nome} · ${AGENCIA.tagline}<br>${AGENCIA.email} · CNPJ ${AGENCIA.cnpj}</div>
+  </div>`;
+
+  /* ---- RESUMO ---- */
+  const resumo = rep.analise?.resumo || gerarResumo(rep);
+  html += `<div class="pg"><div class="r-h2"><span class="dot"></span>Resumo executivo</div>
+    <div class="r-sub">${esc(cli.nome)} · ${fmtData(rep.de)} a ${fmtData(rep.ate)}${rep.deAnt?` · comparado a ${fmtData(rep.deAnt)}–${fmtData(rep.ateAnt)}`:''}</div>
+    <div class="r-resumo">${esc(resumo)}</div>
+    ${htmlEvolucao(rep)}
+  </div>`;
+
+  /* ---- CANAIS ---- */
+  canaisAtivos.forEach(canal=>{ html += htmlCanalRelatorio(rep, canal, cli); });
+
+  /* ---- PÚBLICO ---- */
+  const pub = rep.publico||{};
+  const temIdades = pub.idades?.some(x=>parseNum(x.pct)>0);
+  const temGen = parseNum(pub.fem)!=null;
+  if(temIdades || temGen || pub.locais || pub.topAnuncios){
+    html += `<div class="pg"><div class="r-h2"><span class="dot"></span>Quem é o público que respondeu aos anúncios</div>
+      <div class="r-sub">Dados demográficos dos resultados no período</div>
+      <div class="charts2">
+        ${temGen?`<div class="cbox"><h5>Gênero</h5><canvas id="chGen" height="210"></canvas></div>`:''}
+        ${temIdades?`<div class="cbox"><h5>Faixa etária</h5><canvas id="chIdade" height="210"></canvas></div>`:''}
+      </div>
+      ${pub.locais?`<div style="margin-top:24px"><h5 style="font-size:13px;color:#525a77;margin-bottom:8px">📍 Principais localizações</h5>
+        <ul style="margin-left:19px">${pub.locais.split('\n').filter(Boolean).map(l=>`<li style="font-size:13.4px;line-height:1.7;color:#39405c">${esc(l)}</li>`).join('')}</ul></div>`:''}
+      ${pub.topAnuncios?`<div style="margin-top:18px"><h5 style="font-size:13px;color:#525a77;margin-bottom:8px">🏆 Anúncios com melhor desempenho</h5>
+        <ul style="margin-left:19px">${pub.topAnuncios.split('\n').filter(Boolean).map(l=>`<li style="font-size:13.4px;line-height:1.7;color:#39405c">${esc(l)}</li>`).join('')}</ul></div>`:''}
+    </div>`;
+  }
+
+  /* ---- INSTAGRAM ---- */
+  if(rep.social?.ativo){
+    const s = rep.social;
+    const segDelta = deltaHtml(parseNum(s.seguidores), parseNum(s.seguidoresAnt), false);
+    html += `<div class="pg"><div class="r-h2"><span class="dot"></span>Instagram — efeito do tráfego no perfil</div>
+      <div class="r-sub">O tráfego pago também alimenta o perfil: novos seguidores, visitas e conversas</div>
+      <div class="kpis">
+        ${s.seguidores?`<div class="kpi"><div class="kl">Seguidores</div><div class="kv">${fmtInt(parseNum(s.seguidores))}</div>${segDelta}</div>`:''}
+        ${s.alcanceIG?`<div class="kpi"><div class="kl">Contas alcançadas</div><div class="kv">${fmtInt(parseNum(s.alcanceIG))}</div></div>`:''}
+        ${s.interacoes?`<div class="kpi"><div class="kl">Interações</div><div class="kv">${fmtInt(parseNum(s.interacoes))}</div></div>`:''}
+        ${s.visitas?`<div class="kpi"><div class="kl">Visitas ao perfil</div><div class="kv">${fmtInt(parseNum(s.visitas))}</div></div>`:''}
+      </div>
+      ${s.obs?`<div class="an-bloco an-reco" style="margin-top:14px"><h4>📌 Observações e melhorias para o perfil</h4>
+        <ul>${s.obs.split('\n').filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:''}
+    </div>`;
+  }
+
+  /* ---- ANÁLISE ---- */
+  const a = rep.analise||{};
+  const bloco = (txt, cls, titulo) => !txt?'' :
+    `<div class="an-bloco ${cls}"><h4>${titulo}</h4><ul>${txt.split('\n').filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`;
+  if(a.destaques || a.atencao || a.recomendacoes){
+    html += `<div class="pg"><div class="r-h2"><span class="dot"></span>Análise do período</div>
+      <div class="r-sub">Leitura estratégica dos números — o que funcionou, o que merece atenção e o que vamos otimizar</div>
+      ${bloco(a.destaques,'an-dest','✅ Destaques')}
+      ${bloco(a.atencao,'an-aten','⚠️ Pontos de atenção')}
+      ${bloco(a.recomendacoes,'an-reco','🚀 Recomendações de otimização')}
+    </div>`;
+  }
+  if(a.proximos){
+    html += `<div class="pg"><div class="r-h2"><span class="dot"></span>Próximos passos</div>
+      <div class="r-sub">O plano para o próximo período</div>
+      <ol class="passos" style="margin-left:22px;margin-top:10px">${a.proximos.split('\n').filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</ol>
+      <div style="margin-top:34px;font-size:13.5px;color:#525a77;line-height:1.8">Qualquer dúvida sobre este relatório, estou à disposição.<br><b style="color:#1d2333">${AGENCIA.responsavel}</b> · ${AGENCIA.nome}</div>
+    </div>`;
+  }
+
+  /* ---- CONTRACAPA ---- */
+  html += `<div class="pg r-rodape" style="page-break-after:auto">
+    <div class="rlogo">M</div>
+    <h3 style="margin-bottom:6px">${AGENCIA.nome}</h3>
+    <p>${AGENCIA.tagline}<br>${AGENCIA.email}<br>${AGENCIA.cidade} · CNPJ ${AGENCIA.cnpj}</p>
+  </div>`;
+
+  $('repBody').innerHTML = html;
+  desenharGraficos(rep);
+}
+
+function htmlEvolucao(rep){
+  // mini-barras comparando atual x anterior nos 3 números-chave consolidados
+  let invA=0, invP=0, ldA=0, ldP=0, tem=false;
+  ['meta','google'].forEach(c=>{
+    const ch = rep.canais[c]; if(!ch?.ativo) return;
+    invA += parseNum(ch.atual?.investimento)||0;  invP += parseNum(ch.anterior?.investimento)||0;
+    ldA  += leadsTotais(c, ch.atual)||0;          ldP  += leadsTotais(c, ch.anterior)||0;
+    if(Object.keys(ch.anterior||{}).length) tem=true;
+  });
+  if(!tem || (!invP && !ldP)) return '';
+  const cplA = ldA>0?invA/ldA:null, cplP = ldP>0?invP/ldP:null;
+  const linha = (label, a, p, fmt) => {
+    const max = Math.max(a||0, p||0) || 1;
+    return `<div class="evo-l"><div class="el">${label}</div><div class="ebars">
+      <div class="eb eb-at" style="width:${Math.max(8,(a||0)/max*100)}%">${fmt(a)}</div>
+      <div class="eb eb-an" style="width:${Math.max(8,(p||0)/max*100)}%">${fmt(p)}</div></div></div>`;
+  };
+  return `<div style="margin-top:26px"><h5 style="font-size:13px;color:#525a77;margin-bottom:12px">Evolução vs período anterior <span style="font-weight:400;color:#8a90a6">(barra colorida = atual · cinza = anterior)</span></h5>
+    <div class="evo">
+    ${linha('Investimento', invA, invP, fmtMoeda)}
+    ${ldA||ldP ? linha('Leads / contatos', ldA, ldP, fmtInt) : ''}
+    ${cplA&&cplP ? linha('Custo por lead', cplA, cplP, fmtMoeda) : ''}
+    </div></div>`;
+}
+
+function htmlCanalRelatorio(rep, canal, cli){
+  const c = rep.canais[canal];
+  const at = c.atual||{}, an = c.anterior||{};
+  const d = calcDerivadas(canal, at), dAnt = calcDerivadas(canal, an);
+  const temAnt = Object.values(an).some(v=>v!=='' && v!=null);
+
+  // KPIs em destaque conforme objetivo
+  const cards = [];
+  const add = (label, vAt, vAnt, t, inverso) => { if(vAt!=null) cards.push({label, vAt, vAnt, t, inverso}); };
+  add('Investimento', parseNum(at.investimento), parseNum(an.investimento), 'moeda', null);
+  if(canal==='meta') add('Alcance', parseNum(at.alcance), parseNum(an.alcance), 'int', false);
+  add('Impressões', parseNum(at.impressoes), parseNum(an.impressoes), 'int', false);
+  add('Cliques', parseNum(at.cliques), parseNum(an.cliques), 'int', false);
+  add('CTR', d.ctr, dAnt.ctr, 'pct', false);
+  add('CPC', d.cpc, dAnt.cpc, 'moeda', true);
+  add('CPM', d.cpm, dAnt.cpm, 'moeda', true);
+  const lt = leadsTotais(canal, at), ltAnt = leadsTotais(canal, an);
+  add(canal==='meta'?'Leads / Conversas':'Conversões', lt, ltAnt, 'int', false);
+  add('Custo por Lead', d.cpl, dAnt.cpl, 'moeda', true);
+  if(canal==='meta'){
+    add('Frequência', d.freq, dAnt.freq, 'dec', true);
+    add('Compras', parseNum(at.compras), parseNum(an.compras), 'int', false);
+    add('ROAS', d.roas, dAnt.roas, 'dec', false);
+  } else {
+    add('Ligações', parseNum(at.ligacoes), parseNum(an.ligacoes), 'int', false);
+    add('Parcela de impressões', parseNum(at.parcelaImpr), parseNum(an.parcelaImpr), 'pct', false);
+  }
+  const kpis = cards.slice(0,8).map(k=>`<div class="kpi"><div class="kl">${k.label}</div><div class="kv">${fmtVal(k.vAt,k.t)}</div>${temAnt?deltaHtml(k.vAt,k.vAnt,k.inverso):''}</div>`).join('');
+
+  // funil
+  const passos = canal==='meta'
+    ? [['Impressões',parseNum(at.impressoes)],['Cliques no link',parseNum(at.cliques)],['Visualizações da página',parseNum(at.lp)],['Leads / Conversas',parseNum(at.leads)],['Compras',parseNum(at.compras)]]
+    : [['Impressões',parseNum(at.impressoes)],['Cliques',parseNum(at.cliques)],['Conversões + Ligações',lt]];
+  const fSteps = passos.filter(p=>p[1]!=null && p[1]>0);
+  let funil = '';
+  if(fSteps.length >= 2){
+    const max = fSteps[0][1];
+    funil = `<h5 style="font-size:13px;color:#525a77;margin:26px 0 10px">Funil do período</h5><div class="funil">` +
+      fSteps.map((p,i)=>{
+        const pctPrev = i>0 ? (p[1]/fSteps[i-1][1]*100) : null;
+        return `<div class="fstep"><div class="fl">${p[0]}</div>
+          <div style="flex:1"><div class="fbar" style="width:${Math.max(7, p[1]/max*100)}%">${fmtInt(p[1])}</div></div>
+          <div class="fp">${pctPrev!=null?fmtDec(pctPrev)+'% da etapa acima':''}</div></div>`;
+      }).join('') + '</div>';
+  }
+
+  // tabela completa
+  const linhas = [];
+  CAMPOS[canal].forEach(f=>{
+    const vA = parseNum(at[f.k]); if(vA==null && parseNum(an[f.k])==null) return;
+    linhas.push([f.l.replace(' (R$)','').replace(' (%)',''), fmtVal(vA, f.t==='moeda'?'moeda':f.t==='pct'?'pct':'int'), fmtVal(parseNum(an[f.k]), f.t==='moeda'?'moeda':f.t==='pct'?'pct':'int'), variacao(vA, parseNum(an[f.k])), f.k==='investimento'?null:false]);
+  });
+  DERIVADAS[canal].forEach(([k,l,t,invr])=>{
+    if(d[k]==null && dAnt[k]==null) return;
+    linhas.push([l, fmtVal(d[k],t), fmtVal(dAnt[k],t), variacao(d[k], dAnt[k]), invr]);
+  });
+  const tbl = linhas.length ? `<h5 style="font-size:13px;color:#525a77;margin:26px 0 4px">Todas as métricas</h5>
+    <table class="r-tbl"><tr><th>Métrica</th><th>Período atual</th>${temAnt?'<th>Anterior</th><th>Variação</th>':''}</tr>
+    ${linhas.map(([l,a,p,v,invr])=>{
+      const bom = (v==null || invr===null) ? null : (invr ? v<0 : v>0);
+      return `<tr><td>${l}</td><td><b>${a}</b></td>${temAnt?`<td>${p}</td><td class="${bom==null?'neutro':bom?'up':'down'}">${v==null?'—':(v>0?'+':'')+v.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%'}</td>`:''}</tr>`;
+    }).join('')}</table>` : '';
+
+  return `<div class="pg"><div class="r-h2"><span class="dot"></span>${CANAL_NOME[canal]}</div>
+    <div class="r-sub">${fmtData(rep.de)} a ${fmtData(rep.ate)}${temAnt?' · variações comparadas ao período anterior':''}</div>
+    <div class="kpis">${kpis}</div>
+    ${funil}
+    ${tbl}
+    ${c.obs?`<div class="r-resumo" style="margin-top:22px">${esc(c.obs)}</div>`:''}
+  </div>`;
+}
+
+function desenharGraficos(rep){
+  charts.forEach(c=>c.destroy()); charts=[];
+  if(typeof Chart === 'undefined') return;
+  const pub = rep.publico||{};
+  const gen = $('chGen');
+  if(gen && parseNum(pub.fem)!=null){
+    const fem = parseNum(pub.fem), masc = Math.max(0, 100-fem);
+    charts.push(new Chart(gen, {type:'doughnut',
+      data:{labels:['Mulheres','Homens'], datasets:[{data:[fem,masc], backgroundColor:['#6c63ff','#43d9ad'], borderWidth:0}]},
+      options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},cutout:'62%',animation:false}}));
+  }
+  const idd = $('chIdade');
+  if(idd && pub.idades?.some(x=>parseNum(x.pct)>0)){
+    charts.push(new Chart(idd, {type:'bar',
+      data:{labels:pub.idades.map(x=>x.faixa), datasets:[{data:pub.idades.map(x=>parseNum(x.pct)||0), backgroundColor:'#6c63ff', borderRadius:5}]},
+      options:{plugins:{legend:{display:false}}, scales:{y:{ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#eef0f5'}},x:{ticks:{font:{size:10}},grid:{display:false}}}, animation:false}}));
+  }
+}
+
+/* ============================================================
+   ⬇ PDF · 🔗 LINK · 💬 WHATSAPP
+============================================================ */
+function baixarPDF(){
+  const rep = cur; if(!rep) return;
+  const nome = `Relatorio ${nomeCliente(rep.clientId)} ${fmtData(rep.de).replace(/\//g,'-')} a ${fmtData(rep.ate).replace(/\//g,'-')}.pdf`;
+  toast('Gerando PDF... aguarde');
+  html2pdf().set({
+    margin:0, filename:nome,
+    image:{type:'jpeg', quality:0.96},
+    html2canvas:{scale:2, useCORS:true, letterRendering:true},
+    jsPDF:{unit:'mm', format:'a4', orientation:'portrait'},
+    pagebreak:{mode:['css','legacy']}
+  }).from($('repBody')).save().then(()=>toast('✓ PDF baixado')).catch(e=>{console.error(e);toast('Erro ao gerar PDF — tente pelo navegador (Imprimir → Salvar como PDF)');});
+}
+async function publicarShare(){
+  const rep = cur;
+  const shareId = rep.publicadoId || ('rel_' + rep.id);
+  const snapshot = { report:rep, client:cliente(rep.clientId), agencia:AGENCIA };
+  const body = [{id:shareId, data:snapshot, updated_at:new Date().toISOString()}];
+  const r = await fetch(`${SUPA_URL}/rest/v1/${TABELA}?on_conflict=id`,{
+    method:'POST', headers:supaHeaders({'Prefer':'resolution=merge-duplicates'}), body:JSON.stringify(body)});
+  if(!r.ok) throw new Error('share '+r.status);
+  rep.publicadoId = shareId; salvarCur();
+  const base = location.origin.startsWith('http') ? location.origin + location.pathname : 'https://martinelle-pro.netlify.app/relatorios.html';
+  return `${base}?ver=${shareId}`;
+}
+async function copiarLink(){
+  try{
+    const url = await publicarShare();
+    await navigator.clipboard.writeText(url);
+    toast('✓ Link copiado — o cliente abre direto, sem senha');
+  }catch(e){ console.error(e); toast('Não consegui publicar o link — verifique a conexão'); }
+}
+async function zapLink(){
+  try{
+    const url = await publicarShare();
+    const cli = cliente(cur.clientId);
+    const msg = `Olá! 👋 Segue o relatório de tráfego ${cli?`da ${cli.nome} `:''}(${fmtData(cur.de)} a ${fmtData(cur.ate)}):\n\n${url}\n\nQualquer dúvida estou à disposição!\n— ${AGENCIA.responsavel}, ${AGENCIA.nome}`;
+    window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
+  }catch(e){ toast('Não consegui publicar o link — verifique a conexão'); }
+}
+
+/* ============================================================
+   🚀 INICIALIZAÇÃO (inclui modo cliente ?ver=)
+============================================================ */
+async function bootShare(verId){
+  modoShare = true;
+  document.querySelectorAll('.gate,.topbar').forEach(e=>e.classList.add('hide'));
+  $('btnVoltarRep').classList.add('hide');
+  $('btnLink').classList.add('hide'); $('btnZap').classList.add('hide');
+  try{
+    const r = await fetch(`${SUPA_URL}/rest/v1/${TABELA}?id=eq.${encodeURIComponent(verId)}&select=data`,{headers:supaHeaders()});
+    const rows = await r.json();
+    if(!rows.length) throw new Error('não encontrado');
+    const {report, client} = rows[0].data;
+    cur = report;
+    montarRelatorio(report, client);
+    $('viewReport').classList.remove('hide');
+  }catch(e){
+    document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;color:#9aa0b5;font-family:sans-serif">Relatório não encontrado ou link expirado.</div>';
+  }
+}
+(function init(){
+  const ver = new URLSearchParams(location.search).get('ver');
+  if(ver){ bootShare(ver); return; }
+  load();
+  if(localStorage.getItem(AUTH_KEY)==='1'){
+    $('gate').classList.add('hide'); $('topbar').classList.remove('hide');
+    go('home'); cloudBoot();
+  } else {
+    setTimeout(()=>$('gatePass').focus(), 150);
+  }
+})();
+</script>
+</body>
+</html>

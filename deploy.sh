@@ -49,6 +49,7 @@ if [ "$SKIP_GIT" = false ]; then
 
     # Adiciona arquivos relevantes
     git add prospector-medicos.html 2>/dev/null || true
+    git add relatorios.html 2>/dev/null || true
     git add netlify.toml 2>/dev/null || true
     git add manifest.json 2>/dev/null || true
     git add sw.js 2>/dev/null || true
@@ -98,7 +99,7 @@ if [ "$SKIP_NETLIFY" = false ]; then
   echo -e "${B}📦 Empacotando…${N}"
   rm -f .netlify-deploy.zip
   # Inclui arquivos estáticos, contratos e netlify/functions (necessário para assinatura digital)
-  zip -q .netlify-deploy.zip netlify.toml _redirects manifest.json sw.js icon.svg crm-pipeline.json prospector-medicos.html 2>/dev/null || true
+  zip -q .netlify-deploy.zip netlify.toml _redirects manifest.json sw.js icon.svg crm-pipeline.json prospector-medicos.html relatorios.html 2>/dev/null || true
   [ -d contratos ] && zip -q -r .netlify-deploy.zip contratos/
   [ -d netlify/functions ] && zip -q -r .netlify-deploy.zip netlify/functions/
   SIZE=$(wc -c < .netlify-deploy.zip | tr -d ' ')
