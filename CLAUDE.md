@@ -131,6 +131,9 @@ skills/
 
 crm-pipeline.json               ← Dados do pipeline (atualizado pelo /crm)
 prospector-medicos.html         ← CRM visual de leads médicos
+relatorios.html                 ← Relatórios de tráfego Meta/Google Ads para clientes
+                                   (importa colando texto, análise com benchmarks,
+                                   PDF, link compartilhável, nuvem Supabase)
 CLAUDE.md                       ← Este arquivo — manual mestre do sistema
 ```
 
