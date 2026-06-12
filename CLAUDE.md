@@ -130,6 +130,8 @@ skills/
   crm/SKILL.md                  ← Pipeline de Vendas
 
 crm-pipeline.json               ← Dados do pipeline (atualizado pelo /crm)
+index.html                      ← PAINEL DA EQUIPE: login único (senha da equipe) com
+                                   3 abas — Prospecção · Contratos · Relatórios
 prospector-medicos.html         ← CRM visual de leads médicos
 relatorios.html                 ← Relatórios de tráfego Meta/Google Ads para clientes
                                    (importa colando texto, análise com benchmarks,
