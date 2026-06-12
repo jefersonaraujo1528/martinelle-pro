@@ -17,7 +17,9 @@ const CORS = {
 };
 
 function num(s: string) {
-  return parseFloat(String(s || "0").replace(/\./g, "").replace(",", ".")) || 0;
+  const t = String(s || "0").trim().replace(/[R$\s]/g, "");
+  if (/^\d+\.\d{1,2}$/.test(t)) return parseFloat(t) || 0;            // "500.00" = decimal com ponto
+  return parseFloat(t.replace(/\./g, "").replace(",", ".")) || 0;     // pt-BR: ponto = milhar
 }
 // ===== Cálculo financeiro centralizado =====
 // valor_total = valor_mensal × duração (meses). Indeterminado (0) = 1 mês de referência.

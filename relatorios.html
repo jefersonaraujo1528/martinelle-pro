@@ -165,6 +165,8 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 .r-rodape .rlogo{width:54px;height:54px;border-radius:15px;background:var(--grad);display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:25px;margin-bottom:14px}
 .r-rodape p{font-size:13px;opacity:.8;line-height:1.8}
 @media print{.rep-actions,.topbar{display:none!important}body{background:#fff}}
+/* dentro do Painel (iframe): esconde a marca duplicada — o Painel já mostra */
+.emb .topbar .logo,.emb .topbar .brand{display:none}
 </style>
 </head>
 <body>
@@ -666,7 +668,7 @@ function importarColado(canal){
 ============================================================ */
 function tryLogin(){
   if($('gatePass').value === TEAM_PASSWORD){
-    localStorage.setItem(AUTH_KEY, '1');
+    localStorage.setItem(AUTH_KEY, TEAM_PASSWORD);   // mesmo valor que o Prospector e o Painel usam
     $('gate').classList.add('hide'); $('topbar').classList.remove('hide');
     go('home'); cloudBoot();
   } else $('gateMsg').textContent = 'Senha incorreta';
@@ -1255,8 +1257,9 @@ async function bootShare(verId){
 (function init(){
   const ver = new URLSearchParams(location.search).get('ver');
   if(ver){ bootShare(ver); return; }
+  if(window.self !== window.top) document.documentElement.classList.add('emb');  // dentro do Painel
   load();
-  if(localStorage.getItem(AUTH_KEY)==='1'){
+  if(localStorage.getItem(AUTH_KEY)===TEAM_PASSWORD){
     $('gate').classList.add('hide'); $('topbar').classList.remove('hide');
     go('home'); cloudBoot();
   } else {

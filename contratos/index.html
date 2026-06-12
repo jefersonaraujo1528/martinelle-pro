@@ -76,6 +76,36 @@
 </head>
 <body>
 
+<!-- ============ SENHA DA EQUIPE (mesma do Painel/Prospector) ============ -->
+<style>
+  .gate-eq{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:20px;text-align:center}
+  .gate-eq .gl{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-weight:900;font-size:28px;color:#0d0d0d}
+  .gate-eq input{max-width:240px;text-align:center;font-size:16px}
+  .gate-eq button{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#0d0d0d;border:none;border-radius:9px;padding:12px 30px;font-weight:700;font-size:.95rem;cursor:pointer}
+  .gate-eq .gerr{font-size:.8rem;color:var(--danger);min-height:14px}
+</style>
+<div class="gate-eq" id="gateEq">
+  <div class="gl">M</div>
+  <div><b style="font-size:1.05rem">Gerador de Contratos</b><br><span style="font-size:.8rem;color:var(--muted)">Agência Martinelle — acesso da equipe</span></div>
+  <input type="password" id="gateEqSenha" placeholder="Senha da equipe" onkeydown="if(event.key==='Enter')gateEqEntrar()">
+  <button onclick="gateEqEntrar()">Entrar</button>
+  <div class="gerr" id="gateEqMsg"></div>
+</div>
+<script>
+  // Mesma chave usada pelo Painel, Prospector e Relatórios — login único da equipe.
+  // A página pública de assinatura (assinar.html) NÃO tem senha: o cliente assina direto.
+  (function(){
+    var SENHA = '28082019', CHAVE = 'martinelle_auth';
+    window.gateEqEntrar = function(){
+      var v = document.getElementById('gateEqSenha').value;
+      if(v === SENHA){ localStorage.setItem(CHAVE, SENHA); document.getElementById('gateEq').remove(); }
+      else document.getElementById('gateEqMsg').textContent = 'Senha incorreta';
+    };
+    if(localStorage.getItem(CHAVE) === SENHA) document.getElementById('gateEq').remove();
+    else setTimeout(function(){ document.getElementById('gateEqSenha').focus(); }, 150);
+  })();
+</script>
+
 <header>
   <h1>Gerador de Contratos</h1>
   <p>Agência Martinelle — CNPJ 49.561.800/0001-70</p>
@@ -473,7 +503,13 @@
   // ===== LÓGICA FINANCEIRA CENTRALIZADA (regra 9) =====
   // Toda regra de dinheiro passa por aqui. Sem juros manual — o parcelamento no
   // cartão tem juros aplicados pela operadora/Asaas no checkout.
-  function parseMoeda(s) { return parseFloat(String(s || '0').replace(/\./g, '').replace(',', '.')) || 0; }
+  function parseMoeda(s) {
+    s = String(s ?? '0').trim().replace(/[R$\s]/g, '');
+    if (/^\d+\.\d{1,2}$/.test(s)) return parseFloat(s) || 0;            // "500.00" = decimal com ponto
+    return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;     // pt-BR: ponto = milhar
+  }
+  // Escape de HTML/atributo — evita que aspas ou < no nome/e-mail quebrem os botões de copiar
+  function escHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function fmtBR(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   // valor_total = valor_mensal × duração (meses). Indeterminado (0) = 1 mês de referência.
   function calcFinanceiro() {
@@ -536,6 +572,12 @@
     const fin = calcFinanceiro();
     if (fin.mensal <= 0) return 'Valor mensal inválido';
     if (fin.total <= 0) return 'Valor total do contrato inválido (mensal × duração)';
+    // Pagamento misto: a entrada precisa existir e ser menor que o total
+    if (document.querySelector('[name=pgto]:checked')?.value === 'misto') {
+      const entrada = parseMoeda(document.getElementById('entrada')?.value);
+      if (entrada <= 0) return 'Pagamento misto: informe o valor da entrada';
+      if (entrada >= fin.total) return `Pagamento misto: a entrada (R$ ${fmtBR(entrada)}) deve ser MENOR que o total do contrato (R$ ${fmtBR(fin.total)})`;
+    }
     return null;
   }
 
@@ -556,13 +598,14 @@
       email: document.getElementById('email').value.trim(),
       telefone: document.getElementById('telefone').value.trim(),
       tipoCliente, plano, pgto,
-      valor: document.getElementById('valor').value.trim(),
+      // normalizado para "1.234,56" — garante que assinar.html e a função Asaas leiam o valor certo
+      valor: fmtBR(parseMoeda(document.getElementById('valor').value)),
       diaVencimento: document.getElementById('diaVencimento').value,
       dataInicio: document.getElementById('dataInicio').value,
       duracao: document.getElementById('duracao').value,
       parcelas: pgto === 'cartao' ? document.getElementById('parcelas').value : '',
       // Pagamento misto (entrada + restante no cartão)
-      entrada: pgto === 'misto' ? document.getElementById('entrada').value.trim() : '',
+      entrada: pgto === 'misto' ? fmtBR(parseMoeda(document.getElementById('entrada').value)) : '',
       formEntrada: pgto === 'misto' ? document.getElementById('formEntrada').value : '',
       parcelasMisto: pgto === 'misto' ? document.getElementById('parcelasMisto').value : '',
       // Cláusulas personalizáveis
@@ -587,7 +630,10 @@
 
     dadosUltimo = dados;
     document.getElementById('linkBox').textContent = link;
-    criarNoAsaas(dados); // tenta automático, fallback para dados manuais
+    // Guarda contra cobrança duplicada: só chama o Asaas se este contrato (mesmos dados)
+    // ainda não teve cobrança criada com sucesso nesta sessão
+    const chave = JSON.stringify(dados);
+    if (cobrancaCriadaKey !== chave) criarNoAsaas(dados, chave);
     document.getElementById('modalSucesso').classList.add('show');
   }
 
@@ -596,7 +642,8 @@
     const tel = (dadosUltimo?.telefone || '').replace(/\D/g, '');
     const nome = dadosUltimo?.nome || '';
     const msg = `Olá ${nome}! Tudo bem? 😊\n\nSegue o contrato da *Agência Martinelle* para sua assinatura digital (link válido por 48h):\n\n${link}\n\nÉ rápido e 100% online. Qualquer dúvida, estou à disposição! 🚀`;
-    const num = tel.length >= 10 ? '55' + tel : '';
+    // não duplica o DDI se o telefone já veio com 55 na frente
+    const num = tel.length >= 10 ? (tel.startsWith('55') && tel.length >= 12 ? tel : '55' + tel) : '';
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
   }
 
@@ -613,6 +660,8 @@
   }
 
   let dadosUltimo = null;
+  let cobrancaCriadaKey = null;   // dados do último contrato que JÁ gerou cobrança no Asaas
+  let cobrancaRodando = false;    // trava contra duplo clique enquanto a chamada está no ar
 
   function copiarCampo(valor, btn) {
     navigator.clipboard.writeText(valor).then(() => {
@@ -622,54 +671,57 @@
   }
 
   function campo(label, valor) {
-    const id = 'c_' + Math.random().toString(36).slice(2);
     return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
       <div style="flex:1;background:#1e1e1e;border-radius:6px;padding:7px 10px;font-size:0.8rem">
-        <span style="color:var(--muted);font-size:0.7rem;display:block">${label}</span>
-        <span style="color:var(--text)">${valor}</span>
+        <span style="color:var(--muted);font-size:0.7rem;display:block">${escHtml(label)}</span>
+        <span style="color:var(--text)">${escHtml(valor)}</span>
       </div>
-      <button id="${id}" onclick="copiarCampo('${valor.replace(/'/g,"\\'")}',this)"
+      <button data-v="${escHtml(valor)}" onclick="copiarCampo(this.dataset.v,this)"
         style="background:var(--gold);color:#0d0d0d;border:none;border-radius:6px;padding:6px 10px;font-size:0.8rem;cursor:pointer;white-space:nowrap">📋</button>
     </div>`;
   }
 
-  async function criarNoAsaas(d) {
+  async function criarNoAsaas(d, chave) {
+    if (cobrancaRodando) return;
+    cobrancaRodando = true;
     const SUPA_ASAAS = 'https://wtirdmwrttoxpljxsoci.supabase.co/functions/v1/asaas-cobranca';
     const PUB = 'sb_publishable_9UF6Ebv3mkxVP2x4kx-eZA_5dDPPuf0';
-    // 1) Supabase (HTTPS — funciona no site publicado, sem depender de servidor local)
     try {
-      const resp = await fetch(SUPA_ASAAS, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'apikey': PUB, 'Authorization': 'Bearer ' + PUB },
-        body: JSON.stringify(d),
-      });
-      const data = await resp.json();
-      const lista = data.cobrancas || data.cobranças;
-      if (data.ok && lista?.length) { renderCobrancasAsaas(lista); return; }
-    } catch (e) { /* segue pro fallback */ }
-    // 2) Servidor local (quando você está rodando o launcher na sua máquina)
-    try {
-      const resp = await fetch('http://localhost:3765/api/asaas', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d),
-      });
-      const data = await resp.json();
-      const lista = data.cobrancas || data.cobranças;
-      if (data.ok && lista?.length) { renderCobrancasAsaas(lista); return; }
-    } catch (e) { /* segue pro fallback */ }
-    // 3) Fallback: dados formatados para cadastrar manualmente
-    mostrarDadosAsaas(d);
+      // 1) Supabase (HTTPS — funciona no site publicado, sem depender de servidor local)
+      try {
+        const resp = await fetch(SUPA_ASAAS, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': PUB, 'Authorization': 'Bearer ' + PUB },
+          body: JSON.stringify(d),
+        });
+        const data = await resp.json();
+        const lista = data.cobrancas || data.cobranças;
+        if (data.ok && lista?.length) { cobrancaCriadaKey = chave || null; renderCobrancasAsaas(lista); return; }
+      } catch (e) { /* segue pro fallback */ }
+      // 2) Servidor local (quando você está rodando o launcher na sua máquina)
+      try {
+        const resp = await fetch('http://localhost:3765/api/asaas', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d),
+        });
+        const data = await resp.json();
+        const lista = data.cobrancas || data.cobranças;
+        if (data.ok && lista?.length) { cobrancaCriadaKey = chave || null; renderCobrancasAsaas(lista); return; }
+      } catch (e) { /* segue pro fallback */ }
+      // 3) Fallback: dados formatados para cadastrar manualmente (não criou nada — pode tentar de novo)
+      mostrarDadosAsaas(d);
+    } finally { cobrancaRodando = false; }
   }
 
   function renderCobrancasAsaas(lista) {
     const el = document.getElementById('asaasDados');
     el.innerHTML = '<p style="color:var(--success);font-size:0.8rem;font-weight:700;margin-bottom:10px">✅ Cobrança criada automaticamente no Asaas!</p>' +
       lista.map(c => {
-        const val = c.total ? `${c.tipo} — ${c.valor.toFixed(2).replace('.',',')} × parcelas = R$ ${c.total.toFixed(2).replace('.',',')}` : `${c.tipo} — R$ ${c.valor.toFixed(2).replace('.',',')}`;
-        const linkHtml = c.link ? `<div style="font-size:0.72rem;word-break:break-all;color:var(--gold-light);cursor:pointer;margin-bottom:6px" onclick="navigator.clipboard.writeText('${c.link}')">${c.link}</div>
-              <button onclick="navigator.clipboard.writeText('${c.link}').then(()=>{this.textContent='✔ Copiado!';setTimeout(()=>this.textContent='📋 Copiar link',1500)})"
+        const val = c.total ? `${escHtml(c.tipo)} — ${c.valor.toFixed(2).replace('.',',')} × parcelas = R$ ${c.total.toFixed(2).replace('.',',')}` : `${escHtml(c.tipo)} — R$ ${c.valor.toFixed(2).replace('.',',')}`;
+        const linkHtml = c.link ? `<div style="font-size:0.72rem;word-break:break-all;color:var(--gold-light);cursor:pointer;margin-bottom:6px" data-link="${escHtml(c.link)}" onclick="navigator.clipboard.writeText(this.dataset.link)">${escHtml(c.link)}</div>
+              <button data-link="${escHtml(c.link)}" onclick="navigator.clipboard.writeText(this.dataset.link).then(()=>{this.textContent='✔ Copiado!';setTimeout(()=>this.textContent='📋 Copiar link',1500)})"
                 style="background:var(--gold);color:#0d0d0d;border:none;border-radius:6px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer">📋 Copiar link</button>` : '<div style="font-size:0.72rem;color:var(--muted)">Recebido em espécie (sem cobrança online)</div>';
         return `<div style="background:#1e2e1e;border:1px solid #2a4a2a;border-radius:8px;padding:10px 12px;margin-bottom:8px">
-              <div style="font-size:0.78rem;color:#4caf72;font-weight:700;margin-bottom:4px">${val} · Vence ${c.vencimento}</div>
+              <div style="font-size:0.78rem;color:#4caf72;font-weight:700;margin-bottom:4px">${val} · Vence ${escHtml(c.vencimento)}</div>
               ${linkHtml}
             </div>`;
       }).join('');
@@ -677,7 +729,8 @@
   }
 
   function mostrarDadosAsaas(d) {
-    const num = s => parseFloat((s||'0').replace(/\./g,'').replace(',','.')) || 0;
+    document.getElementById('asaasBtn').style.display = '';   // garante o botão manual de volta
+    const num = parseMoeda;
     const fmt = v => 'R$ ' + v.toFixed(2).replace('.',',');
     const valor = num(d.valor);                                  // valor mensal
     const meses = parseInt(d.duracao || '0') || 0;
