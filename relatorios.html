@@ -122,8 +122,8 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 .keep{break-inside:avoid;page-break-inside:avoid}
 
 /* ---- CAPA (enche a página inteira) ---- */
-.cover{min-height:1120px;background:linear-gradient(155deg,#14162a 0%,#222a56 52%,#163f30 100%);
-  color:#fff;padding:60px 56px;display:flex;flex-direction:column;page-break-after:always}
+.cover{min-height:1040px;background:linear-gradient(155deg,#14162a 0%,#222a56 52%,#163f30 100%);
+  color:#fff;padding:54px 56px;display:flex;flex-direction:column;page-break-after:always}
 .cover *{color:#fff}
 .c-top{display:flex;align-items:center;gap:13px}
 .c-logo{width:54px;height:54px;border-radius:15px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:25px;flex-shrink:0}
@@ -210,7 +210,7 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 .assina b{color:#1a1f36}
 
 /* ---- contracapa (enche a página, simétrica com a capa) ---- */
-.closing{min-height:1080px;background:linear-gradient(155deg,#14162a 0%,#222a56 52%,#163f30 100%);color:#fff;text-align:center;padding:60px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;page-break-before:always}
+.closing{min-height:1010px;background:linear-gradient(155deg,#14162a 0%,#222a56 52%,#163f30 100%);color:#fff;text-align:center;padding:60px 40px;display:flex;flex-direction:column;align-items:center;justify-content:center;page-break-before:always}
 .closing *{color:#fff}
 .closing .c-logo{display:inline-flex;margin:0 auto 18px;width:62px;height:62px;font-size:29px}
 .closing h3{font-size:22px;margin-bottom:10px}
@@ -1055,6 +1055,7 @@ function relatorioVazio(clientId){
     canais:{ meta:{ativo:true, atual:{}, anterior:{}, obs:''}, google:{ativo:false, atual:{}, anterior:{}, obs:''} },
     publico:{ fem:'', idades:[{faixa:'18-24',pct:''},{faixa:'25-34',pct:''},{faixa:'35-44',pct:''},{faixa:'45-54',pct:''},{faixa:'55-64',pct:''},{faixa:'65+',pct:''}], locais:'', topAnuncios:'' },
     social:{ ativo:false, seguidores:'', seguidoresAnt:'', alcanceIG:'', interacoes:'', visitas:'', obs:'' },
+    gmn:{ ativo:false, visualizacoes:'', visualizacoesAnt:'', interacoes:'', pesquisas:'', chamadas:'', agendamentos:'', rotas:'', cliquesSite:'', descobrir:'', termos:'', obs:'' },
     analise:{ resumo:'', destaques:'', atencao:'', recomendacoes:'', proximos:'' },
     criadoEm:Date.now()
   };
@@ -1134,13 +1135,16 @@ function renderEditor(){
   const tabs = [
     ['meta','Ⓜ️ Meta Ads', cur.canais.meta.ativo],
     ['google','🔍 Google Ads', cur.canais.google.ativo],
+    ['gmn','📍 Google Meu Negócio', cur.gmn?.ativo],
     ['publico','👥 Público', true],
     ['social','📸 Instagram', cur.social.ativo],
     ['analise','🤖 Análise', true],
   ];
-  $('etabs').innerHTML = tabs.map(([k,l,on])=>`<button class="${etab===k?'on':''} ${!on&&(k==='meta'||k==='google'||k==='social')?'off-canal':''}" onclick="etab='${k}';renderEditor()">${l}</button>`).join('');
+  const canalKeys = ['meta','google','gmn','social'];
+  $('etabs').innerHTML = tabs.map(([k,l,on])=>`<button class="${etab===k?'on':''} ${!on&&canalKeys.includes(k)?'off-canal':''}" onclick="etab='${k}';renderEditor()">${l}</button>`).join('');
   const body = $('etabBody');
   if(etab==='meta' || etab==='google') body.innerHTML = htmlCanal(etab);
+  if(etab==='gmn') body.innerHTML = htmlGmn();
   if(etab==='publico') body.innerHTML = htmlPublico();
   if(etab==='social') body.innerHTML = htmlSocial();
   if(etab==='analise') body.innerHTML = htmlAnalise();
@@ -1212,6 +1216,37 @@ function htmlSocial(){
   </div>
   <div class="fld" style="margin-top:14px"><label>Observações e melhorias sugeridas para o perfil (aparecem no relatório)</label>
     <textarea placeholder="Ex.: destacar os destaques de antes/depois; responder comentários em até 1h; fixar post de prova social..." oninput="cur.social.obs=this.value;salvarCur()">${esc(s.obs||'')}</textarea></div>`}`;
+}
+function htmlGmn(){
+  const g = cur.gmn || (cur.gmn = {ativo:false});
+  const f = (k, label, ph) => `<div class="fld"><label>${label}</label><input value="${esc(g[k]??'')}" placeholder="${ph||'—'}" oninput="cur.gmn.${k}=this.value;salvarCur()"></div>`;
+  return `
+  <label class="switch ${g.ativo?'on':''}" onclick="cur.gmn.ativo=!cur.gmn.ativo;salvarCur();renderEditor()">
+    <span class="tk"></span> Incluir seção de Google Meu Negócio neste relatório</label>
+  ${!g.ativo?'':`
+  <div class="muted" style="margin:12px 0">Presença gratuita no Google/Maps. Dados em <b>Perfil da Empresa → Desempenho</b> (app Google Maps ou Google Meu Negócio). Preencha o que tiver — campo vazio não aparece no relatório.</div>
+  <div class="colhead">Visão do perfil</div>
+  <div class="fgrid">
+    ${f('visualizacoes','Pessoas que viram o perfil','ex.: 10.524')}
+    ${f('visualizacoesAnt','Período anterior (opcional)','ex.: 8.900')}
+    ${f('interacoes','Interações no perfil','ex.: 480')}
+    ${f('pesquisas','Pesquisas que mostraram o perfil','ex.: 2.345')}
+  </div>
+  <div class="colhead">Ações que o cliente tomou</div>
+  <div class="fgrid">
+    ${f('chamadas','Chamadas (ligações)','ex.: 86')}
+    ${f('agendamentos','Agendamentos pelo perfil','ex.: 12')}
+    ${f('rotas','Pedidos de rota (orientações)','ex.: 154')}
+    ${f('cliquesSite','Cliques no site','ex.: 320')}
+  </div>
+  <div class="colhead">Como as pessoas descobriram a empresa</div>
+  <div class="fld"><label>Uma fonte por linha — "Fonte — valor" (o valor pode ser % ou número)</label>
+    <textarea placeholder="Pesquisa Google — 73%&#10;Google Maps — 15%&#10;Computador — 11%" oninput="cur.gmn.descobrir=this.value;salvarCur()">${esc(g.descobrir||'')}</textarea></div>
+  <div class="colhead">O que as pessoas pesquisaram (termos que mostraram o perfil)</div>
+  <div class="fld"><label>Um termo por linha (na ordem dos mais buscados)</label>
+    <textarea placeholder="Primeiro orfanato em Teresina&#10;Lar de Maria&#10;Casa de Maria de Teresina&#10;Casa de apoio em Teresina" oninput="cur.gmn.termos=this.value;salvarCur()">${esc(g.termos||'')}</textarea></div>
+  <div class="fld" style="margin-top:14px"><label>Observações / oportunidades (aparecem no relatório)</label>
+    <textarea placeholder="Ex.: responder todas as avaliações; adicionar fotos novas toda semana; ativar agendamento direto no perfil..." oninput="cur.gmn.obs=this.value;salvarCur()">${esc(g.obs||'')}</textarea></div>`}`;
 }
 function htmlAnalise(){
   const a = cur.analise;
@@ -1306,7 +1341,7 @@ function montarRelatorio(rep, cli){
       <h1>${esc(cli.nome)}</h1>
       <div class="c-cli">${fmtData(rep.de)} <span style="opacity:.6">até</span> ${fmtData(rep.ate)}</div>
       <div class="c-per">Preparado por ${esc(AGENCIA.responsavel)}</div>
-      <div class="c-badges">${canaisAtivos.map(c=>`<span class="rb">${CANAL_NOME[c].toUpperCase()}</span>`).join('')}${rep.social?.ativo?'<span class="rb">INSTAGRAM</span>':''}</div>
+      <div class="c-badges">${canaisAtivos.map(c=>`<span class="rb">${CANAL_NOME[c].toUpperCase()}</span>`).join('')}${rep.gmn?.ativo?'<span class="rb">GOOGLE MEU NEGÓCIO</span>':''}${rep.social?.ativo?'<span class="rb">INSTAGRAM</span>':''}</div>
     </div>
     <div class="hero-stats">${heroStats.map(s=>`<div class="hero-stat"><div class="hl">${s.l}</div><div class="hv">${s.v}</div>${s.d?`<div class="hd">${s.d}</div>`:''}</div>`).join('')}</div>
     <div class="c-foot">${esc(AGENCIA.email)} · CNPJ ${esc(AGENCIA.cnpj)} · ${esc(AGENCIA.cidade)}</div>
@@ -1327,6 +1362,9 @@ function montarRelatorio(rep, cli){
 
   /* ---- CANAIS ---- */
   canaisAtivos.forEach(canal=>{ html += htmlCanalRelatorio(rep, canal, cli); });
+
+  /* ---- GOOGLE MEU NEGÓCIO ---- */
+  if(rep.gmn?.ativo) html += htmlGmnRelatorio(rep);
 
   /* ---- PÚBLICO ---- */
   const pub = rep.publico||{};
@@ -1512,6 +1550,49 @@ function htmlCanalRelatorio(rep, canal, cli){
   </div>`;
 }
 
+// Google Meu Negócio — presença orgânica no Google/Maps
+function htmlGmnRelatorio(rep){
+  const g = rep.gmn||{};
+  const kc = (label, val, deltaAt, deltaP) => val ? `<div class="kc"><div class="kl">${label}</div><div class="kv">${fmtInt(parseNum(val))}</div>${deltaP?deltaHtml(parseNum(val),parseNum(deltaP),false):''}</div>` : '';
+  const cards = [
+    kc('Viram o perfil', g.visualizacoes, g.visualizacoes, g.visualizacoesAnt),
+    kc('Pesquisas', g.pesquisas),
+    kc('Interações', g.interacoes),
+    kc('Chamadas', g.chamadas),
+    kc('Agendamentos', g.agendamentos),
+    kc('Pedidos de rota', g.rotas),
+    kc('Cliques no site', g.cliquesSite),
+  ].filter(Boolean).join('');
+
+  // "como descobriram" → gráfico de rosca
+  const fontes = (g.descobrir||'').split('\n').map(s=>s.trim()).filter(Boolean).map(l=>{
+    const [nome, ...resto] = l.split(/—|->|:/);
+    const raw = resto.join(' ').trim();
+    return { nome:(nome||'').trim(), val: parseNum(raw), raw };
+  }).filter(x=>x.nome);
+  const temFontes = fontes.some(f=>f.val>0);
+  window.__gmnFontes = temFontes ? fontes : null;
+
+  // termos pesquisados
+  const termos = (g.termos||'').split('\n').map(s=>s.trim()).filter(Boolean);
+
+  let blocoMeio = '';
+  if(temFontes || termos.length){
+    blocoMeio = `<div class="cards2 keep" style="margin-top:18px">
+      ${temFontes?`<div class="chartcard"><h5>Como descobriram a empresa</h5><canvas id="chGmn" height="200"></canvas></div>`:''}
+      ${termos.length?`<div class="chartcard"><h5>O que pesquisaram pra te achar</h5><div style="margin-top:4px">${termos.slice(0,7).map(t=>`<div style="display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid #eff1f7"><span style="color:#6c63ff;font-weight:800">🔎</span><span style="font-size:12.8px;color:#2f3650;font-weight:600">${esc(t)}</span></div>`).join('')}</div></div>`:''}
+    </div>`;
+  }
+
+  return `<div class="sec"><div class="keep">
+    <div class="h2"><span class="dot"></span>Google Meu Negócio</div>
+    <div class="sub">Presença gratuita no Google e no Maps — quem encontrou a empresa e o que fez</div>
+    <div class="kgrid">${cards}</div></div>
+    ${blocoMeio}
+    ${g.obs?`<div class="ablk a-reco keep" style="margin-top:16px"><h4>📍 Oportunidades no perfil</h4><ul>${g.obs.split('\n').filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</ul></div>`:''}
+  </div>`;
+}
+
 function desenharGraficos(rep){
   charts.forEach(c=>c.destroy()); charts=[];
   if(typeof Chart === 'undefined') return;
@@ -1531,6 +1612,16 @@ function desenharGraficos(rep){
     charts.push(new Chart(idd, {type:'bar',
       data:{labels:pub.idades.map(x=>x.faixa), datasets:[{data:pub.idades.map(x=>parseNum(x.pct)||0), backgroundColor:'#6c63ff', borderRadius:6, maxBarThickness:42}]},
       options:{plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{y:{ticks:{callback:v=>v+'%',font:{size:11}},grid:{color:'#eef0f5'}},x:{ticks:{font:{size:11}},grid:{display:false}}}, animation:false}}));
+  }
+  // Google Meu Negócio — como descobriram (rosca)
+  const gmn = $('chGmn');
+  if(gmn && window.__gmnFontes){
+    const fs = window.__gmnFontes;
+    const cores = ['#6c63ff','#43d9ad','#ffb84d','#4da3ff','#ff6fd8','#9ccc65'];
+    const tot = fs.reduce((a,f)=>a+f.val,0) || 1;
+    charts.push(new Chart(gmn, {type:'doughnut',
+      data:{labels:fs.map(f=> f.raw ? `${f.nome} ${f.raw}` : `${f.nome} ${Math.round(f.val/tot*100)}%`), datasets:[{data:fs.map(f=>f.val), backgroundColor:fs.map((_,i)=>cores[i%cores.length]), borderWidth:0}]},
+      options:{plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:11,usePointStyle:true,pointStyle:'circle'}}},cutout:'60%',animation:false}}));
   }
   // investimento e resultados por canal (quando há 2 canais)
   const ca = $('chCanais'), cr = $('chResCanais');
@@ -1557,7 +1648,7 @@ function baixarPDF(){
   // pequena espera garante que os gráficos (canvas) terminaram de desenhar antes da captura
   setTimeout(()=>{
     html2pdf().set({
-      margin:0, filename:nome,
+      margin:[9,0,9,0], filename:nome,   // respiro branco no topo/rodapé de cada página
       image:{type:'jpeg', quality:0.98},
       html2canvas:{scale:2.2, useCORS:true, letterRendering:true, backgroundColor:'#ffffff'},
       jsPDF:{unit:'mm', format:'a4', orientation:'portrait', compress:true},
