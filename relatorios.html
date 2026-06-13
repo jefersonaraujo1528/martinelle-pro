@@ -7,6 +7,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
 <style>
 /* ============ BASE (tema escuro — painel interno) ============ */
 :root{
@@ -689,7 +692,8 @@ function parseColado(texto, canal){
       const fim = i + nome.length;
       const proxima = marcas.find(m=>m>fim);
       const trecho = blob.slice(fim, Math.min(proxima ?? fim+220, fim+220));
-      const prevIdx = trecho.indexOf('no período anterior');
+      const mPrev = trecho.match(/per[ií]odo anterior|no anterior|anterior/);   // tolerante a acento
+      const prevIdx = mPrev ? mPrev.index : -1;
       const nums = [...trecho.matchAll(reNum)].map(m=>({v:m[0], pos:m.index}));
       if(!nums.length) continue;
       // 1º número = valor atual; o último antes de "no período anterior" = comparação
@@ -900,42 +904,95 @@ function parsePlanilha(rows, canal){
   return { atual, publico, topAnuncios: rank.join('\n'), de, ate, avisos, colunas: Object.keys(idx).length };
 }
 
-function importarArquivo(canal, input){
+function lerArquivo(f, como){ // como: 'buffer' | 'texto'
+  return new Promise((ok, no)=>{
+    const r = new FileReader();
+    r.onload = e => ok(e.target.result);
+    r.onerror = () => no(new Error('Falha ao ler o arquivo'));
+    como==='texto' ? r.readAsText(f) : r.readAsArrayBuffer(f);
+  });
+}
+// PDF (texto) → string. Só funciona em PDF com camada de texto (não em PDF-imagem/escaneado).
+async function pdfParaTexto(buf){
+  if(typeof pdfjsLib === 'undefined') throw new Error('Leitor de PDF ainda carregando — tente de novo em 2s');
+  const pdf = await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  let txt = '';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    // agrupa por linha (mesma altura y) pra preservar "rótulo \n número"
+    const linhas = {};
+    tc.items.forEach(it=>{ const y = Math.round(it.transform[5]); (linhas[y] = linhas[y]||[]).push(it.str); });
+    txt += Object.keys(linhas).sort((a,b)=>b-a).map(y=>linhas[y].join(' ')).join('\n') + '\n';
+  }
+  return txt;
+}
+// DOCX (Word) → texto bruto
+async function docxParaTexto(buf){
+  if(typeof JSZip === 'undefined') throw new Error('Leitor de Word ainda carregando — tente de novo em 2s');
+  const zip = await JSZip.loadAsync(buf);
+  const file = zip.file('word/document.xml');
+  if(!file) throw new Error('Documento Word inválido');
+  const xml = await file.async('string');
+  return xml.replace(/<\/w:p>/g,'\n').replace(/<[^>]+>/g,'')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
+}
+
+function aplicarPlanilha(canal, r){
+  if(!Object.keys(r.atual).length) throw new Error('Nenhuma métrica encontrada no arquivo');
+  cur.canais[canal].atual = Object.assign({}, cur.canais[canal].atual, r.atual);
+  if(r.publico.fem != null) cur.publico.fem = String(r.publico.fem);
+  if(r.publico.idades) cur.publico.idades = r.publico.idades;
+  if(r.topAnuncios) cur.publico.topAnuncios = r.topAnuncios;
+  if(r.de && r.ate){ cur.de = r.de; cur.ate = r.ate; cur.deAnt = ''; cur.ateAnt = ''; }
+  salvarCur(); renderEditor();
+  const partes = [`${Object.keys(r.atual).length} métricas`];
+  if(r.publico.fem != null || r.publico.idades) partes.push('público (idade/gênero)');
+  if(r.topAnuncios) partes.push('melhores anúncios');
+  if(r.de && r.ate) partes.push(`período ${fmtData(r.de)}–${fmtData(r.ate)}`);
+  toast('✓ Importado do arquivo: ' + partes.join(' · ') + (r.avisos.length ? ' · ⚠ ' + r.avisos[0] : ''));
+}
+// PDF/Word: extrai texto e usa o parser de texto (rótulo → número). Sem público/criativos.
+function aplicarTexto(canal, texto, origem){
+  const limpo = (texto||'').replace(/\s+\n/g,'\n').trim();
+  if(limpo.length < 30) throw new Error(`${origem} sem texto legível — provavelmente é uma imagem/escaneado. Exporte em Excel ou CSV.`);
+  const r = parseColado(limpo, canal);
+  const nA = Object.keys(r.atual).length;
+  if(!nA) throw new Error(`Não reconheci métricas no ${origem}. O ideal é o Excel/CSV da plataforma (PDF do Meta/Google costuma ser imagem).`);
+  const nP = Object.keys(r.anterior).length;
+  cur.canais[canal].atual = Object.assign({}, cur.canais[canal].atual, r.atual);
+  if(nP) cur.canais[canal].anterior = Object.assign({}, cur.canais[canal].anterior, r.anterior);
+  salvarCur(); renderEditor();
+  toast(`✓ Importado do ${origem}: ${nA} métricas${nP?` + ${nP} do período anterior`:''} · 💡 pra público/criativos, use o Excel/CSV`);
+}
+
+async function importarArquivo(canal, input){
   const f = input.files && input.files[0];
   if(!f) return;
-  if(typeof XLSX === 'undefined'){ toast('Leitor de planilhas ainda carregando — tente de novo em 2s'); input.value=''; return; }
-  const ehCsv = /\.csv$/i.test(f.name);
-  const reader = new FileReader();
-  reader.onload = e => {
-    try{
-      // CSV: lê como TEXTO (resolve acentuação UTF-8/UTF-16 do Google) e raw:true
-      // mantém "1.234,56" como string para o parser pt-BR decidir
-      const wb = ehCsv
-        ? XLSX.read(e.target.result, {type:'string', raw:true})
-        : XLSX.read(e.target.result, {type:'array', cellDates:true});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
-      const r = parsePlanilha(rows, canal);
-      if(!Object.keys(r.atual).length) throw new Error('Nenhuma métrica encontrada no arquivo');
-      // aplica no relatório atual
-      cur.canais[canal].atual = Object.assign({}, cur.canais[canal].atual, r.atual);
-      if(r.publico.fem != null) cur.publico.fem = String(r.publico.fem);
-      if(r.publico.idades) cur.publico.idades = r.publico.idades;
-      if(r.topAnuncios) cur.publico.topAnuncios = r.topAnuncios;
-      if(r.de && r.ate){ cur.de = r.de; cur.ate = r.ate; cur.deAnt = ''; cur.ateAnt = ''; }  // recalcula a comparação
-      salvarCur(); renderEditor();
-      const partes = [`${Object.keys(r.atual).length} métricas`];
-      if(r.publico.fem != null || r.publico.idades) partes.push('público (idade/gênero)');
-      if(r.topAnuncios) partes.push('melhores anúncios');
-      if(r.de && r.ate) partes.push(`período ${fmtData(r.de)}–${fmtData(r.ate)}`);
-      toast('✓ Importado do arquivo: ' + partes.join(' · ') + (r.avisos.length ? ' · ⚠ ' + r.avisos[0] : ''));
-    }catch(err){
-      console.error(err);
-      toast('⚠ ' + (err.message || 'Não consegui ler este arquivo'));
+  const nome = f.name.toLowerCase();
+  toast('Lendo o arquivo...');
+  try{
+    if(/\.(xlsx|xls|csv)$/.test(nome)){
+      if(typeof XLSX === 'undefined') throw new Error('Leitor de planilhas ainda carregando — tente de novo em 2s');
+      const ehCsv = /\.csv$/.test(nome);
+      const dados = await lerArquivo(f, ehCsv?'texto':'buffer');
+      const wb = ehCsv ? XLSX.read(dados, {type:'string', raw:true}) : XLSX.read(dados, {type:'array', cellDates:true});
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:''});
+      aplicarPlanilha(canal, parsePlanilha(rows, canal));
+    } else if(/\.pdf$/.test(nome)){
+      aplicarTexto(canal, await pdfParaTexto(await lerArquivo(f,'buffer')), 'PDF');
+    } else if(/\.(docx)$/.test(nome)){
+      aplicarTexto(canal, await docxParaTexto(await lerArquivo(f,'buffer')), 'Word');
+    } else if(/\.(doc|pptx|ppt|pages|key|numbers)$/.test(nome)){
+      toast('Formato antigo/proprietário não lido direto. Salve como Excel (.xlsx), CSV ou PDF e tente de novo.');
+    } else {
+      toast('Formato não suportado. Use Excel (.xlsx), CSV, PDF ou Word (.docx).');
     }
-    input.value = '';
-  };
-  if(ehCsv) reader.readAsText(f); else reader.readAsArrayBuffer(f);
+  }catch(err){
+    console.error(err);
+    toast('⚠ ' + (err.message || 'Não consegui ler este arquivo'));
+  }
+  input.value = '';
 }
 
 /* ============================================================
@@ -1158,10 +1215,10 @@ function htmlCanal(canal){
     <span class="tk"></span> Incluir ${CANAL_NOME[canal]} neste relatório</label>
   ${!c.ativo?'':`
   <div class="paste" style="margin-top:15px">
-    <div class="muted" style="margin-bottom:8px">📁 <b>Importar o arquivo da plataforma</b> (preenche tudo sozinho — números, público por idade/gênero e melhores anúncios):<br>
-    · <b>Meta:</b> Gerenciador de Anúncios → Relatórios → Exportar → <b>.xlsx</b> ou <b>.csv</b><br>
-    · <b>Google:</b> botão de download → <b>Excel</b> ou <b>.csv</b> <span style="color:var(--tx3)">(PDF não — escolha Excel/CSV no mesmo menu)</span></div>
-    <input type="file" id="arq_${canal}" accept=".xlsx,.xls,.csv" style="padding:7px;font-size:12.5px" onchange="importarArquivo('${canal}', this)">
+    <div class="muted" style="margin-bottom:8px">📁 <b>Importar o arquivo da plataforma</b> — aceita <b>Excel (.xlsx), CSV, PDF e Word (.docx)</b>:<br>
+    · <b>Melhor resultado (números + público + criativos):</b> Excel/CSV → Meta: Gerenciador → Relatórios → Exportar; Google: botão de download → Excel/CSV<br>
+    · <b>PDF/Word:</b> puxa os números principais (Reportei, impressões com texto). <span style="color:var(--tx3)">PDF que é imagem/print não tem texto pra ler — nesse caso use Excel/CSV.</span></div>
+    <input type="file" id="arq_${canal}" accept=".xlsx,.xls,.csv,.pdf,.docx" style="padding:7px;font-size:12.5px" onchange="importarArquivo('${canal}', this)">
     <div class="muted" style="margin:14px 0 8px">⚡ Ou <b>cole o texto</b> do relatório (Reportei, Gerenciador, texto de PDF...):</div>
     <textarea id="paste_${canal}" placeholder="Cole aqui o texto com as métricas de ${CANAL_NOME[canal]}..."></textarea>
     <div style="margin-top:8px"><button class="btn btn-sm" onclick="importarColado('${canal}')">⚡ Preencher campos</button></div>
