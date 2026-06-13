@@ -183,6 +183,27 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 .selo .sn{font-size:25px;font-weight:800;line-height:1.05}
 .selo .sl{font-size:13px;opacity:.92;margin-top:3px;font-weight:500}
 
+/* ---- Resultado em Reais (placar + ROI) ---- */
+.reais{background:linear-gradient(160deg,#0f2e22 0%,#15324a 100%);border-radius:18px;padding:24px 26px;color:#fff;margin-bottom:30px}
+.reais *{color:#fff}
+.reais .rt{font-size:13px;text-transform:uppercase;letter-spacing:1px;opacity:.7;font-weight:700}
+.reais .rfrase{font-size:16px;line-height:1.55;margin:10px 0 18px;font-weight:500}
+.reais .rfrase b{color:#5fe0b2;font-weight:800}
+.reais .rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.reais .rcard{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:13px;padding:14px 16px}
+.reais .rcard .rl{font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+.reais .rcard .rv{font-size:24px;font-weight:800;margin-top:6px;line-height:1}
+.reais .roi{margin-top:16px;background:rgba(95,224,178,.15);border:1px solid rgba(95,224,178,.4);border-radius:12px;padding:13px 16px;font-size:15px;font-weight:600}
+.reais .roi b{color:#5fe0b2;font-weight:800;font-size:18px}
+.reais .robs{font-size:11px;opacity:.6;margin-top:10px}
+
+/* ---- Oportunidades (upsell) ---- */
+.opps{display:grid;gap:11px;margin-top:8px}
+.opp{display:flex;gap:14px;align-items:flex-start;border:1px solid #e7eaf3;border-radius:13px;padding:14px 16px;background:#fcfcfe}
+.opp .oi{font-size:22px;flex-shrink:0;line-height:1.2}
+.opp .on{font-size:14px;font-weight:800;color:#1a1f36}
+.opp .od{font-size:12.8px;color:#5b647e;margin-top:3px;line-height:1.5}
+
 /* ---- Régua: você vs mercado ---- */
 .reguas{margin-top:6px}
 .regua{margin-bottom:18px}
@@ -355,8 +376,11 @@ h2.sec{font-size:18px;margin:6px 0 14px}
         <option value="vendas">Vendas (e-commerce)</option>
         <option value="trafego">Tráfego / Reconhecimento</option></select></div>
       <div class="fld"><label>Cidade</label><input id="cCidade" placeholder="Teresina - PI"></div>
+      <div class="fld"><label>Ticket médio (R$) <span style="color:var(--tx3)">— quanto vale um cliente novo</span></label><input id="cTicket" placeholder="Ex.: 300"></div>
+      <div class="fld"><label>Fechamento (%) <span style="color:var(--tx3)">— de 10 leads, quantos viram cliente</span></label><input id="cFechamento" placeholder="Ex.: 30"></div>
     </div>
-    <div class="fld" style="margin-top:12px"><label>Observações (oferta, ticket médio, metas...)</label><textarea id="cObs"></textarea></div>
+    <div class="muted" style="margin-top:10px;font-size:12px">💡 Ticket e fechamento alimentam o "Resultado em Reais" e o ROI no relatório — traduzem os leads em faturamento. Se não souber, deixe em branco (o app usa estimativas conservadoras).</div>
+    <div class="fld" style="margin-top:12px"><label>Observações (oferta, metas...)</label><textarea id="cObs"></textarea></div>
     <div class="row" style="justify-content:flex-end;margin-top:16px">
       <button class="btn btn-d hide" id="cExcluir" onclick="excluirCliente()">Excluir</button>
       <button class="btn btn-g" onclick="fecharModal('cliOverlay')">Cancelar</button>
@@ -1078,6 +1102,7 @@ function abrirCliente(id){
   $('cliTitulo').textContent = c ? 'Editar cliente' : 'Novo cliente';
   $('cNome').value = c?.nome||''; $('cNicho').value = c?.nicho||'local';
   $('cObjetivo').value = c?.objetivo||'leads'; $('cCidade').value = c?.cidade||'';
+  $('cTicket').value = c?.ticket||''; $('cFechamento').value = c?.fechamento||'';
   $('cObs').value = c?.obs||'';
   $('cExcluir').classList.toggle('hide', !c);
   $('cliOverlay').classList.add('show');
@@ -1085,7 +1110,7 @@ function abrirCliente(id){
 function salvarCliente(){
   const nome = $('cNome').value.trim();
   if(!nome) return toast('Dê um nome ao cliente');
-  const dados = {nome, nicho:$('cNicho').value, objetivo:$('cObjetivo').value, cidade:$('cCidade').value.trim(), obs:$('cObs').value.trim()};
+  const dados = {nome, nicho:$('cNicho').value, objetivo:$('cObjetivo').value, cidade:$('cCidade').value.trim(), ticket:$('cTicket').value.trim(), fechamento:$('cFechamento').value.trim(), obs:$('cObs').value.trim()};
   if(editandoCli){ Object.assign(cliente(editandoCli), dados); }
   else S.clients.push(Object.assign({id:uid()}, dados));
   save(); fecharModal('cliOverlay'); renderClientes(); renderHome(); toast('✓ Cliente salvo');
@@ -1506,6 +1531,49 @@ function microcopy(rep, K, cli){
   return m;
 }
 
+/* ============================================================
+   💰 PACOTE VENDAS — Resultado em Reais, ROI, Oportunidades
+============================================================ */
+function htmlResultadoReais(rep, K, cli){
+  const ticket = parseNum(cli.ticket);
+  if(!ticket || ticket<=0) return '';                 // sem ticket não dá pra traduzir em R$
+  if(!(K.leads>0)) return '';
+  let fech = parseNum(cli.fechamento), suposto=false;
+  if(!fech || fech<=0){ fech = 20; suposto=true; }    // estimativa conservadora
+  const novos = K.leads * fech/100;
+  const fat = novos * ticket;
+  const palavraCli = cli.nicho==='medico' ? 'pacientes' : 'clientes';
+  const roi = K.inv>0 ? fat/K.inv : null;
+  const frase = `Geramos <b>${fmtInt(K.leads)}</b> contatos no mês. Com seu ticket de <b>${fmtMoeda(ticket)}</b>${suposto?' e uma estimativa conservadora de 20% de fechamento':` e ${fmtDec(fech)}% de fechamento`}, isso representa cerca de <b>${fmtInt(Math.round(novos))} ${palavraCli}</b> e até <b>${fmtMoeda(fat)}</b> em ${cli.nicho==='medico'?'consultas':'vendas'}.`;
+  return `<div class="reais keep">
+    <div class="rt">💰 Resultado em reais</div>
+    <div class="rfrase">${frase}</div>
+    <div class="rgrid">
+      <div class="rcard"><div class="rl">Contatos gerados</div><div class="rv">${fmtInt(K.leads)}</div></div>
+      <div class="rcard"><div class="rl">${palavraCli[0].toUpperCase()+palavraCli.slice(1)} estimados</div><div class="rv">${fmtInt(Math.round(novos))}</div></div>
+      <div class="rcard"><div class="rl">Faturamento potencial</div><div class="rv">${fmtMoeda(fat)}</div></div>
+    </div>
+    ${roi && roi>=1 ? `<div class="roi">📈 Retorno: cada R$ 1 investido em mídia se traduziu em <b>${fmtMoeda(roi)}</b> de potencial em ${cli.nicho==='medico'?'consultas':'vendas'} — um retorno de <b>${fmtDec(roi)}×</b>.</div>`:''}
+    <div class="robs">Estimativa baseada no ticket médio${suposto?' e em 20% de fechamento (preencha a taxa real do cliente no cadastro para precisão)':' e na taxa de fechamento informados'}. Não é garantia de vendas.</div>
+  </div>`;
+}
+
+function htmlOportunidades(rep, cli){
+  const ops=[];
+  const ativo = c => rep.canais[c]?.ativo;
+  if(!ativo('google')) ops.push(['🔍','Google Ads — quem já está procurando','Aparecer no topo do Google quando alguém pesquisa pelo seu serviço. É o canal de maior intenção de compra — a pessoa já quer comprar, só falta achar você.']);
+  if(!ativo('meta')) ops.push(['📱','Meta Ads (Instagram e Facebook)','Alcançar gente da sua região que ainda não te conhece, com vídeo e imagem. Gera demanda e enche o topo do funil.']);
+  if(!rep.gmn?.ativo) ops.push(['📍','Google Meu Negócio otimizado','Seu perfil no Google/Maps bem trabalhado faz você aparecer nas buscas locais e no mapa — tráfego gratuito e contínuo, todo dia.']);
+  if(!rep.social?.ativo) ops.push(['📸','Presença no Instagram','O perfil recebe o público dos anúncios. Mantê-lo ativo e com prova social aumenta a conversão de quem chega pela mídia paga.']);
+  if(cli.nicho==='medico') ops.push(['▶️','YouTube Ads Pro','Vídeos seus aparecendo pra pacientes em potencial antes dos conteúdos que eles assistem — autoridade e lembrança de marca no canal de maior consumo de vídeo.']);
+  if(!ops.length) return '';
+  return `<div class="sec keep">
+    <div class="h2"><span class="dot"></span>Oportunidades pra crescer ainda mais</div>
+    <div class="sub">Onde ainda há resultado na mesa — possibilidades para o próximo ciclo</div>
+    <div class="opps">${ops.slice(0,4).map(([i,n,d])=>`<div class="opp"><div class="oi">${i}</div><div><div class="on">${esc(n)}</div><div class="od">${esc(d)}</div></div></div>`).join('')}</div>
+  </div>`;
+}
+
 function montarRelatorio(rep, cli){
   cli = cli || {nome:'Cliente', nicho:'outro', objetivo:'leads'};
   const tipoNome = {mensal:'Relatório Mensal', quinzenal:'Relatório Quinzenal', semanal:'Relatório Semanal', custom:'Relatório de Desempenho'}[rep.tipo]||'Relatório';
@@ -1544,6 +1612,9 @@ function montarRelatorio(rep, cli){
 
   /* ---- SELO DE DESTAQUE DO MÊS ---- */
   html += htmlSeloDestaque(rep, K, cli);
+
+  /* ---- RESULTADO EM REAIS (placar + ROI) ---- */
+  html += htmlResultadoReais(rep, K, cli);
 
   /* ---- VISÃO GERAL DO MÊS ---- */
   const resumo = rep.analise?.resumo || gerarResumo(rep);
@@ -1617,12 +1688,15 @@ function montarRelatorio(rep, cli){
   }
   if(a.proximos){
     html += `<div class="sec keep">
-      <div class="h2"><span class="dot"></span>Próximos passos</div>
-      <div class="sub">O plano para o próximo período</div>
+      <div class="h2"><span class="dot"></span>Plano de ação do próximo mês</div>
+      <div class="sub">O que a Agência Martinelle vai executar no próximo período</div>
       <ol class="passos">${a.proximos.split('\n').filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</ol>
       <div class="assina">Qualquer dúvida sobre este relatório, estou à disposição.<br><b>${esc(AGENCIA.responsavel)}</b> · ${esc(AGENCIA.nome)}</div>
     </div>`;
   }
+
+  /* ---- OPORTUNIDADES (upsell) ---- */
+  html += htmlOportunidades(rep, cli);
 
   html += '</div>'; // .doc
 
@@ -1851,7 +1925,7 @@ function baixarPDF(){
       html2canvas:{scale:2.2, useCORS:true, letterRendering:true, backgroundColor:'#ffffff'},
       jsPDF:{unit:'mm', format:'a4', orientation:'portrait', compress:true},
       // não corta no meio de cards, blocos, gráficos, linhas de tabela ou funil
-      pagebreak:{mode:['css','legacy'], avoid:['.keep','.kc','.ablk','.chartcard','.frow','tr','.topad','.resumo','.selo','.regua','.notaWrap']}
+      pagebreak:{mode:['css','legacy'], avoid:['.keep','.kc','.ablk','.chartcard','.frow','tr','.topad','.resumo','.selo','.regua','.notaWrap','.reais','.opp']}
     }).from($('repBody')).save().then(()=>toast('✓ PDF baixado')).catch(e=>{console.error(e);toast('Erro ao gerar PDF — tente pelo navegador (Imprimir → Salvar como PDF)');});
   }, 350);
 }
