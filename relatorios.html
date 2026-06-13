@@ -164,7 +164,39 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 .kc .kv{font-size:23px;font-weight:800;color:#1a1f36;margin:5px 0 3px;line-height:1}
 .kc.hot .kv{font-size:26px;color:#3a2fb8}
 .kc .kd{font-size:11px;font-weight:700}
+.kc .kt{font-size:10.5px;color:#737b92;margin-top:7px;line-height:1.35;font-weight:500}
 .up{color:#0a9d68}.down{color:#e0455c}.neutro{color:#9aa0b5}
+
+/* ---- Nota do mês (selo circular) ---- */
+.notaWrap{display:flex;align-items:center;gap:16px;background:#f6f7fb;border:1px solid #e7eaf3;border-radius:16px;padding:16px 18px;margin-top:16px}
+.notaWrap .nt{flex:1}
+.notaWrap .nt b{font-size:15px;color:#1a1f36;display:block}
+.notaWrap .nt span{font-size:12.5px;color:#5b647e}
+.notaRing{flex-shrink:0}
+/* hero stat nota na capa */
+.hero-stat.nota .hv{font-size:30px}
+
+/* ---- Selo de destaque do mês (faixa headline) ---- */
+.selo{display:flex;align-items:center;gap:16px;background:linear-gradient(120deg,#6c63ff 0%,#43d9ad 100%);color:#fff;border-radius:18px;padding:20px 24px;margin-bottom:30px}
+.selo *{color:#fff}
+.selo .si{font-size:30px;flex-shrink:0;opacity:.95}
+.selo .sn{font-size:25px;font-weight:800;line-height:1.05}
+.selo .sl{font-size:13px;opacity:.92;margin-top:3px;font-weight:500}
+
+/* ---- Régua: você vs mercado ---- */
+.reguas{margin-top:6px}
+.regua{margin-bottom:18px}
+.regua .rh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.regua .rh b{font-size:13px;color:#1a1f36}
+.regua .rh .rv{font-size:13px;font-weight:800}
+.regua .track{position:relative;height:11px;border-radius:7px;display:flex;overflow:visible}
+.regua .z{height:100%}
+.regua .z:first-child{border-radius:7px 0 0 7px}
+.regua .z:last-child{border-radius:0 7px 7px 0}
+.regua .mark{position:absolute;top:-5px;width:3px;height:21px;background:#1a1f36;border-radius:2px;transform:translateX(-50%)}
+.regua .mark::after{content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1a1f36}
+.regua .leg{display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:#9aa0b5;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.regua .verdict{font-size:11.5px;font-weight:700;margin-top:5px}
 
 /* ---- funil ---- */
 .funnel{margin-top:6px}
@@ -1374,16 +1406,118 @@ function consolidado(rep){
   return o;
 }
 
+/* ============================================================
+   ⭐ PACOTE IMPACTO RÁPIDO — Nota, Selo, Régua, Microcopy
+============================================================ */
+// Nota do mês (0–100) a partir das mesmas regras de benchmark do app
+function calcularNota(rep){
+  const cli = cliente(rep.clientId) || {nicho:'outro'};
+  const pts=[], peso=[];
+  ['meta','google'].forEach(canal=>{
+    const c = rep.canais[canal]; if(!c?.ativo) return;
+    const B = BENCH[canal], at=c.atual||{}, an=c.anterior||{};
+    const d = calcDerivadas(canal, at);
+    if(d.ctr!=null){
+      let s = d.ctr>=B.ctrOtimo ? 100 : d.ctr<=B.ctrRuim ? 38 : 38 + (d.ctr-B.ctrRuim)/(B.ctrOtimo-B.ctrRuim)*62;
+      pts.push(Math.max(0,Math.min(100,s))); peso.push(1);
+    }
+    if(d.cpl!=null){
+      const f = B.cpl[cli.nicho]||B.cpl.outro;
+      let s = d.cpl<=f[1] ? 100 - Math.max(0,(d.cpl-f[0]))/((f[1]-f[0])||1)*15 : Math.max(28, 85 - (d.cpl-f[1])/f[1]*55);
+      pts.push(Math.max(0,Math.min(100,s))); peso.push(1.4);
+    }
+    const lt=leadsTotais(canal,at), ltA=leadsTotais(canal,an);
+    if(lt!=null && ltA!=null && ltA>0){
+      pts.push(Math.max(20,Math.min(100, 70 + (lt-ltA)/ltA*120))); peso.push(1);
+    }
+    if(canal==='meta' && d.freq!=null){ pts.push(d.freq>B.freqAlerta?45:85); peso.push(0.6); }
+  });
+  if(!pts.length) return null;
+  const soma = pts.reduce((a,p,i)=>a+p*peso[i],0), totp = peso.reduce((a,b)=>a+b,0);
+  let nota = Math.max(12, Math.min(98, Math.round(soma/totp)));
+  const cor = nota>=75 ? '#0a9d68' : nota>=50 ? '#e0a020' : '#e0455c';
+  const label = nota>=82?'Mês Excelente' : nota>=70?'Mês Forte' : nota>=55?'Mês Bom' : nota>=45?'Mês Regular' : 'Mês de Ajustes';
+  return {nota, label, cor};
+}
+function svgNotaRing(nota, cor, size){
+  const r = (size-14)/2, c = 2*Math.PI*r, off = c*(1-nota/100), cx=size/2;
+  return `<svg class="notaRing" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="#e7eaf3" stroke-width="9"/>
+    <circle cx="${cx}" cy="${cx}" r="${r}" fill="none" stroke="${cor}" stroke-width="9" stroke-linecap="round"
+      stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 ${cx} ${cx})"/>
+    <text x="50%" y="50%" dy="-1" text-anchor="middle" dominant-baseline="middle" font-size="${size*0.34}" font-weight="800" fill="#1a1f36">${nota}</text>
+    <text x="50%" y="50%" dy="${size*0.20}" text-anchor="middle" dominant-baseline="middle" font-size="${size*0.13}" fill="#9aa0b5" font-weight="700">/100</text>
+  </svg>`;
+}
+
+// Selo de destaque do mês — a maior conquista vira manchete
+function htmlSeloDestaque(rep, K, cli){
+  const dests = (rep.analise?.destaques||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  let manchete='', sub='';
+  if(K.leads>0){
+    manchete = `${fmtInt(K.leads)} ${cli.objetivo==='vendas'?'vendas':'novos contatos'} este mês`;
+    sub = K.cpl!=null ? `a ${fmtMoeda(K.cpl)} cada · ${fmtMoeda(K.inv)} investidos` : `${fmtMoeda(K.inv)} investidos em mídia`;
+  } else if(dests.length){
+    manchete = dests[0].replace(/^[^:]+:\s*/,''); sub = 'Destaque do período';
+  } else { return ''; }
+  return `<div class="selo keep"><div class="si">🏆</div><div><div class="sn">${esc(manchete)}</div><div class="sl">${esc(sub)}</div></div></div>`;
+}
+
+// Régua "você vs mercado": barra com zonas + marcador
+function reguaBar(titulo, valor, fmt, zonas, melhor){
+  // zonas: [{cor, ate}] em ordem; escala = ultima 'ate'. melhor: 'alto'|'baixo'
+  const escala = zonas[zonas.length-1].ate;
+  const posPct = Math.max(2, Math.min(98, valor/escala*100));
+  let larg=0, segs='';
+  zonas.forEach(z=>{ const w=(z.ate-larg)/escala*100; segs+=`<div class="z" style="width:${w}%;background:${z.cor}"></div>`; larg=z.ate; });
+  // veredito pela zona onde caiu
+  const idx = zonas.findIndex(z=>valor<=z.ate);
+  const nivel = idx<=0?(melhor==='alto'?'abaixo do mercado':'excelente') : idx>=zonas.length-1?(melhor==='alto'?'excelente':'acima do mercado') : 'na média';
+  const corTxt = (nivel==='excelente')?'#0a9d68':(nivel==='na média')?'#c98a10':'#e0455c';
+  return `<div class="regua keep"><div class="rh"><b>${titulo}</b><span class="rv" style="color:${corTxt}">${fmt(valor)} · ${nivel}</span></div>
+    <div class="track">${segs}<div class="mark" style="left:${posPct}%"></div></div>
+    <div class="leg"><span>${melhor==='alto'?'fraco':'ótimo'}</span><span>${melhor==='alto'?'ótimo':'caro'}</span></div></div>`;
+}
+function htmlReguaBenchmark(rep, canal){
+  const cli = cliente(rep.clientId)||{nicho:'outro'};
+  const B = BENCH[canal], at=rep.canais[canal].atual||{}, d=calcDerivadas(canal, at);
+  const barras=[];
+  if(d.ctr!=null){
+    barras.push(reguaBar('CTR (taxa de cliques)', d.ctr, fmtPct,
+      [{cor:'#f3c0c6',ate:B.ctrRuim},{cor:'#f6e2b0',ate:B.ctrMedio},{cor:'#bfe8d6',ate:Math.max(B.ctrOtimo*1.25, d.ctr*1.1)}], 'alto'));
+  }
+  if(d.cpl!=null){
+    const f = B.cpl[cli.nicho]||B.cpl.outro;
+    barras.push(reguaBar('Custo por '+(canal==='meta'?'lead':'conversão'), d.cpl, fmtMoeda,
+      [{cor:'#bfe8d6',ate:f[1]},{cor:'#f6e2b0',ate:f[1]*1.8},{cor:'#f3c0c6',ate:Math.max(f[1]*2.6, d.cpl*1.1)}], 'baixo'));
+  }
+  if(!barras.length) return '';
+  return `<div class="keep" style="margin-top:24px"><div class="sub" style="font-weight:700;color:#4a5270;margin-bottom:10px">Como você está vs o mercado</div><div class="reguas">${barras.join('')}</div></div>`;
+}
+
+// Microcopy: traduz a métrica pra linguagem de dono
+function microcopy(rep, K, cli){
+  const m={};
+  if(K.cpl!=null) m.cpl = `Cada ${cli.objetivo==='vendas'?'venda':'novo contato'} custou ${fmtMoeda(K.cpl)}.`;
+  if(K.impr>0) m.impr = `Sua marca apareceu ${fmtInt(K.impr)} vezes pra gente da região.`;
+  if(K.leads>0) m.leads = `${fmtInt(K.leads)} pessoas demonstraram interesse no mês.`;
+  if(K.inv>0) m.inv = `Total aplicado em anúncios no período.`;
+  if(K.roas!=null) m.roas = `Cada R$ 1 investido trouxe ${fmtMoeda(K.roas)} em vendas.`;
+  return m;
+}
+
 function montarRelatorio(rep, cli){
   cli = cli || {nome:'Cliente', nicho:'outro', objetivo:'leads'};
   const tipoNome = {mensal:'Relatório Mensal', quinzenal:'Relatório Quinzenal', semanal:'Relatório Semanal', custom:'Relatório de Desempenho'}[rep.tipo]||'Relatório';
   const canaisAtivos = ['meta','google'].filter(c=>rep.canais[c]?.ativo);
   const ehVendas = cli.objetivo==='vendas';
   const K = consolidado(rep);
+  const nota = calcularNota(rep);
+  const micro = microcopy(rep, K, cli);
   const rotuloRes = ehVendas ? 'Vendas' : 'Resultados';
   let html = '';
 
-  /* ===== CAPA (enche a página + 3 números-chave do mês) ===== */
+  /* ===== CAPA (enche a página + números-chave do mês) ===== */
   const heroStats = [
     {l:'Investimento no mês', v:fmtMoeda(K.inv), d:K.temAnt&&K.invP?deltaTxt(K.inv,K.invP,null):''},
     ehVendas && K.valorCompras>0
@@ -1391,6 +1525,7 @@ function montarRelatorio(rep, cli){
       : {l:rotuloRes+' gerados', v:fmtInt(K.leads), d:K.temAnt?deltaTxt(K.leads,K.leadsP,false):''},
     {l:ehVendas?'Custo por venda':'Custo por resultado', v:K.cpl!=null?fmtMoeda(K.cpl):'—', d:K.temAnt&&K.cplP?deltaTxt(K.cpl,K.cplP,true):''},
   ];
+  if(nota) heroStats.push({l:'Nota do mês', v:String(nota.nota), d:nota.label, cor:nota.cor});
   html += `<div class="cover">
     <div class="c-top"><div class="c-logo">M</div><div class="c-ag"><b>${esc(AGENCIA.nome)}</b><span>${esc(AGENCIA.tagline)}</span></div></div>
     <div class="c-mid">
@@ -1400,20 +1535,24 @@ function montarRelatorio(rep, cli){
       <div class="c-per">Preparado por ${esc(AGENCIA.responsavel)}</div>
       <div class="c-badges">${canaisAtivos.map(c=>`<span class="rb">${CANAL_NOME[c].toUpperCase()}</span>`).join('')}${rep.gmn?.ativo?'<span class="rb">GOOGLE MEU NEGÓCIO</span>':''}${rep.social?.ativo?'<span class="rb">INSTAGRAM</span>':''}</div>
     </div>
-    <div class="hero-stats">${heroStats.map(s=>`<div class="hero-stat"><div class="hl">${s.l}</div><div class="hv">${s.v}</div>${s.d?`<div class="hd">${s.d}</div>`:''}</div>`).join('')}</div>
+    <div class="hero-stats" style="grid-template-columns:repeat(${heroStats.length},1fr)">${heroStats.map(s=>`<div class="hero-stat${s.cor?' nota':''}"><div class="hl">${s.l}</div><div class="hv"${s.cor?` style="color:${s.cor}"`:''}>${s.v}</div>${s.d?`<div class="hd">${s.d}</div>`:''}</div>`).join('')}</div>
     <div class="c-foot">${esc(AGENCIA.email)} · CNPJ ${esc(AGENCIA.cnpj)} · ${esc(AGENCIA.cidade)}</div>
   </div>`;
 
   /* ===== CORPO (fluxo contínuo — sem desperdício de página) ===== */
   html += '<div class="doc">';
 
+  /* ---- SELO DE DESTAQUE DO MÊS ---- */
+  html += htmlSeloDestaque(rep, K, cli);
+
   /* ---- VISÃO GERAL DO MÊS ---- */
   const resumo = rep.analise?.resumo || gerarResumo(rep);
   html += `<div class="sec"><div class="keep">
     <div class="h2"><span class="dot"></span>Visão geral do mês</div>
     <div class="sub">${esc(cli.nome)} · ${fmtData(rep.de)} a ${fmtData(rep.ate)}${rep.deAnt?` · comparado a ${fmtData(rep.deAnt)}–${fmtData(rep.ateAnt)}`:''}</div>
-    <div class="resumo">${esc(resumo)}</div></div>
-    ${htmlKpisGerais(K, ehVendas, rep)}
+    <div class="resumo">${esc(resumo)}</div>
+    ${nota?`<div class="notaWrap">${svgNotaRing(nota.nota, nota.cor, 86)}<div class="nt"><b>Nota do mês: ${nota.label}</b><span>Uma média do desempenho vs os parâmetros de mercado — CTR, custo por resultado, frequência e evolução. Quanto mais perto de 100, melhor o mês.</span></div></div>`:''}</div>
+    ${htmlKpisGerais(K, ehVendas, rep, micro)}
     ${htmlGraficoVisao(rep, K, canaisAtivos)}
   </div>`;
 
@@ -1507,19 +1646,20 @@ function deltaTxt(atual, anterior, inverso){
   return `${seta} ${Math.abs(v).toLocaleString('pt-BR',{maximumFractionDigits:1})}% vs período anterior`;
 }
 
-// KPI grid consolidado do mês (Visão Geral)
-function htmlKpisGerais(K, ehVendas, rep){
+// KPI grid consolidado do mês (Visão Geral) — com microcopy em linguagem de dono
+function htmlKpisGerais(K, ehVendas, rep, micro){
+  micro = micro || {};
   const cards = [];
-  const card = (label, val, deltaAt, deltaP, inv, hot) =>
-    cards.push(`<div class="kc${hot?' hot':''}"><div class="kl">${label}</div><div class="kv">${val}</div>${K.temAnt&&deltaP!=null?deltaHtml(deltaAt,deltaP,inv):''}</div>`);
-  card('Investimento', fmtMoeda(K.inv), K.inv, K.invP, null, false);
+  const card = (label, val, deltaAt, deltaP, inv, hot, kt) =>
+    cards.push(`<div class="kc${hot?' hot':''}"><div class="kl">${label}</div><div class="kv">${val}</div>${K.temAnt&&deltaP!=null?deltaHtml(deltaAt,deltaP,inv):''}${kt?`<div class="kt">${esc(kt)}</div>`:''}</div>`);
+  card('Investimento', fmtMoeda(K.inv), K.inv, K.invP, null, false, micro.inv);
   if(K.alcance>0) card('Alcance', fmtInt(K.alcance), K.alcance, K.alcanceP, false);
-  card('Impressões', fmtInt(K.impr), K.impr, K.imprP, false);
+  card('Impressões', fmtInt(K.impr), K.impr, K.imprP, false, false, micro.impr);
   card('Cliques', fmtInt(K.cliques), K.cliques, K.cliquesP, false);
   if(K.ctr!=null) card('CTR', fmtPct(K.ctr), K.ctr, K.ctrP, false);
-  card(ehVendas?'Vendas':'Resultados', fmtInt(K.leads), K.leads, K.leadsP, false, true);
-  if(K.cpl!=null) card(ehVendas?'Custo por venda':'Custo por resultado', fmtMoeda(K.cpl), K.cpl, K.cplP, true, true);
-  if(K.roas!=null) card('ROAS', fmtDec(K.roas), K.roas, null, false);
+  card(ehVendas?'Vendas':'Resultados', fmtInt(K.leads), K.leads, K.leadsP, false, true, micro.leads);
+  if(K.cpl!=null) card(ehVendas?'Custo por venda':'Custo por resultado', fmtMoeda(K.cpl), K.cpl, K.cplP, true, true, micro.cpl);
+  if(K.roas!=null) card('ROAS', fmtDec(K.roas), K.roas, null, false, false, micro.roas);
   return `<div class="kgrid keep" style="margin-top:16px">${cards.join('')}</div>`;
 }
 
@@ -1601,6 +1741,7 @@ function htmlCanalRelatorio(rep, canal, cli){
     <div class="h2"><span class="dot"></span>${CANAL_NOME[canal]}</div>
     <div class="sub">Desempenho detalhado do canal${temAnt?' · variações vs período anterior':''}</div>
     <div class="kgrid">${kpis}</div></div>
+    ${htmlReguaBenchmark(rep, canal)}
     ${funil}
     ${tbl}
     ${c.obs?`<div class="resumo keep" style="margin-top:22px">${esc(c.obs)}</div>`:''}
@@ -1710,7 +1851,7 @@ function baixarPDF(){
       html2canvas:{scale:2.2, useCORS:true, letterRendering:true, backgroundColor:'#ffffff'},
       jsPDF:{unit:'mm', format:'a4', orientation:'portrait', compress:true},
       // não corta no meio de cards, blocos, gráficos, linhas de tabela ou funil
-      pagebreak:{mode:['css','legacy'], avoid:['.keep','.kc','.ablk','.chartcard','.frow','tr','.topad','.resumo']}
+      pagebreak:{mode:['css','legacy'], avoid:['.keep','.kc','.ablk','.chartcard','.frow','tr','.topad','.resumo','.selo','.regua','.notaWrap']}
     }).from($('repBody')).save().then(()=>toast('✓ PDF baixado')).catch(e=>{console.error(e);toast('Erro ao gerar PDF — tente pelo navegador (Imprimir → Salvar como PDF)');});
   }, 350);
 }
