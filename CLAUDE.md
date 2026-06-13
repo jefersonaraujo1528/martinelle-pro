@@ -42,7 +42,7 @@ Jeferson Araujo Martinelle — Diretor Fundador da Agência Martinelle. Trabalha
 ### Médicos (Pacotes Pro)
 - Abordagem: **representante**, visita consultiva — **NUNCA dossiê**
 - Canal primário: **Google Ads** (intenção de busca — não Instagram)
-- Preços: R$1.200/mês (Google Pro ou Meta Pro) | R$2.500/mês (YouTube Pro)
+- Preços: R$1.200/mês (Google Pro ou Meta Pro) | R$3.200/mês (YouTube Pro com pontualidade; R$4.000 cheio)
 - CFM Resolução 2.336/2023: sem prometer resultados, sem "o melhor", sem depoimentos identificados
 - Qualificação: menos de 50 anos + sem posicionamento digital
 
