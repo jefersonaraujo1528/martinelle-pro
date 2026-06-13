@@ -6,6 +6,7 @@
 <title>Relatórios de Tráfego — Agência Martinelle</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 /* ============ BASE (tema escuro — painel interno) ============ */
 :root{
@@ -664,6 +665,229 @@ function importarColado(canal){
 }
 
 /* ============================================================
+   📁 IMPORTAR ARQUIVO (Excel/CSV exportado do Meta ou Google)
+   Lê o "Raw Data Report" do Meta (linhas por conjunto × idade ×
+   gênero × dia) e os exports de campanha do Google. Soma as
+   métricas, monta o público e ranqueia os melhores anúncios.
+============================================================ */
+function normTxt(s){ return String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+
+// célula → número. Números do .xlsx chegam como float (usa direto); strings
+// passam pelo parser pt-BR (parseNum já decide ponto-milhar × ponto-decimal)
+function numCelula(v){
+  if(v==null || v==='') return 0;
+  if(typeof v === 'number') return v;
+  const s = String(v).replace(/[%<>]/g,'').replace(/^\s*-+\s*$/,'');
+  if(!s.trim()) return 0;
+  return parseNum(s) || 0;
+}
+function dataCelula(v){
+  if(v==null || v==='') return null;
+  if(v instanceof Date && !isNaN(v)) return v.toISOString().slice(0,10);
+  if(typeof v === 'number' && v > 30000 && v < 60000){   // serial do Excel
+    const d = new Date(Date.UTC(1899,11,30) + v*86400000);
+    return d.toISOString().slice(0,10);
+  }
+  const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[0];
+  const br = String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if(br) return `${br[3]}-${br[2]}-${br[1]}`;
+  return null;
+}
+
+// colunas que procuramos nos cabeçalhos (m = contém; naoM = não pode conter)
+const COLS_ARQ = {
+  meta: [
+    {campo:'investimento', m:['valor usado','valor gasto','amount spent']},
+    {campo:'impressoes',   m:['impressoes','impressions'], naoM:['custo','cpm','1.000','1,000','mil','parcela']},
+    {campo:'alcance',      m:['alcance','reach'], naoM:['custo','taxa']},
+    {campo:'cliques',      m:['cliques no link','link clicks'], naoM:['custo','cpc','taxa','ctr','todos']},
+    {campo:'lp',           m:['visualizacoes da pagina de destino','landing page views'], naoM:['custo']},
+    {campo:'leads',        m:['conversas por mensagem inicia','novos contatos de mensagem','messaging conversations started','cadastros concluidos','leads'], naoM:['custo','cost']},
+    {campo:'compras',      m:['compras','purchases'], naoM:['valor','custo','cost','inicia','finaliza','adicion','conversao','value']},
+    {campo:'valorCompras', m:['valor de conversao de compras','valor de conversao da compra','purchases conversion value']},
+  ],
+  google: [
+    {campo:'investimento', m:['custo','cost'], naoM:['por','/','medio','cpc','cpm','conv','resultado']},
+    {campo:'impressoes',   m:['impressoes','impr.','impressions'], naoM:['parcela','share','perdida','superior','%','cpm','custo']},
+    {campo:'cliques',      m:['cliques','clicks'], naoM:['taxa','ctr','custo','%','invalidos']},
+    {campo:'conversoes',   m:['conversoes','conversions'], naoM:['valor','custo','taxa','cost','value','rate','visualizacao','todas as']},
+    {campo:'ligacoes',     m:['chamadas telefonicas','ligacoes','phone calls','chamadas'], naoM:['custo','taxa']},
+    {campo:'valorConv',    m:['valor de conversao','valor da conversao','conv. value','valor conv']},
+  ]
+};
+const COLS_EXTRA = {
+  idade:   ['idade','age'],
+  genero:  ['genero','gender','sexo'],
+  anuncio: ['nome do anuncio','ad name'],
+  conjunto:['nome do conjunto de anuncios','ad set name','grupo de anuncios','ad group'],
+  campanha:['nome da campanha','campanha','campaign'],
+  dia:     ['dia','day','data'],
+  iniRel:  ['inicio dos relatorios','reporting starts'],
+  fimRel:  ['encerramento dos relatorios','reporting ends'],
+  tipoRes: ['tipo de resultado','result type'],
+  resultados: ['resultados','results'],
+  parcelaImpr: ['parcela de impressoes','impression share'],
+};
+
+function achaCol(cab, m, naoM){
+  for(const alvo of m){
+    const i = cab.findIndex(h => h.includes(alvo) && !(naoM||[]).some(x => h.includes(x)));
+    if(i > -1) return i;
+  }
+  return -1;
+}
+
+function parsePlanilha(rows, canal){
+  // 1) localizar a linha de cabeçalho (a que mais contém rótulos conhecidos)
+  const alvos = COLS_ARQ[canal].flatMap(c=>c.m).concat(Object.values(COLS_EXTRA).flat());
+  let hIdx = -1, hScore = 0;
+  for(let i = 0; i < Math.min(rows.length, 15); i++){
+    const cab = (rows[i]||[]).map(normTxt);
+    const score = cab.filter(h => h && alvos.some(a => h.includes(a))).length;
+    if(score > hScore){ hScore = score; hIdx = i; }
+  }
+  if(hIdx < 0 || hScore < 2) throw new Error('Não reconheci os cabeçalhos — exporte como .xlsx/.csv padrão da plataforma');
+  const cab = rows[hIdx].map(normTxt);
+
+  // 2) mapear colunas
+  const idx = {};
+  COLS_ARQ[canal].forEach(c => { const i = achaCol(cab, c.m, c.naoM); if(i > -1) idx[c.campo] = i; });
+  const ex = {};
+  Object.entries(COLS_EXTRA).forEach(([k, m]) => { const i = achaCol(cab, m, k==='campanha'?['tipo']:[]); if(i > -1) ex[k] = i; });
+
+  // 3) somar linhas de dados (pulando totais do Google)
+  const soma = {}; Object.keys(idx).forEach(k => soma[k] = 0);
+  // público: acumula em 3 níveis (leads > cliques > impressões) — com poucos
+  // leads, cliques/impressões dão um retrato estatístico melhor do público
+  const NIVEIS = [idx.leads ?? idx.conversoes, idx.cliques, idx.impressoes];
+  const gen = {f:[0,0,0], m:[0,0,0]}, idades = {}, criativos = {};
+  let de = null, ate = null, somaResultTipo = 0;
+  let parcelaAcum = 0, parcelaPeso = 0;
+
+  for(let i = hIdx+1; i < rows.length; i++){
+    const r = rows[i]; if(!r || !r.length) continue;
+    const prim = normTxt(r.find(c => c !== '' && c != null));
+    if(!prim) continue;
+    if(/^total/.test(prim)) continue;                          // "Total: conta" etc. (Google)
+    Object.entries(idx).forEach(([k, ci]) => soma[k] += numCelula(r[ci]));
+
+    // leads via "Resultados" quando o tipo de resultado é conversa/lead (fallback do Meta)
+    if(ex.tipoRes != null && ex.resultados != null && /conversa|mensagem|lead|cadastro|contato/.test(normTxt(r[ex.tipoRes])))
+      somaResultTipo += numCelula(r[ex.resultados]);
+
+    // público (idade × gênero) acumulado nos 3 níveis
+    const pesos = NIVEIS.map(ci => ci != null ? numCelula(r[ci]) : 0);
+    if(ex.genero != null){
+      const g = normTxt(r[ex.genero]);
+      const alvo = (g === 'female' || g === 'feminino' || g === 'mulheres') ? 'f'
+                 : (g === 'male' || g === 'masculino' || g === 'homens') ? 'm' : null;
+      if(alvo) pesos.forEach((p,n) => gen[alvo][n] += p);
+    }
+    if(ex.idade != null){
+      const fx = String(r[ex.idade]||'').trim();
+      if(/^\d{2}[-+]/.test(fx)){
+        idades[fx] = idades[fx] || [0,0,0];
+        pesos.forEach((p,n) => idades[fx][n] += p);
+      }
+    }
+    // criativos / campanhas
+    const nomeIdx = ex.anuncio ?? ex.conjunto ?? ex.campanha;
+    if(nomeIdx != null && r[nomeIdx]){
+      const nome = String(r[nomeIdx]).trim();
+      if(nome){
+        const c = criativos[nome] = criativos[nome] || {leads:0, cliques:0, inv:0};
+        c.leads   += idx.leads != null ? numCelula(r[idx.leads]) : (idx.conversoes != null ? numCelula(r[idx.conversoes]) : 0);
+        c.cliques += idx.cliques != null ? numCelula(r[idx.cliques]) : 0;
+        c.inv     += idx.investimento != null ? numCelula(r[idx.investimento]) : 0;
+      }
+    }
+    // período
+    [ex.dia, ex.iniRel].forEach(ci => { const d = ci != null ? dataCelula(r[ci]) : null; if(d){ if(!de || d < de) de = d; if(!ate || d > ate) ate = d; } });
+    if(ex.fimRel != null){ const d = dataCelula(r[ex.fimRel]); if(d && (!ate || d > ate)) ate = d; }
+    // parcela de impressões (média ponderada por impressões)
+    if(ex.parcelaImpr != null){
+      const p = numCelula(r[ex.parcelaImpr]);
+      const w = idx.impressoes != null ? numCelula(r[idx.impressoes]) : 1;
+      if(p > 0 && w > 0){ parcelaAcum += p * w; parcelaPeso += w; }
+    }
+  }
+
+  // 4) montar resultado
+  const avisos = [];
+  const atual = {};
+  Object.entries(soma).forEach(([k, v]) => { if(v > 0) atual[k] = Math.round(v * 100) / 100; });
+  if((!atual.leads || atual.leads === 0) && somaResultTipo > 0){ atual.leads = somaResultTipo; }
+  if(canal === 'google' && parcelaPeso > 0) atual.parcelaImpr = Math.round(parcelaAcum / parcelaPeso * 100) / 100;
+  if(atual.alcance && ex.dia != null) avisos.push('Alcance somado por dia/segmento (aproximação) — para o alcance único exato, confira o total no Gerenciador');
+
+  // público — usa o nível mais representativo: leads se ≥10, senão cliques se ≥10, senão impressões
+  const publico = {};
+  const totaisNivel = [0,1,2].map(n => gen.f[n] + gen.m[n]);
+  const nivel = totaisNivel[0] >= 10 ? 0 : totaisNivel[1] >= 10 ? 1 : 2;
+  const totGen = gen.f[nivel] + gen.m[nivel];
+  if(totGen > 0) publico.fem = Math.round(gen.f[nivel] / totGen * 100);
+  const FAIXAS = ['18-24','25-34','35-44','45-54','55-64','65+'];
+  const totId = Object.values(idades).reduce((a,v)=>a+v[nivel], 0);
+  if(totId > 0){
+    publico.idades = FAIXAS.map(f => {
+      const v = Object.entries(idades).filter(([k])=>k.startsWith(f.slice(0,2))).reduce((a,[,vv])=>a+vv[nivel], 0);
+      return {faixa:f, pct:String(Math.round(v/totId*100))};
+    });
+  }
+  // melhores anúncios (top 3 por leads, depois cliques)
+  const rank = Object.entries(criativos)
+    .filter(([,c]) => c.leads > 0 || c.cliques > 0)
+    .sort((a,b) => (b[1].leads - a[1].leads) || (b[1].cliques - a[1].cliques))
+    .slice(0,3)
+    .map(([nome,c]) => {
+      const cpl = c.leads > 0 && c.inv > 0 ? ` — CPL ${fmtMoeda(c.inv/c.leads)}` : '';
+      const res = c.leads > 0 ? `${fmtInt(c.leads)} leads` : `${fmtInt(c.cliques)} cliques`;
+      return `${nome} — ${res}${cpl}`;
+    });
+
+  return { atual, publico, topAnuncios: rank.join('\n'), de, ate, avisos, colunas: Object.keys(idx).length };
+}
+
+function importarArquivo(canal, input){
+  const f = input.files && input.files[0];
+  if(!f) return;
+  if(typeof XLSX === 'undefined'){ toast('Leitor de planilhas ainda carregando — tente de novo em 2s'); input.value=''; return; }
+  const ehCsv = /\.csv$/i.test(f.name);
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      // CSV: lê como TEXTO (resolve acentuação UTF-8/UTF-16 do Google) e raw:true
+      // mantém "1.234,56" como string para o parser pt-BR decidir
+      const wb = ehCsv
+        ? XLSX.read(e.target.result, {type:'string', raw:true})
+        : XLSX.read(e.target.result, {type:'array', cellDates:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+      const r = parsePlanilha(rows, canal);
+      if(!Object.keys(r.atual).length) throw new Error('Nenhuma métrica encontrada no arquivo');
+      // aplica no relatório atual
+      cur.canais[canal].atual = Object.assign({}, cur.canais[canal].atual, r.atual);
+      if(r.publico.fem != null) cur.publico.fem = String(r.publico.fem);
+      if(r.publico.idades) cur.publico.idades = r.publico.idades;
+      if(r.topAnuncios) cur.publico.topAnuncios = r.topAnuncios;
+      if(r.de && r.ate){ cur.de = r.de; cur.ate = r.ate; cur.deAnt = ''; cur.ateAnt = ''; }  // recalcula a comparação
+      salvarCur(); renderEditor();
+      const partes = [`${Object.keys(r.atual).length} métricas`];
+      if(r.publico.fem != null || r.publico.idades) partes.push('público (idade/gênero)');
+      if(r.topAnuncios) partes.push('melhores anúncios');
+      if(r.de && r.ate) partes.push(`período ${fmtData(r.de)}–${fmtData(r.ate)}`);
+      toast('✓ Importado do arquivo: ' + partes.join(' · ') + (r.avisos.length ? ' · ⚠ ' + r.avisos[0] : ''));
+    }catch(err){
+      console.error(err);
+      toast('⚠ ' + (err.message || 'Não consegui ler este arquivo'));
+    }
+    input.value = '';
+  };
+  if(ehCsv) reader.readAsText(f); else reader.readAsArrayBuffer(f);
+}
+
+/* ============================================================
    🔐 LOGIN
 ============================================================ */
 function tryLogin(){
@@ -879,7 +1103,11 @@ function htmlCanal(canal){
     <span class="tk"></span> Incluir ${CANAL_NOME[canal]} neste relatório</label>
   ${!c.ativo?'':`
   <div class="paste" style="margin-top:15px">
-    <div class="muted" style="margin-bottom:8px">⚡ <b>Importação rápida:</b> copie o texto do relatório (Gerenciador, Reportei, print convertido...) e cole aqui — os campos são preenchidos sozinhos, inclusive o período anterior.</div>
+    <div class="muted" style="margin-bottom:8px">📁 <b>Importar o arquivo da plataforma</b> (preenche tudo sozinho — números, público por idade/gênero e melhores anúncios):<br>
+    · <b>Meta:</b> Gerenciador de Anúncios → Relatórios → Exportar → <b>.xlsx</b> ou <b>.csv</b><br>
+    · <b>Google:</b> botão de download → <b>Excel</b> ou <b>.csv</b> <span style="color:var(--tx3)">(PDF não — escolha Excel/CSV no mesmo menu)</span></div>
+    <input type="file" id="arq_${canal}" accept=".xlsx,.xls,.csv" style="padding:7px;font-size:12.5px" onchange="importarArquivo('${canal}', this)">
+    <div class="muted" style="margin:14px 0 8px">⚡ Ou <b>cole o texto</b> do relatório (Reportei, Gerenciador, texto de PDF...):</div>
     <textarea id="paste_${canal}" placeholder="Cole aqui o texto com as métricas de ${CANAL_NOME[canal]}..."></textarea>
     <div style="margin-top:8px"><button class="btn btn-sm" onclick="importarColado('${canal}')">⚡ Preencher campos</button></div>
   </div>
