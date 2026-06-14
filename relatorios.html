@@ -118,18 +118,19 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 #viewReport{background:#e9ecf4;color:#1a1f36;min-height:100vh}
 .rep-actions{position:sticky;top:0;z-index:60;background:#11131a;padding:11px 16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .rep{width:800px;max-width:100%;margin:0 auto;background:#fff;color:#1a1f36;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --ac:#6c63ff;--ac2:#43d9ad;--acg:linear-gradient(135deg,var(--ac),var(--ac2))}
 .doc{padding:50px 54px;color:#1a1f36}
 @media(max-width:640px){.rep{width:100%}.doc{padding:28px 20px}}
 .sec{margin-bottom:34px}
 .keep{break-inside:avoid;page-break-inside:avoid}
 
 /* ---- CAPA (enche a página inteira) ---- */
-.cover{min-height:1040px;background:linear-gradient(155deg,#14162a 0%,#222a56 52%,#163f30 100%);
+.cover{min-height:1010px;background:linear-gradient(155deg,#14162a 0%,#222a56 52%,#163f30 100%);
   color:#fff;padding:54px 56px;display:flex;flex-direction:column;page-break-after:always}
 .cover *{color:#fff}
 .c-top{display:flex;align-items:center;gap:13px}
-.c-logo{width:54px;height:54px;border-radius:15px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:25px;flex-shrink:0}
+.c-logo{width:54px;height:54px;border-radius:15px;background:var(--acg);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:25px;flex-shrink:0}
 .c-ag b{font-size:15px;display:block;font-weight:700}
 .c-ag span{font-size:11.5px;opacity:.75}
 .c-mid{margin:auto 0;padding:36px 0}
@@ -148,11 +149,19 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 
 /* ---- títulos de seção ---- */
 .h2{font-size:21px;font-weight:800;color:#1a1f36;display:flex;align-items:center;gap:11px;margin-bottom:4px}
-.h2 .dot{width:19px;height:19px;border-radius:6px;background:var(--grad);flex-shrink:0}
-.sub{font-size:12.5px;color:#828aa0;margin-bottom:18px}
+.h2 .dot{width:19px;height:19px;border-radius:6px;background:var(--acg);flex-shrink:0}
+.sub{font-size:12.5px;color:#6c7488;margin-bottom:18px}
+
+/* ---- Sumário (conteúdo do relatório) ---- */
+.sumario{border:1px solid #e7eaf3;border-radius:16px;padding:18px 22px;margin-bottom:30px;background:#fbfbfd}
+.sumario .st{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--ac);margin-bottom:13px}
+.sumario .sgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 26px}
+@media(max-width:640px){.sumario .sgrid{grid-template-columns:1fr}}
+.sumario .si{display:flex;align-items:center;gap:11px;font-size:13.5px;color:#2f3650;font-weight:600;padding:5px 0;border-bottom:1px solid #f0f2f8}
+.sumario .si .sn{width:23px;height:23px;border-radius:7px;background:#eef0f8;color:var(--ac);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 
 /* ---- resumo executivo ---- */
-.resumo{font-size:14.5px;line-height:1.7;color:#2f3650;background:#f6f7fb;border-left:4px solid #6c63ff;padding:17px 20px;border-radius:0 12px 12px 0;white-space:pre-wrap}
+.resumo{font-size:14.5px;line-height:1.7;color:#2f3650;background:#f6f7fb;border-left:4px solid var(--ac);padding:17px 20px;border-radius:0 12px 12px 0;white-space:pre-wrap}
 
 /* ---- KPI cards ---- */
 .kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -177,7 +186,7 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 .hero-stat.nota .hv{font-size:30px}
 
 /* ---- Selo de destaque do mês (faixa headline) ---- */
-.selo{display:flex;align-items:center;gap:16px;background:linear-gradient(120deg,#6c63ff 0%,#43d9ad 100%);color:#fff;border-radius:18px;padding:20px 24px;margin-bottom:30px}
+.selo{display:flex;align-items:center;gap:16px;background:var(--acg);color:#fff;border-radius:18px;padding:20px 24px;margin-bottom:30px}
 .selo *{color:#fff}
 .selo .si{font-size:30px;flex-shrink:0;opacity:.95}
 .selo .sn{font-size:25px;font-weight:800;line-height:1.05}
@@ -224,7 +233,7 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 .frow{display:flex;align-items:center;gap:14px;margin-bottom:9px}
 .frow .fn{width:172px;text-align:right;font-size:12.5px;font-weight:600;color:#4a5270;flex-shrink:0}
 .ftrack{flex:1;background:#f0f2f8;border-radius:8px}
-.fbar{height:34px;border-radius:8px;background:linear-gradient(90deg,#6c63ff,#43d9ad);display:flex;align-items:center;justify-content:flex-end;padding:0 12px;color:#fff;font-size:12.5px;font-weight:700;min-width:62px}
+.fbar{height:34px;border-radius:8px;background:var(--acg);display:flex;align-items:center;justify-content:flex-end;padding:0 12px;color:#fff;font-size:12.5px;font-weight:700;min-width:62px}
 .frow .fpct{width:84px;font-size:10.5px;color:#9aa0b5;flex-shrink:0;line-height:1.3}
 
 /* ---- tabela ---- */
@@ -244,7 +253,7 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 /* ---- top anúncios ---- */
 .topads{display:grid;gap:10px;margin-top:6px}
 .topad{display:flex;align-items:center;gap:14px;border:1px solid #e7eaf3;border-radius:12px;padding:12px 15px;background:#fcfcfe}
-.topad .rank{width:30px;height:30px;border-radius:9px;background:var(--grad);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.topad .rank{width:30px;height:30px;border-radius:9px;background:var(--acg);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
 .topad .tn{flex:1;font-size:12.8px;color:#2f3650;font-weight:600;line-height:1.4}
 .topad .tv{font-size:12.5px;color:#0a9d68;font-weight:800;white-space:nowrap}
 
@@ -378,6 +387,12 @@ h2.sec{font-size:18px;margin:6px 0 14px}
       <div class="fld"><label>Cidade</label><input id="cCidade" placeholder="Teresina - PI"></div>
       <div class="fld"><label>Ticket médio (R$) <span style="color:var(--tx3)">— quanto vale um cliente novo</span></label><input id="cTicket" placeholder="Ex.: 300"></div>
       <div class="fld"><label>Fechamento (%) <span style="color:var(--tx3)">— de 10 leads, quantos viram cliente</span></label><input id="cFechamento" placeholder="Ex.: 30"></div>
+      <div class="fld"><label>Cor da marca do cliente <span style="color:var(--tx3)">— tinge o relatório dele</span></label>
+        <div class="row" style="gap:8px">
+          <input type="color" id="cCor" value="#6c63ff" style="width:48px;height:42px;padding:3px;cursor:pointer" oninput="document.getElementById('cCorHex').value=this.value">
+          <input id="cCorHex" placeholder="#6c63ff" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('cCor').value=this.value" style="flex:1">
+          <button class="btn btn-g btn-sm" type="button" onclick="document.getElementById('cCor').value='#6c63ff';document.getElementById('cCorHex').value=''">Padrão</button>
+        </div></div>
     </div>
     <div class="muted" style="margin-top:10px;font-size:12px">💡 Ticket e fechamento alimentam o "Resultado em Reais" e o ROI no relatório — traduzem os leads em faturamento. Se não souber, deixe em branco (o app usa estimativas conservadoras).</div>
     <div class="fld" style="margin-top:12px"><label>Observações (oferta, metas...)</label><textarea id="cObs"></textarea></div>
@@ -1103,6 +1118,7 @@ function abrirCliente(id){
   $('cNome').value = c?.nome||''; $('cNicho').value = c?.nicho||'local';
   $('cObjetivo').value = c?.objetivo||'leads'; $('cCidade').value = c?.cidade||'';
   $('cTicket').value = c?.ticket||''; $('cFechamento').value = c?.fechamento||'';
+  $('cCor').value = c?.cor||'#6c63ff'; $('cCorHex').value = c?.cor||'';
   $('cObs').value = c?.obs||'';
   $('cExcluir').classList.toggle('hide', !c);
   $('cliOverlay').classList.add('show');
@@ -1110,7 +1126,8 @@ function abrirCliente(id){
 function salvarCliente(){
   const nome = $('cNome').value.trim();
   if(!nome) return toast('Dê um nome ao cliente');
-  const dados = {nome, nicho:$('cNicho').value, objetivo:$('cObjetivo').value, cidade:$('cCidade').value.trim(), ticket:$('cTicket').value.trim(), fechamento:$('cFechamento').value.trim(), obs:$('cObs').value.trim()};
+  const corHex = $('cCorHex').value.trim();
+  const dados = {nome, nicho:$('cNicho').value, objetivo:$('cObjetivo').value, cidade:$('cCidade').value.trim(), ticket:$('cTicket').value.trim(), fechamento:$('cFechamento').value.trim(), cor:/^#[0-9a-fA-F]{6}$/.test(corHex)?corHex:'', obs:$('cObs').value.trim()};
   if(editandoCli){ Object.assign(cliente(editandoCli), dados); }
   else S.clients.push(Object.assign({id:uid()}, dados));
   save(); fecharModal('cliOverlay'); renderClientes(); renderHome(); toast('✓ Cliente salvo');
@@ -1574,6 +1591,27 @@ function htmlOportunidades(rep, cli){
   </div>`;
 }
 
+// clareia um hex pra gerar o 2º tom do gradiente de acento
+function aclarar(hex, amt){
+  if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+  const n = parseInt(hex.slice(1),16);
+  let r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.round(r+(255-r)*amt); g=Math.round(g+(255-g)*amt); b=Math.round(b+(255-b)*amt);
+  return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+// cor de acento do cliente (ou a da marca Martinelle)
+function acentoCliente(cli){
+  const ac = (cli && cli.cor && /^#[0-9a-fA-F]{6}$/.test(cli.cor)) ? cli.cor : '#6c63ff';
+  const ac2 = (cli && cli.cor) ? aclarar(ac, 0.30) : '#43d9ad';
+  return {ac, ac2};
+}
+// sumário — lista das seções presentes no relatório
+function htmlSumario(secoes){
+  if(secoes.length < 3) return '';
+  return `<div class="sumario keep"><div class="st">📑 Conteúdo deste relatório</div>
+    <div class="sgrid">${secoes.map((s,i)=>`<div class="si"><span class="sn">${i+1}</span>${esc(s)}</div>`).join('')}</div></div>`;
+}
+
 function montarRelatorio(rep, cli){
   cli = cli || {nome:'Cliente', nicho:'outro', objetivo:'leads'};
   const tipoNome = {mensal:'Relatório Mensal', quinzenal:'Relatório Quinzenal', semanal:'Relatório Semanal', custom:'Relatório de Desempenho'}[rep.tipo]||'Relatório';
@@ -1582,7 +1620,17 @@ function montarRelatorio(rep, cli){
   const K = consolidado(rep);
   const nota = calcularNota(rep);
   const micro = microcopy(rep, K, cli);
+  const {ac, ac2} = acentoCliente(cli);
   const rotuloRes = ehVendas ? 'Vendas' : 'Resultados';
+  // seções presentes (pro sumário)
+  const _p = rep.publico||{};
+  const _temPub = (_p.idades?.some(x=>parseNum(x.pct)>0)) || parseNum(_p.fem)!=null || (_p.locais||'').trim() || (_p.topAnuncios||'').trim();
+  const _temAnalise = !!(rep.analise && (rep.analise.destaques||rep.analise.atencao||rep.analise.recomendacoes));
+  const _temOpp = ['meta','google'].some(c=>!rep.canais[c]?.ativo) || !rep.gmn?.ativo || !rep.social?.ativo || cli.nicho==='medico';
+  const secoes = ['Visão geral do mês', ...canaisAtivos.map(c=>CANAL_NOME[c]),
+    rep.gmn?.ativo && 'Google Meu Negócio', _temPub && 'Quem é o público',
+    rep.social?.ativo && 'Instagram', _temAnalise && 'Análise do período',
+    rep.analise?.proximos && 'Plano de ação do próximo mês', _temOpp && 'Oportunidades pra crescer'].filter(Boolean);
   let html = '';
 
   /* ===== CAPA (enche a página + números-chave do mês) ===== */
@@ -1609,6 +1657,9 @@ function montarRelatorio(rep, cli){
 
   /* ===== CORPO (fluxo contínuo — sem desperdício de página) ===== */
   html += '<div class="doc">';
+
+  /* ---- SUMÁRIO ---- */
+  html += htmlSumario(secoes);
 
   /* ---- SELO DE DESTAQUE DO MÊS ---- */
   html += htmlSeloDestaque(rep, K, cli);
@@ -1708,7 +1759,10 @@ function montarRelatorio(rep, cli){
     <div class="c-tag">Obrigado pela confiança</div>
   </div>`;
 
-  $('repBody').innerHTML = html;
+  const rb = $('repBody');
+  rb.innerHTML = html;
+  rb.style.setProperty('--ac', ac);     // cor de acento do cliente tinge o relatório
+  rb.style.setProperty('--ac2', ac2);
   desenharGraficos(rep);
 }
 
@@ -1871,25 +1925,26 @@ function desenharGraficos(rep){
   Chart.defaults.devicePixelRatio = 3;   // nitidez no PDF
   Chart.defaults.font.family = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif";
   const pub = rep.publico||{};
+  const {ac, ac2} = acentoCliente(cliente(rep.clientId));   // cor do cliente nos gráficos
 
   const gen = $('chGen');
   if(gen && parseNum(pub.fem)!=null){
     const fem = parseNum(pub.fem), masc = Math.max(0, 100-fem);
     charts.push(new Chart(gen, {type:'doughnut',
-      data:{labels:[`Mulheres ${fem}%`,`Homens ${masc}%`], datasets:[{data:[fem,masc], backgroundColor:['#6c63ff','#43d9ad'], borderWidth:0}]},
+      data:{labels:[`Mulheres ${fem}%`,`Homens ${masc}%`], datasets:[{data:[fem,masc], backgroundColor:[ac, ac2], borderWidth:0}]},
       options:{plugins:{legend:{position:'bottom',labels:{font:{size:12},padding:14,usePointStyle:true,pointStyle:'circle'}}},cutout:'64%',animation:false}}));
   }
   const idd = $('chIdade');
   if(idd && pub.idades?.some(x=>parseNum(x.pct)>0)){
     charts.push(new Chart(idd, {type:'bar',
-      data:{labels:pub.idades.map(x=>x.faixa), datasets:[{data:pub.idades.map(x=>parseNum(x.pct)||0), backgroundColor:'#6c63ff', borderRadius:6, maxBarThickness:42}]},
+      data:{labels:pub.idades.map(x=>x.faixa), datasets:[{data:pub.idades.map(x=>parseNum(x.pct)||0), backgroundColor:ac, borderRadius:6, maxBarThickness:42}]},
       options:{plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{y:{ticks:{callback:v=>v+'%',font:{size:11}},grid:{color:'#eef0f5'}},x:{ticks:{font:{size:11}},grid:{display:false}}}, animation:false}}));
   }
   // Google Meu Negócio — como descobriram (rosca)
   const gmn = $('chGmn');
   if(gmn && window.__gmnFontes){
     const fs = window.__gmnFontes;
-    const cores = ['#6c63ff','#43d9ad','#ffb84d','#4da3ff','#ff6fd8','#9ccc65'];
+    const cores = [ac, ac2, '#ffb84d','#4da3ff','#ff6fd8','#9ccc65'];
     const tot = fs.reduce((a,f)=>a+f.val,0) || 1;
     charts.push(new Chart(gmn, {type:'doughnut',
       data:{labels:fs.map(f=> f.raw ? `${f.nome} ${f.raw}` : `${f.nome} ${Math.round(f.val/tot*100)}%`), datasets:[{data:fs.map(f=>f.val), backgroundColor:fs.map((_,i)=>cores[i%cores.length]), borderWidth:0}]},
@@ -1900,12 +1955,12 @@ function desenharGraficos(rep){
   const ativos = ['meta','google'].filter(c=>rep.canais[c]?.ativo);
   if(ca && ativos.length>=2){
     charts.push(new Chart(ca, {type:'doughnut',
-      data:{labels:ativos.map(c=>CANAL_NOME[c]), datasets:[{data:ativos.map(c=>parseNum(rep.canais[c].atual?.investimento)||0), backgroundColor:['#6c63ff','#ffb84d'], borderWidth:0}]},
+      data:{labels:ativos.map(c=>CANAL_NOME[c]), datasets:[{data:ativos.map(c=>parseNum(rep.canais[c].atual?.investimento)||0), backgroundColor:[ac,'#ffb84d'], borderWidth:0}]},
       options:{plugins:{legend:{position:'bottom',labels:{font:{size:12},padding:14,usePointStyle:true,pointStyle:'circle'}}},cutout:'62%',animation:false}}));
   }
   if(cr && ativos.length>=2){
     charts.push(new Chart(cr, {type:'bar',
-      data:{labels:ativos.map(c=>CANAL_NOME[c]), datasets:[{data:ativos.map(c=>leadsTotais(c, rep.canais[c].atual)||0), backgroundColor:['#6c63ff','#ffb84d'], borderRadius:6, maxBarThickness:64}]},
+      data:{labels:ativos.map(c=>CANAL_NOME[c]), datasets:[{data:ativos.map(c=>leadsTotais(c, rep.canais[c].atual)||0), backgroundColor:[ac,'#ffb84d'], borderRadius:6, maxBarThickness:64}]},
       options:{plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{y:{ticks:{font:{size:11}},grid:{color:'#eef0f5'}},x:{ticks:{font:{size:12}},grid:{display:false}}}, animation:false}}));
   }
 }
@@ -1915,7 +1970,10 @@ function desenharGraficos(rep){
 ============================================================ */
 function baixarPDF(){
   const rep = cur; if(!rep) return;
+  const cli = cliente(rep.clientId);
   const nome = `Relatorio ${nomeCliente(rep.clientId)} ${fmtData(rep.de).replace(/\//g,'-')} a ${fmtData(rep.ate).replace(/\//g,'-')}.pdf`;
+  const rodapeEsq = `${AGENCIA.nome} · ${nomeCliente(rep.clientId)}`;
+  const rodapeMeio = `${fmtData(rep.de)} a ${fmtData(rep.ate)}`;
   toast('Gerando PDF... aguarde');
   // pequena espera garante que os gráficos (canvas) terminaram de desenhar antes da captura
   setTimeout(()=>{
@@ -1926,7 +1984,20 @@ function baixarPDF(){
       jsPDF:{unit:'mm', format:'a4', orientation:'portrait', compress:true},
       // não corta no meio de cards, blocos, gráficos, linhas de tabela ou funil
       pagebreak:{mode:['css','legacy'], avoid:['.keep','.kc','.ablk','.chartcard','.frow','tr','.topad','.resumo','.selo','.regua','.notaWrap','.reais','.opp']}
-    }).from($('repBody')).save().then(()=>toast('✓ PDF baixado')).catch(e=>{console.error(e);toast('Erro ao gerar PDF — tente pelo navegador (Imprimir → Salvar como PDF)');});
+    }).from($('repBody')).toPdf().get('pdf').then(pdf=>{
+      // rodapé paginado nas páginas de conteúdo (pula capa e contracapa, que são escuras)
+      const n = pdf.internal.getNumberOfPages();
+      const W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
+      for(let i=2;i<=n-1;i++){
+        pdf.setPage(i);
+        pdf.setFontSize(7.5); pdf.setTextColor(150,155,170);
+        pdf.text(rodapeEsq, 12, H-5);
+        pdf.text(rodapeMeio, W/2, H-5, {align:'center'});
+        pdf.text(`Página ${i-1} de ${n-2}`, W-12, H-5, {align:'right'});
+      }
+      pdf.save(nome);
+      toast('✓ PDF baixado');
+    }).catch(e=>{console.error(e);toast('Erro ao gerar PDF — tente pelo navegador (Imprimir → Salvar como PDF)');});
   }, 350);
 }
 async function publicarShare(){
