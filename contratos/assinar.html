@@ -405,7 +405,7 @@
         <p><strong>7.1</strong> Pela prestação dos serviços, o CONTRATANTE pagará à CONTRATADA a Taxa de Gerenciamento de <strong>R$ ${d.valor}/mês</strong>, com vencimento no dia <strong>${d.diaVencimento}</strong> de cada mês, mediante <strong>${pgtoTexto[d.pgto] || d.pgto}</strong>.</p>
         ${totalContratoTexto(d.valor, d.duracao)}
         ${descontoTexto(d.cl_desconto, d.valor)}
-        <p><strong>7.2</strong> O primeiro mês de gerenciamento será cobrado de forma proporcional à data de início do contrato, caso iniciado após o dia 1º do mês vigente.</p>
+        <p><strong>7.2</strong> Caso o contrato se inicie após o dia 1º do mês, o primeiro mês de gerenciamento poderá ser cobrado de forma proporcional (pro rata die) aos dias restantes, sem prejuízo do Desconto de Pontualidade, que se aplica igualmente a todos os meses de vigência, inclusive o primeiro.</p>
         <p><strong>7.3</strong> O atraso no pagamento implicará multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.</p>
         <p><strong>7.4</strong> O não pagamento por período superior a <strong>${d.cl_suspensao || '7'} (${porExtensoNum(d.cl_suspensao || '7')}) dias</strong> ensejará a suspensão dos serviços pela CONTRATADA, sem prejuízo da cobrança dos valores devidos.</p>
         ${d.cl_reajuste && d.cl_reajuste !== 'sem_reajuste' ? `<p><strong>7.5</strong> Os valores serão reajustados anualmente pelo índice <strong>${d.cl_reajuste}</strong>, acumulado no período.</p>` : (d.cl_reajuste === 'sem_reajuste' ? '<p><strong>7.5</strong> Fica acordado entre as partes que não haverá reajuste automático de valores durante o período de vigência deste contrato.</p>' : '<p><strong>7.5</strong> Os valores serão reajustados anualmente pelo índice <strong>IGP-M/FGV</strong>, acumulado no período.</p>')}
@@ -472,9 +472,9 @@
     const pctNum = parseInt(pct);
     const valorNum = _parseBR(valorCheio);
     const valorDesc = valorNum * (1 - pctNum / 100);
-    const fmtDesc = 'R$ ' + valorDesc.toFixed(2).replace('.', ',');
+    const fmtDesc = 'R$ ' + valorDesc.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const diaLabel = dia === '1' ? 'primeiro' : dia === '5' ? 'cinco' : dia === '10' ? 'dez' : dia;
-    return `<p><strong>Desconto de Pontualidade:</strong> O CONTRATANTE terá direito a desconto de <strong>${pct}% (${pct === '20' ? 'vinte' : pct === '30' ? 'trinta' : pct === '10' ? 'dez' : pct} por cento)</strong> sobre a Taxa de Gerenciamento para pagamentos realizados até o dia <strong>${dia}º (${diaLabel})</strong> de cada mês, totalizando <strong>${fmtDesc}/mês</strong>. Após essa data, aplica-se o valor integral de <strong>R$ ${valorCheio}/mês</strong>.</p>`;
+    return `<p><strong>Desconto de Pontualidade:</strong> Em <strong>todos os meses</strong> de vigência do contrato, o pagamento da Taxa de Gerenciamento realizado entre o dia 1º (primeiro) e o dia <strong>${dia} (${diaLabel})</strong> do mês de competência concederá ao CONTRATANTE desconto de <strong>${pct}% (${pct === '20' ? 'vinte' : pct === '30' ? 'trinta' : pct === '10' ? 'dez' : pct} por cento)</strong>, totalizando <strong>${fmtDesc}/mês</strong>. Os pagamentos efetuados após o dia ${dia} não farão jus ao desconto, aplicando-se o valor integral de <strong>R$ ${valorCheio}/mês</strong>. O desconto é benefício mensal e recorrente, condicionado exclusivamente à pontualidade do pagamento, não constituindo redução do valor contratual.</p>`;
   }
 
   function multaTexto(cl) {
