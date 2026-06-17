@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Assinar Contrato — Agência Martinelle</title>
+  <title>Assinar Contrato — Consultoria MRTN</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -217,7 +217,7 @@
 
 <header>
   <h1>Contrato de Prestação de Serviços</h1>
-  <p>Agência Martinelle — CNPJ 49.561.800/0001-70</p>
+  <p>Consultoria MRTN — CNPJ 49.561.800/0001-70</p>
 </header>
 
 <div class="container">
@@ -332,9 +332,9 @@
 
     document.getElementById('contratoBox').innerHTML = `
       <div class="doc-header" style="display:flex;align-items:center;gap:14px;border-bottom:3px solid #c9a84c;padding-bottom:14px;margin-bottom:20px">
-        <img src="./logo-martinelle.png" alt="Agência Martinelle" crossorigin="anonymous" style="height:66px;width:66px;object-fit:contain;flex-shrink:0" />
+        <img src="./logo-martinelle.png" alt="Consultoria MRTN" crossorigin="anonymous" style="height:66px;width:66px;object-fit:contain;flex-shrink:0" />
         <div style="line-height:1.35">
-          <div style="font-size:1.15rem;font-weight:800;letter-spacing:0.5px;color:#0d0d0d">AGÊNCIA MARTINELLE</div>
+          <div style="font-size:1.15rem;font-weight:800;letter-spacing:0.5px;color:#0d0d0d">CONSULTORIA MRTN</div>
           <div style="font-size:0.72rem;color:#444">CNPJ 49.561.800/0001-70 · Teresina/PI</div>
           <div style="font-size:0.72rem;color:#444">agenciamartinelle@gmail.com · Tráfego pago e performance</div>
         </div>
@@ -345,7 +345,7 @@
       <div class="partes">
         <p><strong>CONTRATANTE:</strong> ${d.nome}, ${d.tipoDoc}: ${d.documento}, e-mail: ${d.email}, telefone: ${d.telefone}, doravante denominado CONTRATANTE.</p>
         <br/>
-        <p><strong>CONTRATADA:</strong> <strong>Agência Martinelle</strong>, inscrita no CNPJ sob o nº 49.561.800/0001-70, com sede em Teresina/PI, representada por Jeferson Araujo Martinelle, doravante denominada CONTRATADA.</p>
+        <p><strong>CONTRATADA:</strong> <strong>Consultoria MRTN</strong>, inscrita no CNPJ sob o nº 49.561.800/0001-70, com sede em Teresina/PI, representada por Jeferson Araujo Martinelle, doravante denominada CONTRATADA.</p>
       </div>
 
       <p>Ambas individualmente denominadas "Parte" e, em conjunto, "Partes", têm entre si justo e acertado o presente Contrato de Prestação de Serviços de Marketing Digital, que se regerá pelas cláusulas e condições a seguir.</p>
@@ -455,7 +455,7 @@
           <strong>${d.nome}</strong><br/>${d.tipoDoc}: ${d.documento}<br/>CONTRATANTE
         </div>
         <div style="flex:1;min-width:200px;border-top:2px solid #222;padding-top:10px;font-size:0.82rem;color:#333">
-          <strong>Jeferson Araujo Martinelle</strong><br/>CNPJ: 49.561.800/0001-70<br/>CONTRATADA — Agência Martinelle
+          <strong>Jeferson Araujo Martinelle</strong><br/>CNPJ: 49.561.800/0001-70<br/>CONTRATADA — Consultoria MRTN
         </div>
       </div>
     `;
@@ -657,7 +657,7 @@
           pdf.setPage(i);
           pdf.setFontSize(8);
           pdf.setTextColor(130);
-          pdf.text('Ag\u00eancia Martinelle \u00b7 CNPJ 49.561.800/0001-70', 14, h - 7);
+          pdf.text('Consultoria MRTN \u00b7 CNPJ 49.561.800/0001-70', 14, h - 7);
           pdf.text(`P\u00e1gina ${i} de ${total}`, w - 14, h - 7, { align: 'right' });
         }
       });

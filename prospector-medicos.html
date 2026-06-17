@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Prospecção Médica — Martinelle</title>
+<title>Prospecção Médica — Consultoria MRTN</title>
 <link rel="manifest" href="manifest.json">
 <style>
 :root{
   --bg:#0e0f14; --surface:#171923; --surface2:#1f2230; --surface3:#262a3a;
   --border:#2a2f3f; --border-strong:#3a4054;
   --text:#e8eaf2; --text-soft:#c6cad8; --muted:#8a91a8;
-  --accent:#6c63ff; --accent-soft:rgba(108,99,255,.16);
+  --accent:#2f6bff; --accent-soft:rgba(47,107,255,.16);
   --green:#43d9ad; --green-soft:rgba(67,217,173,.16);
   --yellow:#f5a623; --yellow-soft:rgba(245,166,35,.16);
   --red:#ef476f; --red-soft:rgba(239,71,111,.16);
@@ -282,8 +282,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 <!-- =================== PORTÃO DE SENHA (equipe) =================== -->
 <div id="gateOverlay" class="gate-overlay">
   <div class="gate-box">
-    <div class="gate-logo"><img src="logo-branco.png" alt="Agência Martinelle"></div>
-    <div class="gate-title">Prospecção Martinelle</div>
+    <div class="gate-logo"><img src="logo-branco.png" alt="Consultoria MRTN"></div>
+    <div class="gate-title">Prospecção MRTN</div>
     <div class="gate-sub">Área da equipe — digite a senha de acesso</div>
     <input id="gatePass" type="password" placeholder="Senha da equipe" autocomplete="off">
     <div id="gateErr" class="gate-err">Senha incorreta. Tente novamente.</div>
@@ -294,7 +294,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 
 <!-- =================== HEADER =================== -->
 <header class="header">
   <div class="header-top">
-    <div class="brand"><span class="brand-logo"><img src="logo-branco.png" alt="Agência Martinelle"></span> Prospecção Martinelle</div>
+    <div class="brand"><span class="brand-logo"><img src="logo-branco.png" alt="Consultoria MRTN"></span> Prospecção MRTN</div>
     <div class="header-actions">
       <span id="syncPill" class="sync-pill s-ok" title="Status da nuvem"><span>☁️</span><span class="sync-label">Salvo na nuvem</span></span>
       <button class="btn-cfg" onclick="openConfig()" title="Configurações">⚙</button>
@@ -1249,7 +1249,7 @@ function exportJSON(){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `prospeccao-martinelle-${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `prospeccao-mrtn-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 1000);
   toast('💾 Backup baixado','ok');

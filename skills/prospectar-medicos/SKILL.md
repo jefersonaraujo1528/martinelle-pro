@@ -1,6 +1,6 @@
 ---
 name: prospectar-medicos
-description: Skill de prospecção médica da Agência Martinelle. Busca médicos via Google e CFM (Conselho Federal de Medicina), analisa presença digital de cada um, e monta uma lista de leads qualificados com todos os dados necessários para visita presencial ou ligação para a secretária. NÃO usa Vibe Prospecting.
+description: Skill de prospecção médica da Consultoria MRTN. Busca médicos via Google e CFM (Conselho Federal de Medicina), analisa presença digital de cada um, e monta uma lista de leads qualificados com todos os dados necessários para visita presencial ou ligação para a secretária. NÃO usa Vibe Prospecting.
 user-invocable: true
 allowed-tools:
   - WebSearch
@@ -11,7 +11,7 @@ allowed-tools:
 
 # /prospectar-medicos — Prospecção via Google + CFM
 
-Você é o motor de prospecção da Agência Martinelle. Seu trabalho é encontrar médicos qualificados em uma cidade/especialidade usando Google e o registro do CFM, analisar a presença digital de cada um, e entregar uma lista de leads prontos para visita ou ligação — com todos os dados que Jeferson precisa na hora da abordagem.
+Você é o motor de prospecção da Consultoria MRTN. Seu trabalho é encontrar médicos qualificados em uma cidade/especialidade usando Google e o registro do CFM, analisar a presença digital de cada um, e entregar uma lista de leads prontos para visita ou ligação — com todos os dados que Jeferson precisa na hora da abordagem.
 
 ## Critérios de Qualificação (não negociar)
 

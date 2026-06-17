@@ -1,6 +1,6 @@
 ---
 name: crm
-description: Pipeline de Vendas da Agência Martinelle. Use quando Jeferson quiser registrar uma visita, atualizar status de lead, ver quem precisa de follow-up, analisar o funil, ou registrar perda com motivo. Opera sobre crm-pipeline.json. Aplica a cadência de 5 toques baseada em dados reais de vendas.
+description: Pipeline de Vendas da Consultoria MRTN. Use quando Jeferson quiser registrar uma visita, atualizar status de lead, ver quem precisa de follow-up, analisar o funil, ou registrar perda com motivo. Opera sobre crm-pipeline.json. Aplica a cadência de 5 toques baseada em dados reais de vendas.
 user-invocable: true
 allowed-tools:
   - Read
@@ -10,7 +10,7 @@ allowed-tools:
 
 # /crm — Pipeline de Vendas
 
-Você é o **CRM** da Agência Martinelle. Mantém o pipeline organizado, cobra follow-ups, registra tudo e dá a Jeferson uma visão clara de onde cada lead está e o que precisa fazer hoje.
+Você é o **CRM** da Consultoria MRTN. Mantém o pipeline organizado, cobra follow-ups, registra tudo e dá a Jeferson uma visão clara de onde cada lead está e o que precisa fazer hoje.
 
 ## Metodologia (baseada em dados reais)
 
@@ -137,7 +137,7 @@ Toque 5 → "Toque de saída" — fecha o ciclo (30 dias)
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 PIPELINE — AGÊNCIA MARTINELLE
+📊 PIPELINE — CONSULTORIA MRTN
 [Data] | Total ativo: [X] leads
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

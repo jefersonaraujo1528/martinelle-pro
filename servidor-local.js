@@ -1,5 +1,5 @@
 /**
- * Servidor Local — Agência Martinelle
+ * Servidor Local — Consultoria MRTN
  * Proxy para API do Asaas e Autentique
  *
  * Como usar:
@@ -58,7 +58,7 @@ async function asaasAPI(path, body) {
       hostname: 'www.asaas.com',
       path: '/api/v3' + path,
       method: 'POST',
-      headers: { 'User-Agent': 'Agencia-Martinelle/1.0', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), access_token: ASAAS_KEY },
+      headers: { 'User-Agent': 'Consultoria-MRTN/1.0', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), access_token: ASAAS_KEY },
     }, res => {
       let raw = '';
       res.on('data', c => raw += c);
@@ -74,7 +74,7 @@ async function handleAsaas(body) {
   const { pgto, valor, diaVencimento, plano } = body;
   const v = num(valor), due = venc(diaVencimento);
   const pl = { google: 'Google Ads Pro', meta: 'Meta Ads Pro', youtube: 'YouTube Ads Pro' }[plano] || plano;
-  const desc = `Taxa Gerenciamento ${pl} — Agência Martinelle`;
+  const desc = `Taxa Gerenciamento ${pl} — Consultoria MRTN`;
 
   const cli = await asaasAPI('/customers', {
     name: body.nome,
@@ -129,19 +129,19 @@ async function enviarBoasVindas({ nomeCliente, emailCliente, plano, dataInicio, 
 
   const planoNome = { google: 'Google Ads Pro', meta: 'Meta Ads Pro', youtube: 'YouTube Ads Pro' }[plano] || plano;
   const data = JSON.stringify({
-    from: 'Agência Martinelle <agenciamartinelle@gmail.com>',
+    from: 'Consultoria MRTN <agenciamartinelle@gmail.com>',
     to: [emailCliente],
-    subject: `Boas-vindas à Agência Martinelle — ${planoNome}`,
+    subject: `Boas-vindas à Consultoria MRTN — ${planoNome}`,
     html: `
       <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e5e5e5">
         <div style="background:#0d0d0d;padding:28px 32px;text-align:center">
-          <h1 style="color:#c9a84c;margin:0;font-size:22px">Agência Martinelle</h1>
+          <h1 style="color:#c9a84c;margin:0;font-size:22px">Consultoria MRTN</h1>
           <p style="color:#888;margin:6px 0 0;font-size:13px">Tráfego pago que gera resultados reais</p>
         </div>
         <div style="padding:32px">
           <h2 style="color:#111;margin:0 0 16px">Olá, ${nomeCliente}! 👋</h2>
           <p style="color:#444;line-height:1.6;margin-bottom:16px">
-            Seu contrato com a <strong>Agência Martinelle</strong> foi assinado com sucesso. Estamos muito felizes em ter você como cliente!
+            Seu contrato com a <strong>Consultoria MRTN</strong> foi assinado com sucesso. Estamos muito felizes em ter você como cliente!
           </p>
           <div style="background:#f8f8f8;border-radius:8px;padding:18px;margin-bottom:20px">
             <p style="margin:0 0 8px;font-weight:700;color:#111">Resumo do seu pacote:</p>
@@ -158,7 +158,7 @@ async function enviarBoasVindas({ nomeCliente, emailCliente, plano, dataInicio, 
           <p style="color:#444;line-height:1.6">Qualquer dúvida, fale conosco pelo WhatsApp ou responda este e-mail.</p>
         </div>
         <div style="background:#f5f5f5;padding:20px 32px;text-align:center;border-top:1px solid #e5e5e5">
-          <p style="color:#888;font-size:12px;margin:0">Agência Martinelle · agenciamartinelle@gmail.com · Teresina/PI</p>
+          <p style="color:#888;font-size:12px;margin:0">Consultoria MRTN · agenciamartinelle@gmail.com · Teresina/PI</p>
           <p style="color:#888;font-size:12px;margin:4px 0 0">CNPJ 49.561.800/0001-70</p>
         </div>
       </div>
@@ -263,7 +263,7 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   const url = 'http://localhost:' + PORT + '/contratos/index.html';
   console.log('');
-  console.log('✅ Servidor Martinelle rodando!');
+  console.log('✅ Servidor MRTN rodando!');
   console.log('');
   console.log('   📄 Contratos → ' + url);
   console.log('');

@@ -1,4 +1,4 @@
-// Service Worker — Martinelle Prospector
+// Service Worker — MRTN Prospector
 // Estratégia inteligente: HTML sempre busca rede primeiro (atualizações instantâneas),
 // assets ficam no cache (rápido offline).
 const CACHE = 'martinelle-v3';

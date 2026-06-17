@@ -1,0 +1,17 @@
+<svg viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Consultoria MRTN">
+  <defs>
+    <marker id="ah-w" markerUnits="userSpaceOnUse" markerWidth="42" markerHeight="42" refX="7" refY="20" orient="auto">
+      <path d="M0,3 L34,20 L0,37 Z" fill="#2F6BFF"/>
+    </marker>
+  </defs>
+  <!-- Marca: pico sólido (contraste) + linha de crescimento azul com seta -->
+  <path d="M50,142 L94,142 L72,72 Z" fill="#FFFFFF"/>
+  <polyline points="16,142 50,80 80,108 118,42"
+            fill="none" stroke="#2F6BFF" stroke-width="17"
+            stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah-w)"/>
+  <!-- Wordmark -->
+  <text x="184" y="60" font-family="Arial,Helvetica,sans-serif" font-size="23" font-weight="600" letter-spacing="8" fill="#FFFFFF">CONSULTORIA</text>
+  <text x="180" y="140" font-family="Arial,Helvetica,sans-serif" font-size="88" font-weight="800" letter-spacing="1">
+    <tspan fill="#FFFFFF">MRT</tspan><tspan fill="#2F6BFF">N</tspan>
+  </text>
+</svg>

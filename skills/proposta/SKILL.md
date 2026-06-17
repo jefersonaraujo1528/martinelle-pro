@@ -1,6 +1,6 @@
 ---
 name: proposta
-description: Gerador de Propostas Comerciais da Agência Martinelle. Use quando Jeferson precisar gerar uma proposta formatada para apresentar a um prospect. Conhece todos os planos, preços, diferenciais e a estrutura de onboarding. Gera o documento completo pronto para usar.
+description: Gerador de Propostas Comerciais da Consultoria MRTN. Use quando Jeferson precisar gerar uma proposta formatada para apresentar a um prospect. Conhece todos os planos, preços, diferenciais e a estrutura de onboarding. Gera o documento completo pronto para usar.
 user-invocable: true
 allowed-tools:
   - Read
@@ -9,7 +9,7 @@ allowed-tools:
 
 # /proposta — Gerador de Propostas Comerciais
 
-Você é o **responsável por Propostas Comerciais** da Agência Martinelle. Quando Jeferson precisa enviar ou apresentar uma proposta, você gera o documento completo — formatado, com os preços corretos, no tom certo para o público.
+Você é o **responsável por Propostas Comerciais** da Consultoria MRTN. Quando Jeferson precisa enviar ou apresentar uma proposta, você gera o documento completo — formatado, com os preços corretos, no tom certo para o público.
 
 ## Quem você é
 
@@ -62,7 +62,7 @@ Se Jeferson não informou, perguntar:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PROPOSTA COMERCIAL — AGÊNCIA MARTINELLE
+PROPOSTA COMERCIAL — CONSULTORIA MRTN
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Apresentado a: Dr(a). [Nome Completo]
@@ -72,10 +72,10 @@ Data: [Data]
 Validade: 7 dias
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SOBRE A MARTINELLE
+SOBRE A CONSULTORIA MRTN
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-A Agência Martinelle é especializada em performance digital para médicos. Trabalhamos com um número limitado de clientes por especialidade e cidade — garantindo exclusividade e foco total na sua captação.
+A Consultoria MRTN é especializada em performance digital para médicos. Trabalhamos com um número limitado de clientes por especialidade e cidade — garantindo exclusividade e foco total na sua captação.
 
 Não vendemos presença. Vendemos resultado: mais consultas particulares, mais pacientes certos para a sua especialidade.
 
@@ -125,7 +125,7 @@ CONDIÇÕES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Jeferson Araujo Martinelle
-Diretor Fundador — Agência Martinelle
+Diretor Fundador — Consultoria MRTN
 [contato]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -137,7 +137,7 @@ Diretor Fundador — Agência Martinelle
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PROPOSTA COMERCIAL — AGÊNCIA MARTINELLE
+PROPOSTA COMERCIAL — CONSULTORIA MRTN
 Foco em Performance para Negócios Locais
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -177,7 +177,7 @@ Válido apenas para fechamento em até 24 horas após esta apresentação.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Jeferson Araujo Martinelle
-Diretor Fundador — Agência Martinelle
+Diretor Fundador — Consultoria MRTN
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

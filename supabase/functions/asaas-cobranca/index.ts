@@ -39,7 +39,7 @@ async function asaas(path: string, body: unknown, key: string) {
   const r = await fetch(ASAAS_BASE + path, {
     method: "POST",
     headers: {
-      "User-Agent": "Agencia-Martinelle/1.0",
+      "User-Agent": "Consultoria-MRTN/1.0",
       "Content-Type": "application/json",
       access_token: key,
     },
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     if (v <= 0) throw new Error("Valor mensal inválido");
     if (total <= 0) throw new Error("Valor total do contrato inválido");
     const pl = { google: "Google Ads Pro", meta: "Meta Ads Pro", youtube: "YouTube Ads Pro" }[plano] || plano;
-    const desc = `Taxa Gerenciamento ${pl} — Agência Martinelle`;
+    const desc = `Taxa Gerenciamento ${pl} — Consultoria MRTN`;
 
     // 1) Cliente
     const cli = await asaas("/customers", {

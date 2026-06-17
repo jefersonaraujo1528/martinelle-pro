@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Relatórios de Tráfego — Agência Martinelle</title>
+<title>Relatórios de Tráfego — Consultoria MRTN</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -15,8 +15,8 @@
 :root{
   --bg:#0e0f14; --bg2:#161821; --bg3:#1e2130; --line:#2a2e42;
   --tx:#e8eaf2; --tx2:#9aa0b5; --tx3:#6a7088;
-  --roxo:#6c63ff; --verde:#43d9ad; --verm:#ff5d6c; --amar:#ffb84d; --azul:#4da3ff;
-  --grad:linear-gradient(135deg,#6c63ff,#43d9ad);
+  --roxo:#2f6bff; --verde:#43d9ad; --verm:#ff5d6c; --amar:#ffb84d; --azul:#4da3ff;
+  --grad:linear-gradient(135deg,#2f6bff,#43d9ad);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;min-height:100vh}
@@ -120,7 +120,7 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 .rep-actions{position:sticky;top:0;z-index:60;background:#11131a;padding:11px 16px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .rep{width:800px;max-width:100%;margin:0 auto;background:#fff;color:#1a1f36;
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  --ac:#6c63ff;--ac2:#43d9ad;--acg:linear-gradient(135deg,var(--ac),var(--ac2))}
+  --ac:#2f6bff;--ac2:#43d9ad;--acg:linear-gradient(135deg,var(--ac),var(--ac2))}
 .doc{padding:50px 54px;color:#1a1f36}
 @media(max-width:640px){.rep{width:100%}.doc{padding:28px 20px}}
 .sec{margin-bottom:34px}
@@ -254,9 +254,15 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 /* ---- top anúncios ---- */
 .topads{display:grid;gap:10px;margin-top:6px}
 .topad{display:flex;align-items:center;gap:14px;border:1px solid #e7eaf3;border-radius:12px;padding:12px 15px;background:#fcfcfe}
-.topad .rank{width:30px;height:30px;border-radius:9px;background:var(--acg);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.topad .rank{width:30px;height:30px;border-radius:9px;background:var(--acg);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
 .topad .tn{flex:1;font-size:12.8px;color:#2f3650;font-weight:600;line-height:1.4}
-.topad .tv{font-size:12.5px;color:#0a9d68;font-weight:800;white-space:nowrap}
+.topad .tv{font-size:12.5px;color:#0a9d68;font-weight:800;white-space:nowrap;text-align:right}
+.topad.tg1{border-color:#f0c33c;background:#fffdf3}
+.topad .rank.r1{background:linear-gradient(135deg,#f5b301,#e0890a)}
+.topad .rank.r2{background:linear-gradient(135deg,#aab2c0,#788396)}
+.topad .rank.r3{background:linear-gradient(135deg,#cf8c54,#a4642c)}
+.topad .pos{font-size:10.5px;font-weight:800;color:#8a90a4;letter-spacing:.4px;display:block;margin-bottom:1px}
+.topad .tag{font-size:10.5px;font-weight:800;color:#0a7d54;background:#e7f7ef;border-radius:6px;padding:2px 8px;margin-top:4px;display:inline-block}
 
 /* ---- localizações ---- */
 .locs{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
@@ -291,8 +297,8 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 
 <!-- ============ LOGIN ============ -->
 <div class="gate" id="gate">
-  <div class="logo"><img src="logo-branco.png" alt="Agência Martinelle"></div>
-  <div style="text-align:center"><b style="font-size:17px">Relatórios de Tráfego</b><br><span class="muted">Agência Martinelle</span></div>
+  <div class="logo"><img src="logo-branco.png" alt="Consultoria MRTN"></div>
+  <div style="text-align:center"><b style="font-size:17px">Relatórios de Tráfego</b><br><span class="muted">Consultoria MRTN</span></div>
   <input type="password" id="gatePass" placeholder="Senha da equipe" onkeydown="if(event.key==='Enter')tryLogin()">
   <button class="btn btn-p" onclick="tryLogin()">Entrar</button>
   <div class="muted" id="gateMsg"></div>
@@ -300,8 +306,8 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 
 <!-- ============ TOPBAR ============ -->
 <div class="topbar hide" id="topbar">
-  <div class="logo"><img src="logo-branco.png" alt="Agência Martinelle"></div>
-  <div class="brand"><b>Relatórios de Tráfego</b><span>Agência Martinelle</span></div>
+  <div class="logo"><img src="logo-branco.png" alt="Consultoria MRTN"></div>
+  <div class="brand"><b>Relatórios de Tráfego</b><span>Consultoria MRTN</span></div>
   <div class="nav">
     <button id="navRel" class="on" onclick="go('home')">📊 Relatórios</button>
     <button id="navCli" onclick="go('clientes')">👥 Clientes</button>
@@ -390,10 +396,11 @@ h2.sec{font-size:18px;margin:6px 0 14px}
       <div class="fld"><label>Fechamento (%) <span style="color:var(--tx3)">— de 10 leads, quantos viram cliente</span></label><input id="cFechamento" placeholder="Ex.: 30"></div>
       <div class="fld"><label>Cor da marca do cliente <span style="color:var(--tx3)">— tinge o relatório dele</span></label>
         <div class="row" style="gap:8px">
-          <input type="color" id="cCor" value="#6c63ff" style="width:48px;height:42px;padding:3px;cursor:pointer" oninput="document.getElementById('cCorHex').value=this.value">
-          <input id="cCorHex" placeholder="#6c63ff" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('cCor').value=this.value" style="flex:1">
-          <button class="btn btn-g btn-sm" type="button" onclick="document.getElementById('cCor').value='#6c63ff';document.getElementById('cCorHex').value=''">Padrão</button>
+          <input type="color" id="cCor" value="#2f6bff" style="width:48px;height:42px;padding:3px;cursor:pointer" oninput="document.getElementById('cCorHex').value=this.value">
+          <input id="cCorHex" placeholder="#2f6bff" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value))document.getElementById('cCor').value=this.value" style="flex:1">
+          <button class="btn btn-g btn-sm" type="button" onclick="document.getElementById('cCor').value='#2f6bff';document.getElementById('cCorHex').value=''">Padrão</button>
         </div></div>
+      <div class="fld"><label>Conta de anúncios do Meta <span style="color:var(--tx3)">— para puxar os dados automaticamente</span></label><input id="cMetaAct" placeholder="Ex.: 1234567890 (ID da conta) ou act_1234567890"></div>
     </div>
     <div class="muted" style="margin-top:10px;font-size:12px">💡 Ticket e fechamento alimentam o "Resultado em Reais" e o ROI no relatório — traduzem os leads em faturamento. Se não souber, deixe em branco (o app usa estimativas conservadoras).</div>
     <div class="fld" style="margin-top:12px"><label>Observações (oferta, metas...)</label><textarea id="cObs"></textarea></div>
@@ -420,7 +427,7 @@ const AUTH_KEY = 'martinelle_auth';
 const LS_KEY   = 'mart_relatorios_v1';
 
 const AGENCIA = {
-  nome:'Agência Martinelle',
+  nome:'Consultoria MRTN',
   tagline:'Tráfego pago e performance',
   cnpj:'49.561.800/0001-70',
   email:'agenciamartinelle@gmail.com',
@@ -468,7 +475,7 @@ const DERIVADAS = {
   ]
 };
 
-/* Benchmarks de mercado (Brasil, 2025) — base do manual Martinelle */
+/* Benchmarks de mercado (Brasil, 2025) — base do manual MRTN */
 const BENCH = {
   meta:   { ctrRuim:0.7, ctrMedio:1.0, ctrOtimo:3.0, freqAlerta:3.5, connectMin:70, txconvMin:2,
             cpl:{medico:[40,100], local:[10,40], ecommerce:[15,60], outro:[15,60]} },
@@ -1068,6 +1075,62 @@ async function importarArquivo(canal, input){
 }
 
 /* ============================================================
+   🔄 IMPORTAÇÃO AUTOMÁTICA — META ADS (Edge Function meta-insights)
+   O token do Meta fica em SEGREDO no Supabase; o navegador só
+   chama a função, que devolve números + público + criativos.
+============================================================ */
+const META_FN = `${SUPA_URL}/functions/v1/meta-insights`;
+
+// criativos (array do Meta) -> linhas "Nome — X leads — CPL R$ Y" que o relatório já ranqueia
+function metaCriativosParaTexto(criativos){
+  if(!Array.isArray(criativos)) return '';
+  return criativos.map(c=>{
+    const partes = [c.nome];
+    if(c.leads>0) partes.push(`${fmtInt(c.leads)} leads`);
+    else if(c.cliques>0) partes.push(`${fmtInt(c.cliques)} cliques`);
+    if(c.cpl != null && c.cpl > 0) partes.push(`CPL ${fmtMoeda(c.cpl)}`);
+    else if(c.ctr!=null) partes.push(`CTR ${fmtPct(c.ctr)}`);
+    return partes.join(' — ');
+  }).join('\n');
+}
+
+async function puxarMeta(){
+  if(!cur) return;
+  const cli = cliente(cur.clientId);
+  if(!cli || !cli.metaAct) return toast('Cadastre a conta de anúncios do Meta nos dados do cliente.');
+  if(!cur.de || !cur.ate) return toast('Defina o período (de / até) antes de puxar do Meta.');
+  const btn = $('btnMeta'); if(btn){ btn.disabled = true; btn.textContent = '⏳ Puxando do Meta...'; }
+  try{
+    const payload = { accountId: cli.metaAct, since: cur.de, until: cur.ate };
+    if(cur.deAnt && cur.ateAnt){ payload.prevSince = cur.deAnt; payload.prevUntil = cur.ateAnt; }
+    const r = await fetch(META_FN, { method:'POST', headers: supaHeaders(), body: JSON.stringify(payload) });
+    const j = await r.json();
+    if(!r.ok || j.error) throw new Error(j.error || 'Falha na conexão com o Meta');
+    cur.canais.meta.ativo = true;
+    if(j.atual && Object.keys(j.atual).length) cur.canais.meta.atual = Object.assign({}, cur.canais.meta.atual, j.atual);
+    if(j.anterior && Object.keys(j.anterior).length) cur.canais.meta.anterior = Object.assign({}, cur.canais.meta.anterior, j.anterior);
+    if(j.publico){
+      if(j.publico.fem!=null) cur.publico.fem = String(j.publico.fem);
+      if(j.publico.idades) cur.publico.idades = j.publico.idades;
+    }
+    const txt = metaCriativosParaTexto(j.criativos);
+    if(txt) cur.publico.topAnuncios = txt;
+    salvarCur(); renderEditor();
+    const nM = j.atual ? Object.keys(j.atual).length : 0;
+    const partes = [`${nM} métricas`];
+    if(j.publico && (j.publico.fem!=null || j.publico.idades)) partes.push('público');
+    if(j.criativos && j.criativos.length) partes.push(`${j.criativos.length} criativos ranqueados`);
+    if(j.anterior && Object.keys(j.anterior).length) partes.push('período anterior');
+    toast('✓ Meta Ads: ' + partes.join(' · '));
+  }catch(err){
+    console.error(err);
+    toast('⚠ Meta: ' + (err.message || 'erro ao puxar dados'));
+  }finally{
+    const b = $('btnMeta'); if(b){ b.disabled = false; b.textContent = '🔄 Puxar dados do Meta'; }
+  }
+}
+
+/* ============================================================
    🔐 LOGIN
 ============================================================ */
 function tryLogin(){
@@ -1119,7 +1182,8 @@ function abrirCliente(id){
   $('cNome').value = c?.nome||''; $('cNicho').value = c?.nicho||'local';
   $('cObjetivo').value = c?.objetivo||'leads'; $('cCidade').value = c?.cidade||'';
   $('cTicket').value = c?.ticket||''; $('cFechamento').value = c?.fechamento||'';
-  $('cCor').value = c?.cor||'#6c63ff'; $('cCorHex').value = c?.cor||'';
+  $('cCor').value = c?.cor||'#2f6bff'; $('cCorHex').value = c?.cor||'';
+  $('cMetaAct').value = c?.metaAct||'';
   $('cObs').value = c?.obs||'';
   $('cExcluir').classList.toggle('hide', !c);
   $('cliOverlay').classList.add('show');
@@ -1128,7 +1192,7 @@ function salvarCliente(){
   const nome = $('cNome').value.trim();
   if(!nome) return toast('Dê um nome ao cliente');
   const corHex = $('cCorHex').value.trim();
-  const dados = {nome, nicho:$('cNicho').value, objetivo:$('cObjetivo').value, cidade:$('cCidade').value.trim(), ticket:$('cTicket').value.trim(), fechamento:$('cFechamento').value.trim(), cor:/^#[0-9a-fA-F]{6}$/.test(corHex)?corHex:'', obs:$('cObs').value.trim()};
+  const dados = {nome, nicho:$('cNicho').value, objetivo:$('cObjetivo').value, cidade:$('cCidade').value.trim(), ticket:$('cTicket').value.trim(), fechamento:$('cFechamento').value.trim(), cor:/^#[0-9a-fA-F]{6}$/.test(corHex)?corHex:'', metaAct:$('cMetaAct').value.trim().replace(/^act_/i,''), obs:$('cObs').value.trim()};
   if(editandoCli){ Object.assign(cliente(editandoCli), dados); }
   else S.clients.push(Object.assign({id:uid()}, dados));
   save(); fecharModal('cliOverlay'); renderClientes(); renderHome(); toast('✓ Cliente salvo');
@@ -1285,10 +1349,19 @@ function htmlCanal(canal){
   const c = cur.canais[canal];
   const d = calcDerivadas(canal, c.atual);
   const chips = DERIVADAS[canal].map(([k,l,t])=> d[k]!=null?`<span class="chip">${l}<b>${fmtVal(d[k],t)}</b></span>`:'').join('');
+  const cli = cliente(cur.clientId);
+  const metaBlock = canal!=='meta' ? '' : (cli && cli.metaAct
+    ? `<div class="metaconn">
+        <div class="metaconn-h">⚡ Importação automática do Meta Ads</div>
+        <div class="muted" style="margin:6px 0 11px">Conta <b>act_${esc(cli.metaAct)}</b> — puxa números, público e ranking de criativos do período <b>${fmtData(cur.de)} a ${fmtData(cur.ate)}</b> direto do Meta, sem copiar e colar.</div>
+        <button class="btn btn-p btn-sm" id="btnMeta" onclick="puxarMeta()">🔄 Puxar dados do Meta</button>
+       </div>`
+    : `<div class="metaconn"><div class="metaconn-h">⚡ Importação automática do Meta Ads</div><div class="muted" style="margin-top:6px">Cadastre a <b>Conta de anúncios do Meta</b> nos dados do cliente (botão ✏️ Editar) para liberar a importação automática deste canal.</div></div>`);
   return `
   <label class="switch ${c.ativo?'on':''}" onclick="cur.canais['${canal}'].ativo=!cur.canais['${canal}'].ativo;salvarCur();renderEditor()">
     <span class="tk"></span> Incluir ${CANAL_NOME[canal]} neste relatório</label>
   ${!c.ativo?'':`
+  ${metaBlock}
   <div class="paste" style="margin-top:15px">
     <div class="muted" style="margin-bottom:8px">📁 <b>Importar o arquivo da plataforma</b> — aceita <b>Excel (.xlsx), CSV, PDF e Word (.docx)</b>:<br>
     · <b>Melhor resultado (números + público + criativos):</b> Excel/CSV → Meta: Gerenciador → Relatórios → Exportar; Google: botão de download → Excel/CSV<br>
@@ -1384,7 +1457,7 @@ function htmlAnalise(){
   const a = cur.analise;
   return `
   <div class="row" style="justify-content:space-between;margin-bottom:14px">
-    <div class="muted">A análise é gerada pelas regras de benchmark do manual Martinelle — e você pode editar tudo antes de enviar.</div>
+    <div class="muted">A análise é gerada pelas regras de benchmark do manual MRTN — e você pode editar tudo antes de enviar.</div>
     <button class="btn btn-p" onclick="rodarAnalise()">🤖 Gerar análise automática</button>
   </div>
   <div class="fld"><label>Resumo executivo (abre o relatório)</label>
@@ -1600,9 +1673,9 @@ function aclarar(hex, amt){
   r=Math.round(r+(255-r)*amt); g=Math.round(g+(255-g)*amt); b=Math.round(b+(255-b)*amt);
   return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
 }
-// cor de acento do cliente (ou a da marca Martinelle)
+// cor de acento do cliente (ou a da marca MRTN)
 function acentoCliente(cli){
-  const ac = (cli && cli.cor && /^#[0-9a-fA-F]{6}$/.test(cli.cor)) ? cli.cor : '#6c63ff';
+  const ac = (cli && cli.cor && /^#[0-9a-fA-F]{6}$/.test(cli.cor)) ? cli.cor : '#2f6bff';
   const ac2 = (cli && cli.cor) ? aclarar(ac, 0.30) : '#43d9ad';
   return {ac, ac2};
 }
@@ -1644,7 +1717,7 @@ function montarRelatorio(rep, cli){
   ];
   if(nota) heroStats.push({l:'Nota do mês', v:String(nota.nota), d:nota.label, cor:nota.cor});
   html += `<div class="cover">
-    <div class="c-top"><div class="c-logo"><img src="logo-branco.png" alt="Agência Martinelle"></div><div class="c-ag"><b>${esc(AGENCIA.nome)}</b><span>${esc(AGENCIA.tagline)}</span></div></div>
+    <div class="c-top"><div class="c-logo"><img src="logo-branco.png" alt="Consultoria MRTN"></div><div class="c-ag"><b>${esc(AGENCIA.nome)}</b><span>${esc(AGENCIA.tagline)}</span></div></div>
     <div class="c-mid">
       <div class="c-kick">${esc(tipoNome)} de Tráfego Pago</div>
       <h1>${esc(cli.nome)}</h1>
@@ -1702,10 +1775,17 @@ function montarRelatorio(rep, cli){
       </div>`;
     }
     if(locsArr.length) html += `<div class="keep" style="margin-top:20px"><div class="sub" style="margin-bottom:8px;font-weight:700;color:#4a5270">📍 Onde está esse público</div><div class="locs">${locsArr.map(l=>`<span class="loc">${esc(l)}</span>`).join('')}</div></div>`;
-    if(tops.length) html += `<div class="keep" style="margin-top:20px"><div class="sub" style="margin-bottom:8px;font-weight:700;color:#4a5270">🏆 Anúncios que mais converteram</div><div class="topads">${tops.slice(0,5).map((l,i)=>{
-      const [nome, ...resto] = l.split(' — ');
-      return `<div class="topad"><div class="rank">${i+1}</div><div class="tn">${esc(nome)}</div><div class="tv">${esc(resto.join(' · '))}</div></div>`;
-    }).join('')}</div></div>`;
+    if(tops.length) html += `<div class="keep" style="margin-top:20px">
+      <div class="sub" style="margin-bottom:3px;font-weight:700;color:#4a5270">🏆 Hierarquia de criativos — o que mais converteu</div>
+      <div class="sub" style="margin-bottom:11px;color:#8a90a4;font-size:12px">Ranking por resultado no período. O topo mostra onde concentrar a verba e quais ângulos repetir nos próximos criativos.</div>
+      <div class="topads">${tops.slice(0,5).map((l,i)=>{
+        const [nome, ...resto] = l.split(' — ');
+        const medal = ['🥇','🥈','🥉'][i] || (i+1);
+        const rcls = ['r1','r2','r3'][i] || '';
+        const pos = ['1º lugar','2º lugar','3º lugar','4º lugar','5º lugar'][i];
+        const tag = i===0 ? `<div class="tag">▲ Priorizar verba e replicar o ângulo</div>` : '';
+        return `<div class="topad ${i===0?'tg1':''}"><div class="rank ${rcls}">${medal}</div><div class="tn"><span class="pos">${pos}</span>${esc(nome)}${tag}</div><div class="tv">${esc(resto.join(' · '))}</div></div>`;
+      }).join('')}</div></div>`;
     html += `</div>`;
   }
 
@@ -1741,7 +1821,7 @@ function montarRelatorio(rep, cli){
   if(a.proximos){
     html += `<div class="sec keep">
       <div class="h2"><span class="dot"></span>Plano de ação do próximo mês</div>
-      <div class="sub">O que a Agência Martinelle vai executar no próximo período</div>
+      <div class="sub">O que a Consultoria MRTN vai executar no próximo período</div>
       <ol class="passos">${a.proximos.split('\n').filter(Boolean).map(l=>`<li>${esc(l)}</li>`).join('')}</ol>
       <div class="assina">Qualquer dúvida sobre este relatório, estou à disposição.<br><b>${esc(AGENCIA.responsavel)}</b> · ${esc(AGENCIA.nome)}</div>
     </div>`;
@@ -1754,7 +1834,7 @@ function montarRelatorio(rep, cli){
 
   /* ---- CONTRACAPA ---- */
   html += `<div class="closing">
-    <div class="c-logo"><img src="logo-branco.png" alt="Agência Martinelle"></div>
+    <div class="c-logo"><img src="logo-branco.png" alt="Consultoria MRTN"></div>
     <h3>${esc(AGENCIA.nome)}</h3>
     <p>${esc(AGENCIA.tagline)}<br>${esc(AGENCIA.email)}<br>${esc(AGENCIA.cidade)} · CNPJ ${esc(AGENCIA.cnpj)}</p>
     <div class="c-tag">Obrigado pela confiança</div>
@@ -1907,7 +1987,7 @@ function htmlGmnRelatorio(rep){
   if(temFontes || termos.length){
     blocoMeio = `<div class="cards2 keep" style="margin-top:18px">
       ${temFontes?`<div class="chartcard"><h5>Como descobriram a empresa</h5><canvas id="chGmn" height="200"></canvas></div>`:''}
-      ${termos.length?`<div class="chartcard"><h5>O que pesquisaram pra te achar</h5><div style="margin-top:4px">${termos.slice(0,7).map(t=>`<div style="display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid #eff1f7"><span style="color:#6c63ff;font-weight:800">🔎</span><span style="font-size:12.8px;color:#2f3650;font-weight:600">${esc(t)}</span></div>`).join('')}</div></div>`:''}
+      ${termos.length?`<div class="chartcard"><h5>O que pesquisaram pra te achar</h5><div style="margin-top:4px">${termos.slice(0,7).map(t=>`<div style="display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid #eff1f7"><span style="color:#2f6bff;font-weight:800">🔎</span><span style="font-size:12.8px;color:#2f3650;font-weight:600">${esc(t)}</span></div>`).join('')}</div></div>`:''}
     </div>`;
   }
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Agência Martinelle — Painel da Equipe</title>
+<title>Consultoria MRTN — Painel da Equipe</title>
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0e0f14">
@@ -11,8 +11,8 @@
 :root{
   --bg:#0e0f14; --bg2:#161821; --bg3:#1e2130; --line:#2a2e42;
   --tx:#e8eaf2; --tx2:#9aa0b5; --tx3:#6a7088;
-  --roxo:#6c63ff; --verde:#43d9ad;
-  --grad:linear-gradient(135deg,#6c63ff,#43d9ad);
+  --roxo:#2f6bff; --verde:#1e50d6;
+  --grad:linear-gradient(135deg,#2f6bff,#1e50d6);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -49,7 +49,7 @@ body.aberto .gate{display:none}
 .abas{display:flex;gap:5px;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:4px;margin:0 auto}
 .abas button{display:flex;align-items:center;gap:7px;padding:8px 17px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--tx2);transition:.15s;white-space:nowrap}
 .abas button:hover{color:var(--tx)}
-.abas button.on{background:var(--grad);color:#fff;box-shadow:0 3px 12px rgba(108,99,255,.3)}
+.abas button.on{background:var(--grad);color:#fff;box-shadow:0 3px 12px rgba(47,107,255,.32)}
 
 .acoes{display:flex;gap:4px;align-items:center}
 .acoes button{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--tx2);border:1px solid transparent}
@@ -78,8 +78,8 @@ body.aberto .gate{display:none}
 <!-- ============ LOGIN ÚNICO DA EQUIPE ============ -->
 <div class="gate" id="gate">
   <div class="gate-card">
-    <div class="glogo"><img src="logo-branco.png" alt="Agência Martinelle"></div>
-    <h1>Agência Martinelle</h1>
+    <div class="glogo"><img src="logo-branco.png" alt="Consultoria MRTN"></div>
+    <h1>Consultoria MRTN</h1>
     <div class="sub">Painel da Equipe — Prospecção · Contratos · Relatórios</div>
     <input type="password" id="senha" placeholder="Senha da equipe" autocomplete="current-password"
       onkeydown="if(event.key==='Enter')entrar()">
@@ -93,8 +93,8 @@ body.aberto .gate{display:none}
 <div class="hub">
   <header class="topo">
     <div class="marca">
-      <div class="mlogo"><img src="logo-branco.png" alt="Agência Martinelle"></div>
-      <div><b>Agência Martinelle</b><span>Painel da Equipe</span></div>
+      <div class="mlogo"><img src="logo-branco.png" alt="Consultoria MRTN"></div>
+      <div><b>Consultoria MRTN</b><span>Painel da Equipe</span></div>
     </div>
     <nav class="abas" id="abas"></nav>
     <div class="acoes">
@@ -109,7 +109,7 @@ body.aberto .gate{display:none}
 
 <script>
 /* ============================================================
-   Painel único da Agência Martinelle
+   Painel único da Consultoria MRTN
    Uma senha → três ferramentas (iframes same-origin).
    A senha gravada em localStorage é a MESMA chave que o
    Prospector, os Contratos e os Relatórios verificam — ou seja,
@@ -156,7 +156,7 @@ function ativar(id){
   abaAtiva = id;
   localStorage.setItem(TAB_KEY, id);
   const f = FERRAMENTAS.find(x=>x.id===id);
-  document.title = `${f.titulo} — Agência Martinelle`;
+  document.title = `${f.titulo} — Consultoria MRTN`;
   FERRAMENTAS.forEach(x => $('aba_'+x.id).classList.toggle('on', x.id===id));
   // cria o iframe na primeira visita à aba; depois só alterna (mantém o estado)
   if(!frames[id]){

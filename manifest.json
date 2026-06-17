@@ -1,12 +1,12 @@
 {
-  "name": "Martinelle Pro — Painel da Equipe",
-  "short_name": "Martinelle",
-  "description": "Painel da Agência Martinelle: prospecção, contratos e relatórios",
+  "name": "Consultoria MRTN — Painel da Equipe",
+  "short_name": "MRTN",
+  "description": "Painel da Consultoria MRTN: prospecção, contratos e relatórios",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0e0f14",
-  "theme_color": "#6c63ff",
+  "theme_color": "#2f6bff",
   "orientation": "any",
   "lang": "pt-BR",
   "icons": [

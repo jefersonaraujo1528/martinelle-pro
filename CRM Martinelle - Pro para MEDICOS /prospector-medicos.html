@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Martinelle — Prospecção Médica</title>
+<title>Consultoria MRTN — Prospecção Médica</title>
 <meta name="theme-color" content="#6c63ff">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Martinelle">
+<meta name="apple-mobile-web-app-title" content="MRTN">
 <script>
 (function(){
   var ICON="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%236c63ff'/><text x='256' y='370' font-family='Arial' font-weight='900' font-size='320' text-anchor='middle' fill='white'>M</text></svg>";
   var h=document.head;
   var fi=document.createElement('link');fi.rel='icon';fi.href=ICON;h.appendChild(fi);
   var ai=document.createElement('link');ai.rel='apple-touch-icon';ai.href=ICON;h.appendChild(ai);
-  var mf=JSON.stringify({name:'Martinelle Pro — Prospecção Médica',short_name:'Martinelle',start_url:'./',display:'standalone',background_color:'#0e0f14',theme_color:'#6c63ff',orientation:'any',lang:'pt-BR',icons:[{src:ICON,sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]});
+  var mf=JSON.stringify({name:'Consultoria MRTN — Prospecção Médica',short_name:'MRTN',start_url:'./',display:'standalone',background_color:'#0e0f14',theme_color:'#6c63ff',orientation:'any',lang:'pt-BR',icons:[{src:ICON,sizes:'any',type:'image/svg+xml',purpose:'any maskable'}]});
   var mb=new Blob([mf],{type:'application/manifest+json'});
   var ml=document.createElement('link');ml.rel='manifest';ml.href=URL.createObjectURL(mb);h.appendChild(ml);
 })();
@@ -534,7 +534,7 @@ tr.sel-on td{background:rgba(108,99,255,.07)}
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="brand">Martinelle <span>Pro</span></div>
+  <div class="brand">MRTN <span>Pro</span></div>
   <nav class="nav">
     <div class="nav-item active" data-view="today" onclick="goView('today')"><span class="nav-icon">🌅</span> Hoje <span class="badge-side" id="sideToday">0</span></div>
     <div class="nav-item" data-view="medicos" onclick="goView('medicos')"><span class="nav-icon">🏥</span> Médicos <span class="badge-side" id="sideTotal">0</span></div>
@@ -2667,7 +2667,7 @@ function exportCSV(){
   const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `martinelle_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `mrtn_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   toast('Exportado!','ok');
 }
@@ -2760,7 +2760,7 @@ function exportJSON(){
   const blob = new Blob([JSON.stringify({doctors,config},null,2)],{type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `martinelle_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `mrtn_backup_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
   resetBackupCount();
   toast('Backup JSON gerado','ok');

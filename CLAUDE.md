@@ -1,4 +1,4 @@
-# Agência Martinelle — Sistema Integrado de Agentes
+# Consultoria MRTN — Sistema Integrado de Agentes
 
 ## Orquestração Automática (LEIA PRIMEIRO)
 
@@ -33,7 +33,7 @@ Toda resposta termina com um próximo passo concreto e com prazo. Sem próximo p
 
 ## Quem é Jeferson
 
-Jeferson Araujo Martinelle — Diretor Fundador da Agência Martinelle. Trabalha com tráfego pago e prospecção presencial para médicos e negócios locais. **Não trabalha com design, vídeo, conteúdo orgânico nem gestão de social media.** Tem boa base comercial — responder diretamente, sem explicação básica.
+Jeferson Araujo Martinelle — Diretor Fundador da Consultoria MRTN. Trabalha com tráfego pago e prospecção presencial para médicos e negócios locais. **Não trabalha com design, vídeo, conteúdo orgânico nem gestão de social media.** Tem boa base comercial — responder diretamente, sem explicação básica.
 
 ---
 

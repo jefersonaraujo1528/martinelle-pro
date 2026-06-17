@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gerador de Contratos — Agência Martinelle</title>
+  <title>Gerador de Contratos — Consultoria MRTN</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -86,8 +86,8 @@
   .gate-eq .gerr{font-size:.8rem;color:var(--danger);min-height:14px}
 </style>
 <div class="gate-eq" id="gateEq">
-  <div class="gl"><img src="../logo-branco.png" alt="Agência Martinelle"></div>
-  <div><b style="font-size:1.05rem">Gerador de Contratos</b><br><span style="font-size:.8rem;color:var(--muted)">Agência Martinelle — acesso da equipe</span></div>
+  <div class="gl"><img src="../logo-branco.png" alt="Consultoria MRTN"></div>
+  <div><b style="font-size:1.05rem">Gerador de Contratos</b><br><span style="font-size:.8rem;color:var(--muted)">Consultoria MRTN — acesso da equipe</span></div>
   <input type="password" id="gateEqSenha" placeholder="Senha da equipe" onkeydown="if(event.key==='Enter')gateEqEntrar()">
   <button onclick="gateEqEntrar()">Entrar</button>
   <div class="gerr" id="gateEqMsg"></div>
@@ -109,7 +109,7 @@
 
 <header>
   <h1>Gerador de Contratos</h1>
-  <p>Agência Martinelle — CNPJ 49.561.800/0001-70</p>
+  <p>Consultoria MRTN — CNPJ 49.561.800/0001-70</p>
 </header>
 
 <div class="container">
@@ -642,7 +642,7 @@
     const link = document.getElementById('linkBox').textContent;
     const tel = (dadosUltimo?.telefone || '').replace(/\D/g, '');
     const nome = dadosUltimo?.nome || '';
-    const msg = `Olá ${nome}! Tudo bem? 😊\n\nSegue o contrato da *Agência Martinelle* para sua assinatura digital (link válido por 48h):\n\n${link}\n\nÉ rápido e 100% online. Qualquer dúvida, estou à disposição! 🚀`;
+    const msg = `Olá ${nome}! Tudo bem? 😊\n\nSegue o contrato da *Consultoria MRTN* para sua assinatura digital (link válido por 48h):\n\n${link}\n\nÉ rápido e 100% online. Qualquer dúvida, estou à disposição! 🚀`;
     // não duplica o DDI se o telefone já veio com 55 na frente
     const num = tel.length >= 10 ? (tel.startsWith('55') && tel.length >= 12 ? tel : '55' + tel) : '';
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
@@ -761,7 +761,7 @@
       campo(d.tipoDoc, d.documento) +
       campo('E-mail', d.email) +
       campo('WhatsApp', d.telefone) +
-      campo('Descrição da cobrança', `Taxa Gerenciamento ${planoNome} — Agência Martinelle`) +
+      campo('Descrição da cobrança', `Taxa Gerenciamento ${planoNome} — Consultoria MRTN`) +
       campo('Cobrança', cobranca) +
       campo('Vencimento (dia do mês)', d.diaVencimento);
   }

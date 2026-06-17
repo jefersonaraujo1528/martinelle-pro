@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================
-# DEPLOY — Martinelle Prospector
+# DEPLOY — MRTN Prospector
 # 1. git push para versionar no GitHub
 # 2. Deploy via API direto pro Netlify (site atualiza em 30s)
 #
@@ -30,7 +30,7 @@ for arg in "$@"; do
 done
 
 echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${N}"
-echo -e "${B}🚀 DEPLOY MARTINELLE${N}"
+echo -e "${B}🚀 DEPLOY MRTN${N}"
 echo -e "${B}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${N}"
 
 # =============================================================
