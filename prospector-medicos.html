@@ -765,8 +765,51 @@ function openSelectedRoute(){
   const list = doctors.filter(d => selectedIds.has(d.id) && d.address);
   if(!list.length){ toast('Nenhum médico selecionado tem endereço cadastrado','err'); return; }
   list.sort((a,b) => parseTime(a.time) - parseTime(b.time));
-  const url = 'https://www.google.com/maps/dir/' + list.map(d => encodeURIComponent(d.address)).join('/');
+  const url = 'https://www.google.com/maps/dir/' + list.map(d => encodeURIComponent(d.address.replace(/\n/g,' '))).join('/');
   window.open(url, '_blank');
+}
+
+// Monta a mensagem numerada (1º, 2º, 3º...) na mesma ordem da rota (por horário)
+function buildRouteMessage(){
+  const list = doctors.filter(d => selectedIds.has(d.id));
+  if(!list.length) return null;
+  list.sort((a,b) => parseTime(a.time) - parseTime(b.time));
+  const nums = ['1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+  let msg = '*📋 ROTA DE PROSPECÇÃO — MRTN*\n';
+  list.forEach((d, i) => {
+    const n = nums[i] || `${i+1}º`;
+    msg += `\n${n} *${d.name}*` + (d.time ? ` — ${d.time}` : '');
+    if(d.specialty) msg += `\n   _${d.specialty}_`;
+    if(d.clinic)    msg += `\n   🏥 ${d.clinic}`;
+    if(d.address)   msg += `\n   📍 ${d.address.replace(/\n/g,' ')}`;
+    if(d.secretary) msg += `\n   👤 ${d.secretary}`;
+    if(d.obs)       msg += `\n   ⚠️ ${d.obs}`;
+    msg += '\n';
+  });
+  const withAddr = list.filter(d => d.address);
+  if(withAddr.length){
+    const url = 'https://www.google.com/maps/dir/' + withAddr.map(d => encodeURIComponent(d.address.replace(/\n/g,' '))).join('/');
+    msg += `\n🗺️ *Rota no Google Maps:*\n${url}`;
+  }
+  return msg;
+}
+
+// Copia a mensagem pronta pra colar no WhatsApp
+async function copyRouteMessage(){
+  const msg = buildRouteMessage();
+  if(!msg){ toast('Nenhum médico selecionado','err'); return; }
+  try{
+    await navigator.clipboard.writeText(msg);
+    toast('📋 Mensagem copiada! Cole no seu WhatsApp','ok');
+  }catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = msg; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    let ok = false;
+    try{ ok = document.execCommand('copy'); }catch(_){}
+    document.body.removeChild(ta);
+    toast(ok ? '📋 Mensagem copiada! Cole no seu WhatsApp' : 'Não consegui copiar automaticamente','err');
+  }
 }
 
 function setView(v){
@@ -1578,6 +1621,7 @@ setInterval(() => {
 <div id="selFab" class="sel-fab" style="display:none">
   <span style="font-weight:800;color:var(--green);font-size:14px">☑️ <span id="selFabCount">0</span> selecionado(s)</span>
   <button class="sel-fab-btn" onclick="openSelectedRoute()">🗺️ Abrir Rota no Google Maps</button>
+  <button class="sel-fab-btn" style="background:#2f6bff;color:#fff" onclick="copyRouteMessage()">📋 Copiar Mensagem</button>
   <button class="sel-fab-clear" onclick="clearSel()">✕ Limpar</button>
 </div>
 </body>
