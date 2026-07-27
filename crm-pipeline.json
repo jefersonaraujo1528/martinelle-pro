@@ -1,4 +1,8 @@
 {
-  "ultima_atualizacao": "2026-05-10",
+  "_aposentado": true,
+  "_desde": "2026-07-27",
+  "_motivo": "Fonte unica de leads passou a ser o prospector-medicos.html. Este arquivo NAO deve mais receber leads. Mantido vazio apenas para nao quebrar deploy.sh e quem o leia.",
+  "_fonte_unica": "prospector-medicos.html",
+  "ultima_atualizacao": "2026-07-27",
   "leads": []
 }

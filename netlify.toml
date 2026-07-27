@@ -12,11 +12,6 @@
   to = "/prospector-medicos.html"
   status = 200
 
-[[redirects]]
-  from = "/api/autentique-proxy"
-  to = "/.netlify/functions/autentique-proxy"
-  status = 200
-
 [[headers]]
   for = "/*.html"
   [headers.values]

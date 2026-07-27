@@ -37,6 +37,10 @@
     .plano-card .pi { font-size: 1.8rem; margin-bottom: 6px; }
     .plano-card .pn { font-size: 0.82rem; font-weight: 700; }
     .plano-card .pp { font-size: 0.9rem; font-weight: 700; color: var(--gold); margin-top: 3px; }
+    .plano-card .pd { font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+    .plano-card.oculto { display: none; }
+    .aviso-plano { background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.28); border-radius: 8px; padding: 10px 13px; font-size: 0.78rem; color: var(--gold-light); margin-bottom: 14px; }
+    .aviso-plano.oculto { display: none; }
 
     /* Cards tipo / pgto */
     .opcao-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -152,24 +156,31 @@
   <!-- PLANO -->
   <div class="section">
     <div class="section-title"><span>📦</span> Plano Contratado</div>
+    <div class="aviso-plano" id="avisoPlano">Selecione o tipo de cliente acima para ver os planos disponíveis.</div>
     <div class="plano-grid">
       <label class="plano-card" id="card-google">
         <input type="radio" name="plano" value="google" />
-        <div class="pi">🔍</div><div class="pn">Google Ads Pro</div>
-        <div class="pp">R$ 1.200/mês</div>
-        <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">R$ 1.500 sem pontualidade</div>
+        <div class="pi">🔍</div><div class="pn" id="nome-google">Google Ads Pro</div>
+        <div class="pp" id="preco-google">R$ 1.200/mês</div>
+        <div class="pd" id="desc-google">Fee de gestão · verba de mídia à parte</div>
       </label>
       <label class="plano-card" id="card-meta">
         <input type="radio" name="plano" value="meta" />
-        <div class="pi">📱</div><div class="pn">Meta Ads Pro</div>
-        <div class="pp">R$ 1.200/mês</div>
-        <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">R$ 1.500 sem pontualidade</div>
+        <div class="pi">📱</div><div class="pn" id="nome-meta">Meta Ads Pro</div>
+        <div class="pp" id="preco-meta">R$ 1.200/mês</div>
+        <div class="pd" id="desc-meta">Fee de gestão · verba de mídia à parte</div>
       </label>
       <label class="plano-card" id="card-youtube">
         <input type="radio" name="plano" value="youtube" />
         <div class="pi">▶️</div><div class="pn">YouTube Ads Pro</div>
-        <div class="pp">R$ 3.200/mês</div>
-        <div style="font-size:0.68rem;color:var(--muted);margin-top:2px">R$ 4.000 sem pontualidade</div>
+        <div class="pp">R$ 2.500/mês</div>
+        <div class="pd">Exclusivo para médicos · 12 meses</div>
+      </label>
+      <label class="plano-card" id="card-plus">
+        <input type="radio" name="plano" value="plus" />
+        <div class="pi">🚀</div><div class="pn">Plano Plus</div>
+        <div class="pp">R$ 1.300/mês</div>
+        <div class="pd">Google + Meta · negócio local</div>
       </label>
     </div>
   </div>
@@ -178,7 +189,7 @@
   <div class="section">
     <div class="section-title"><span>💰</span> Valor e Datas</div>
     <div class="form-row">
-      <div><label>Valor mensal cheio (R$) <span class="req">*</span></label><input type="text" id="valor" placeholder="1.500,00" /></div>
+      <div><label>Valor mensal do fee de gestão (R$) <span class="req">*</span></label><input type="text" id="valor" placeholder="1.200,00" /></div>
       <div><label>Dia do vencimento <span class="req">*</span></label>
         <select id="diaVencimento">
           <option value="">Selecione</option>
@@ -217,7 +228,7 @@
       </label>
       <label class="opcao-card" id="pgto-cartao">
         <input type="radio" name="pgto" value="cartao" />
-        <div class="oi">💳</div><div><div class="ol">Cartão de Crédito</div><div class="od">Com juros configuráveis</div></div>
+        <div class="oi">💳</div><div><div class="ol">Cartão de Crédito</div><div class="od">Valor total do contrato parcelado</div></div>
       </label>
       <label class="opcao-card" id="pgto-misto">
         <input type="radio" name="pgto" value="misto" />
@@ -242,7 +253,7 @@
       </div>
       <div class="juros-info">
         <strong>Cartão = valor total do contrato</strong> (mensal × duração), parcelado.
-        Os <strong>juros do parcelamento são aplicados pela operadora/Asaas</strong> no checkout — não somamos juros manualmente.
+        O contrato registra apenas o valor total e o número de parcelas — a CONTRATADA não acrescenta juros.
         <div class="juros-preview" id="jurosPreview"></div>
       </div>
     </div>
@@ -278,7 +289,7 @@
       </div>
       <div class="juros-info">
         <strong>Entrada agora + restante do valor total parcelado no cartão.</strong>
-        Juros do parcelamento aplicados pela operadora/Asaas.
+        O contrato registra apenas o valor total, a entrada e o número de parcelas — sem acréscimo de juros pela CONTRATADA.
         <div class="juros-preview" id="jurosPreviewMisto"></div>
       </div>
     </div>
@@ -314,11 +325,13 @@
     <div class="form-row">
       <div>
         <label>Desconto de pontualidade</label>
+        <!-- Preço limpo: o padrão é SEM desconto. O valor digitado já é o preço final
+             (R$1.200 Google/Meta Pro). Só usar desconto se for negociação pontual. -->
         <select id="cl_desconto">
-          <option value="20_10">20% pagando até dia 10 (padrão)</option>
-          <option value="30_10">30% pagando até dia 10</option>
+          <option value="0">Sem desconto de pontualidade (padrão)</option>
           <option value="10_10">10% pagando até dia 10</option>
-          <option value="0">Sem desconto de pontualidade</option>
+          <option value="20_10">20% pagando até dia 10</option>
+          <option value="30_10">30% pagando até dia 10</option>
         </select>
       </div>
       <div>
@@ -409,7 +422,7 @@
 <div class="modal-overlay" id="modalSucesso">
   <div class="modal" style="max-width:540px">
 
-    <!-- PASSO 1: Link de assinatura + dados Asaas -->
+    <!-- PASSO 1: Link de assinatura -->
     <div id="passoContrato">
       <div style="font-size:2.5rem;margin-bottom:10px">✅</div>
       <h2>Contrato Gerado!</h2>
@@ -418,16 +431,6 @@
       <button class="btn-copiar" style="background:#25D366;color:#fff" onclick="enviarWhatsApp()">📲 Enviar no WhatsApp do cliente</button>
       <button class="btn-copiar" onclick="copiarLink()">📋 Copiar Link do Contrato</button>
       <p class="copiado" id="copiado">✔ Copiado!</p>
-
-      <!-- Dados para o Asaas -->
-      <div style="margin-top:18px;border-top:1px solid var(--border);padding-top:16px;text-align:left">
-        <p style="font-size:0.78rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">💰 Dados para cadastrar no Asaas</p>
-        <div id="asaasDados"></div>
-        <a id="asaasBtn" href="https://app.asaas.com/customerAccount/list" target="_blank"
-           style="display:block;margin-top:10px;background:linear-gradient(135deg,#1a6a2e,#22a83a);color:#fff;border:none;border-radius:8px;padding:12px;font-weight:700;font-size:0.88rem;cursor:pointer;text-align:center;text-decoration:none">
-          🏦 Abrir Asaas e Cadastrar
-        </a>
-      </div>
 
       <button class="btn-fechar" style="margin-top:12px" onclick="fecharModal()">Fechar e criar novo contrato</button>
     </div>
@@ -457,14 +460,63 @@
     });
   });
 
-  // Preço automático por PLANO + DURAÇÃO — valor CHEIO (antes do desconto de pontualidade).
-  // Quanto maior o compromisso, menor o mensal. Indeterminado = preço do 3 meses (sem compromisso).
-  const PRECOS = {
-    google:  { '12': '1.500,00', '6': '1.700,00', '3': '1.900,00', '0': '1.900,00' },
-    meta:    { '12': '1.500,00', '6': '1.700,00', '3': '1.900,00', '0': '1.900,00' },
-    youtube: { '12': '4.000,00', '6': '4.400,00', '3': '4.800,00', '0': '4.800,00' },
+  // ===== CATÁLOGO POR PÚBLICO =====
+  // Regra de ouro: MÉDICO e NEGÓCIO LOCAL são produtos diferentes, com preços e
+  // nomes diferentes. O tipo de cliente decide quais planos aparecem — assim é
+  // impossível gerar contrato de médico para um comércio (e vice-versa).
+  // Preço limpo: sem âncora de valor cheio e sem desconto de pontualidade.
+  // A verba de mídia é sempre do cliente e não entra nestes valores.
+  const CATALOGO = {
+    medico: {
+      google:  { nome: 'Google Ads Pro',  preco: '1.200,00', desc: 'Google Meu Negócio incluso' },
+      meta:    { nome: 'Meta Ads Pro',    preco: '1.200,00', desc: 'GMN de bônus no plano anual' },
+      youtube: { nome: 'YouTube Ads Pro', preco: '2.500,00', desc: 'GMN de bônus · mínimo 12 meses' },
+    },
+    local: {
+      google:  { nome: 'Start · Google',  preco: '650,00',   desc: '1 canal · Google Meu Negócio incluso' },
+      meta:    { nome: 'Start · Meta',    preco: '650,00',   desc: '1 canal · tráfego pago' },
+      plus:    { nome: 'Plano Plus',      preco: '1.300,00', desc: 'Google + Meta · 2 canais' },
+    },
   };
-  // YouTube Ads Pro é aceito SOMENTE no anual (12 meses). Google/Meta: 3, 6 ou 12.
+  function tipoClienteAtual() {
+    const el = document.querySelector('[name=tipoCliente]:checked');
+    return el ? el.value : '';
+  }
+  // Mostra só os planos do público escolhido e renomeia os cards.
+  function aplicarRegrasTipoCliente() {
+    const tipo = tipoClienteAtual();
+    const aviso = document.getElementById('avisoPlano');
+    const cards = { google:'card-google', meta:'card-meta', youtube:'card-youtube', plus:'card-plus' };
+    if (!tipo) {                                   // nada escolhido: esconde tudo e explica
+      Object.values(cards).forEach(id => document.getElementById(id).classList.add('oculto'));
+      aviso.classList.remove('oculto');
+      return;
+    }
+    aviso.classList.add('oculto');
+    const cat = CATALOGO[tipo];
+    Object.entries(cards).forEach(([plano, id]) => {
+      const card = document.getElementById(id);
+      const disponivel = !!cat[plano];
+      card.classList.toggle('oculto', !disponivel);
+      const input = card.querySelector('input');
+      input.disabled = !disponivel;
+      if (!disponivel && input.checked) {           // limpa seleção que não vale mais
+        input.checked = false;
+        card.classList.remove('selected');
+      }
+      if (disponivel) {                             // nome e preço mudam conforme o público
+        const n = document.getElementById('nome-' + plano);
+        const p = document.getElementById('preco-' + plano);
+        const dsc = document.getElementById('desc-' + plano);
+        if (n) n.textContent = cat[plano].nome;
+        if (p) p.textContent = 'R$ ' + cat[plano].preco.replace(',00','') + '/mês';
+        if (dsc) dsc.textContent = cat[plano].desc;
+      }
+    });
+    aplicarRegrasPlano();
+    atualizarPreco();
+  }
+  // YouTube Ads Pro é aceito SOMENTE no anual (12 meses). Os demais: 3, 6 ou 12.
   function aplicarRegrasPlano() {
     const planoEl = document.querySelector('[name=plano]:checked');
     const durSel = document.getElementById('duracao');
@@ -475,17 +527,19 @@
     if (isYT) durSel.value = '12';
   }
   function atualizarPreco() {
+    const tipo = tipoClienteAtual();
     const planoEl = document.querySelector('[name=plano]:checked');
-    if (!planoEl) return;
-    const tabela = PRECOS[planoEl.value];
-    if (!tabela) return;
-    const dur = document.getElementById('duracao').value;
-    document.getElementById('valor').value = tabela[dur] || tabela['12']; // sem duração → base anual
+    if (!tipo || !planoEl) return;
+    const item = (CATALOGO[tipo] || {})[planoEl.value];
+    if (!item) return;
+    document.getElementById('valor').value = item.preco;       // preço único por plano/público
     calcularJuros();
     calcularJurosMisto();
   }
   document.querySelectorAll('[name=plano]').forEach(r => r.addEventListener('change', () => { aplicarRegrasPlano(); atualizarPreco(); }));
+  document.querySelectorAll('[name=tipoCliente]').forEach(r => r.addEventListener('change', aplicarRegrasTipoCliente));
   document.getElementById('duracao').addEventListener('change', atualizarPreco);
+  aplicarRegrasTipoCliente();   // estado inicial: nenhum plano visível até escolher o público
 
   // Data padrão
   document.getElementById('dataInicio').value = new Date().toISOString().split('T')[0];
@@ -502,15 +556,13 @@
   });
 
   // ===== LÓGICA FINANCEIRA CENTRALIZADA (regra 9) =====
-  // Toda regra de dinheiro passa por aqui. Sem juros manual — o parcelamento no
-  // cartão tem juros aplicados pela operadora/Asaas no checkout.
+  // Toda regra de dinheiro passa por aqui. Sem juros manual — o contrato só
+  // registra valor total e número de parcelas.
   function parseMoeda(s) {
     s = String(s ?? '0').trim().replace(/[R$\s]/g, '');
     if (/^\d+\.\d{1,2}$/.test(s)) return parseFloat(s) || 0;            // "500.00" = decimal com ponto
     return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;     // pt-BR: ponto = milhar
   }
-  // Escape de HTML/atributo — evita que aspas ou < no nome/e-mail quebrem os botões de copiar
-  function escHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   function fmtBR(v) { return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
   // valor_total = valor_mensal × duração (meses). Indeterminado (0) = 1 mês de referência.
   function calcFinanceiro() {
@@ -520,7 +572,7 @@
     return { mensal, meses, total };
   }
 
-  // Preview do cartão: mostra o VALOR TOTAL e a divisão em parcelas (juros pela operadora)
+  // Preview do cartão: mostra o VALOR TOTAL e a divisão em parcelas
   function calcularJuros() {
     const el = document.getElementById('jurosPreview');
     if (!el) return;
@@ -530,11 +582,11 @@
     if (total <= 0) { el.textContent = ''; return; }
     const baseMeses = meses > 0 ? `${meses}m × mensal = ` : '';
     if (raw === '') {
-      el.textContent = `Valor total: ${baseMeses}R$ ${fmtBR(total)} · vai cheio pro Asaas — cliente divide à vontade no checkout (juros da operadora)`;
+      el.textContent = `Valor total: ${baseMeses}R$ ${fmtBR(total)} · cliente divide à vontade no cartão`;
       return;
     }
     el.textContent = n > 1
-      ? `Valor total: ${baseMeses}R$ ${fmtBR(total)} · ${n}x de R$ ${fmtBR(total / n)} no cartão (+ juros da operadora)`
+      ? `Valor total: ${baseMeses}R$ ${fmtBR(total)} · ${n}x de R$ ${fmtBR(total / n)} no cartão`
       : `Valor total: ${baseMeses}R$ ${fmtBR(total)} · à vista no cartão`;
   }
 
@@ -549,11 +601,11 @@
     const n = parseInt(raw) || 1;
     if (restante <= 0) { el.textContent = `Valor total: R$ ${fmtBR(total)} — entrada cobre o total (sem restante no cartão)`; return; }
     if (raw === '') {
-      el.textContent = `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} no cartão · cliente divide à vontade no checkout (juros da operadora)`;
+      el.textContent = `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} no cartão · cliente divide à vontade`;
       return;
     }
     el.textContent = n > 1
-      ? `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} · ${n}x de R$ ${fmtBR(restante / n)} (+ juros da operadora)`
+      ? `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} · ${n}x de R$ ${fmtBR(restante / n)}`
       : `Total R$ ${fmtBR(total)} − entrada R$ ${fmtBR(entrada)} = restante R$ ${fmtBR(restante)} em 1x no cartão`;
   }
 
@@ -599,7 +651,7 @@
       email: document.getElementById('email').value.trim(),
       telefone: document.getElementById('telefone').value.trim(),
       tipoCliente, plano, pgto,
-      // normalizado para "1.234,56" — garante que assinar.html e a função Asaas leiam o valor certo
+      // normalizado para "1.234,56" — garante que assinar.html leia o valor certo
       valor: fmtBR(parseMoeda(document.getElementById('valor').value)),
       diaVencimento: document.getElementById('diaVencimento').value,
       dataInicio: document.getElementById('dataInicio').value,
@@ -631,29 +683,55 @@
 
     dadosUltimo = dados;
     document.getElementById('linkBox').textContent = link;
-    // Guarda contra cobrança duplicada: só chama o Asaas se este contrato (mesmos dados)
-    // ainda não teve cobrança criada com sucesso nesta sessão
-    const chave = JSON.stringify(dados);
-    if (cobrancaCriadaKey !== chave) criarNoAsaas(dados, chave);
     document.getElementById('modalSucesso').classList.add('show');
   }
 
   function enviarWhatsApp() {
     const link = document.getElementById('linkBox').textContent;
     const tel = (dadosUltimo?.telefone || '').replace(/\D/g, '');
-    const nome = dadosUltimo?.nome || '';
-    const msg = `Olá ${nome}! Tudo bem? 😊\n\nSegue o contrato da *Consultoria MRTN* para sua assinatura digital (link válido por 48h):\n\n${link}\n\nÉ rápido e 100% online. Qualquer dúvida, estou à disposição! 🚀`;
+    const nome = (dadosUltimo?.nome || '').split(' ')[0];
+    const msg = `Olá ${nome}! Tudo bem? 😊\n\nSegue o contrato da *Consultoria MRTN*:\n\n${link}\n\nÉ só abrir o link para ler o contrato completo e baixar em PDF. Qualquer dúvida, me chama por aqui! 🚀`;
     // não duplica o DDI se o telefone já veio com 55 na frente
     const num = tel.length >= 10 ? (tel.startsWith('55') && tel.length >= 12 ? tel : '55' + tel) : '';
-    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+    if (!num) { alert('WhatsApp do cliente não preenchido ou inválido — confira o telefone antes de enviar.'); return; }
+    const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+    // Se o navegador bloquear o pop-up, o botão pareceria "quebrado" — então avisamos.
+    const aba = window.open(url, '_blank');
+    if (!aba) window.location.href = url;
   }
 
   function copiarLink() {
-    navigator.clipboard.writeText(document.getElementById('linkBox').textContent).then(() => {
+    const texto = document.getElementById('linkBox').textContent;
+    const ok = () => {
       const el = document.getElementById('copiado');
+      el.textContent = '✓ Link copiado!';
       el.style.display = 'block';
       setTimeout(() => el.style.display = 'none', 2500);
-    });
+    };
+    // A API de clipboard só existe em HTTPS. Em file:// ou se o navegador negar,
+    // caímos para o método antigo — o botão nunca pode "não fazer nada".
+    const fallback = () => {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = texto;
+        ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        const copiou = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (copiou) return ok();
+        throw new Error('execCommand falhou');
+      } catch (e) {
+        const el = document.getElementById('copiado');
+        el.textContent = '⚠️ Não consegui copiar. Selecione o link acima e copie manualmente.';
+        el.style.display = 'block';
+        setTimeout(() => el.style.display = 'none', 6000);
+      }
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(texto).then(ok).catch(fallback);
+    } else {
+      fallback();
+    }
   }
 
   function fecharModal() {
@@ -661,110 +739,6 @@
   }
 
   let dadosUltimo = null;
-  let cobrancaCriadaKey = null;   // dados do último contrato que JÁ gerou cobrança no Asaas
-  let cobrancaRodando = false;    // trava contra duplo clique enquanto a chamada está no ar
-
-  function copiarCampo(valor, btn) {
-    navigator.clipboard.writeText(valor).then(() => {
-      btn.textContent = '✔';
-      setTimeout(() => btn.textContent = '📋', 1500);
-    });
-  }
-
-  function campo(label, valor) {
-    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-      <div style="flex:1;background:#1e1e1e;border-radius:6px;padding:7px 10px;font-size:0.8rem">
-        <span style="color:var(--muted);font-size:0.7rem;display:block">${escHtml(label)}</span>
-        <span style="color:var(--text)">${escHtml(valor)}</span>
-      </div>
-      <button data-v="${escHtml(valor)}" onclick="copiarCampo(this.dataset.v,this)"
-        style="background:var(--gold);color:#0d0d0d;border:none;border-radius:6px;padding:6px 10px;font-size:0.8rem;cursor:pointer;white-space:nowrap">📋</button>
-    </div>`;
-  }
-
-  async function criarNoAsaas(d, chave) {
-    if (cobrancaRodando) return;
-    cobrancaRodando = true;
-    const SUPA_ASAAS = 'https://wtirdmwrttoxpljxsoci.supabase.co/functions/v1/asaas-cobranca';
-    const PUB = 'sb_publishable_9UF6Ebv3mkxVP2x4kx-eZA_5dDPPuf0';
-    try {
-      // 1) Supabase (HTTPS — funciona no site publicado, sem depender de servidor local)
-      try {
-        const resp = await fetch(SUPA_ASAAS, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': PUB, 'Authorization': 'Bearer ' + PUB },
-          body: JSON.stringify(d),
-        });
-        const data = await resp.json();
-        const lista = data.cobrancas || data.cobranças;
-        if (data.ok && lista?.length) { cobrancaCriadaKey = chave || null; renderCobrancasAsaas(lista); return; }
-      } catch (e) { /* segue pro fallback */ }
-      // 2) Servidor local (quando você está rodando o launcher na sua máquina)
-      try {
-        const resp = await fetch('http://localhost:3765/api/asaas', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(d),
-        });
-        const data = await resp.json();
-        const lista = data.cobrancas || data.cobranças;
-        if (data.ok && lista?.length) { cobrancaCriadaKey = chave || null; renderCobrancasAsaas(lista); return; }
-      } catch (e) { /* segue pro fallback */ }
-      // 3) Fallback: dados formatados para cadastrar manualmente (não criou nada — pode tentar de novo)
-      mostrarDadosAsaas(d);
-    } finally { cobrancaRodando = false; }
-  }
-
-  function renderCobrancasAsaas(lista) {
-    const el = document.getElementById('asaasDados');
-    el.innerHTML = '<p style="color:var(--success);font-size:0.8rem;font-weight:700;margin-bottom:10px">✅ Cobrança criada automaticamente no Asaas!</p>' +
-      lista.map(c => {
-        const val = c.total ? `${escHtml(c.tipo)} — ${c.valor.toFixed(2).replace('.',',')} × parcelas = R$ ${c.total.toFixed(2).replace('.',',')}` : `${escHtml(c.tipo)} — R$ ${c.valor.toFixed(2).replace('.',',')}`;
-        const linkHtml = c.link ? `<div style="font-size:0.72rem;word-break:break-all;color:var(--gold-light);cursor:pointer;margin-bottom:6px" data-link="${escHtml(c.link)}" onclick="navigator.clipboard.writeText(this.dataset.link)">${escHtml(c.link)}</div>
-              <button data-link="${escHtml(c.link)}" onclick="navigator.clipboard.writeText(this.dataset.link).then(()=>{this.textContent='✔ Copiado!';setTimeout(()=>this.textContent='📋 Copiar link',1500)})"
-                style="background:var(--gold);color:#0d0d0d;border:none;border-radius:6px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer">📋 Copiar link</button>` : '<div style="font-size:0.72rem;color:var(--muted)">Recebido em espécie (sem cobrança online)</div>';
-        return `<div style="background:#1e2e1e;border:1px solid #2a4a2a;border-radius:8px;padding:10px 12px;margin-bottom:8px">
-              <div style="font-size:0.78rem;color:#4caf72;font-weight:700;margin-bottom:4px">${val} · Vence ${escHtml(c.vencimento)}</div>
-              ${linkHtml}
-            </div>`;
-      }).join('');
-    document.getElementById('asaasBtn').style.display = 'none';
-  }
-
-  function mostrarDadosAsaas(d) {
-    document.getElementById('asaasBtn').style.display = '';   // garante o botão manual de volta
-    const num = parseMoeda;
-    const fmt = v => 'R$ ' + v.toFixed(2).replace('.',',');
-    const valor = num(d.valor);                                  // valor mensal
-    const meses = parseInt(d.duracao || '0') || 0;
-    const total = valor * (meses > 0 ? meses : 1);               // valor_total = mensal × meses
-
-    // Boleto/PIX = cobrança mensal recorrente. Cartão = valor TOTAL do contrato parcelado.
-    let cobranca = '';
-    if (d.pgto === 'boleto') cobranca = `Boleto — ${fmt(valor)}/mês`;
-    else if (d.pgto === 'pix') cobranca = `PIX — ${fmt(valor)}/mês`;
-    else if (d.pgto === 'dinheiro') cobranca = `Dinheiro/Espécie — ${fmt(valor)}/mês (emitir recibo)`;
-    else if (d.pgto === 'cartao') {
-      const n = parseInt(d.parcelas || '1') || 1;
-      cobranca = n > 1
-        ? `Cartão (valor total ${fmt(total)}) em ${n}x de ${fmt(total / n)} — juros do parcelamento pela operadora`
-        : `Cartão 1x — valor total ${fmt(total)}`;
-    } else if (d.pgto === 'misto') {
-      const entrada = num(d.entrada), restante = total - entrada;
-      const n = parseInt(d.parcelasMisto || '1') || 1;
-      const restTxt = n > 1 ? `${n}x de ${fmt(restante / n)}` : `1x de ${fmt(restante)}`;
-      cobranca = `Entrada ${fmt(entrada)} (${d.formEntrada}) + restante ${fmt(restante)} no cartão (${restTxt}) — total ${fmt(total)}`;
-    }
-
-    const planoNome = d.plano==='google'?'Google Ads Pro':d.plano==='meta'?'Meta Ads Pro':'YouTube Ads Pro';
-
-    document.getElementById('asaasDados').innerHTML =
-      campo('Nome completo', d.nome) +
-      campo(d.tipoDoc, d.documento) +
-      campo('E-mail', d.email) +
-      campo('WhatsApp', d.telefone) +
-      campo('Descrição da cobrança', `Taxa Gerenciamento ${planoNome} — Consultoria MRTN`) +
-      campo('Cobrança', cobranca) +
-      campo('Vencimento (dia do mês)', d.diaVencimento);
-  }
 </script>
 </body>
 </html>

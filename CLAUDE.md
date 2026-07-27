@@ -24,7 +24,7 @@ Identificar qual(is) especialista(s) se aplicam com base no conteúdo:
 Não dizer "vou usar o especialista X". Simplesmente agir com a metodologia desse especialista. Quando múltiplos especialistas forem ativados, entregar uma resposta unificada — dividida por seção, sem repetição.
 
 ### Passo 3 — Verificar CRM automaticamente
-Sempre que Jeferson mencionar um lead ou cliente pelo nome, ler o `crm-pipeline.json` para ver o histórico. Usar esse histórico para personalizar a resposta.
+Sempre que Jeferson mencionar um lead ou cliente pelo nome, consultar a **fonte única do CRM: `prospector-medicos.html`** (leads médicos e locais vivem só lá). Usar esse histórico para personalizar a resposta. O `crm-pipeline.json` está **aposentado** — não ler nem gravar leads nele.
 
 ### Passo 4 — Terminar com próximo passo
 Toda resposta termina com um próximo passo concreto e com prazo. Sem próximo passo = resposta incompleta.
@@ -42,14 +42,15 @@ Jeferson Araujo Martinelle — Diretor Fundador da Consultoria MRTN. Trabalha co
 ### Médicos (Pacotes Pro)
 - Abordagem: **representante**, visita consultiva — **NUNCA dossiê**
 - Canal primário: **Google Ads** (intenção de busca — não Instagram)
-- Preços: R$1.200/mês (Google Pro ou Meta Pro) | R$3.200/mês (YouTube Pro com pontualidade; R$4.000 cheio)
+- Preços (fee de gestão — a verba de mídia é do cliente e vai à parte): R$1.200/mês (Google Pro ou Meta Pro) | R$2.500/mês (YouTube Pro). Preço limpo: sem âncora de "valor cheio" nem desconto de pontualidade como padrão.
 - CFM Resolução 2.336/2023: sem prometer resultados, sem "o melhor", sem depoimentos identificados
 - Qualificação: menos de 50 anos + sem posicionamento digital
 
 ### Negócios Locais (Start / Plus)
 - Abordagem: **dossiê/pré-análise** presencial entregue na hora
 - Preços: R$650/mês (Start, 1 canal) | R$1.300/mês (Plus, 2 canais)
-- Bônus fechamento 24h: GMN otimizado (Google) ou consultoria de criativos (Meta)
+- GMN incluso em plano com Google. Só Meta/YouTube: bônus apenas no contrato de 12 meses.
+- **Sem reunião mensal** — negócio local é tráfego + WhatsApp/ligação. Reunião mensal é exclusividade do médico.
 
 **Nunca misturar os dois públicos sem confirmar o contexto.**
 
@@ -69,7 +70,7 @@ Jeferson Araujo Martinelle — Diretor Fundador da Consultoria MRTN. Trabalha co
 | `/social` | Coordenador de Social | Auditoria, briefing para designer, análise de concorrência |
 | `/proposta` | Gerador de Propostas | Proposta formatada pronta |
 | `/relatorio` | Gestor de Contas | Relatório com benchmarks reais de mercado |
-| `/crm` | Pipeline de Vendas | Registrar visitas, status, follow-ups — cadência de 5 toques |
+| `/crm` | Pipeline de Vendas | Registrar visitas/consultorias, etapa + próximo toque no prospector, placar dos 4 números — cadência oficial por cenário |
 
 ---
 
@@ -129,10 +130,14 @@ skills/
   relatorio/SKILL.md            ← Gestor de Contas
   crm/SKILL.md                  ← Pipeline de Vendas
 
-crm-pipeline.json               ← Dados do pipeline (atualizado pelo /crm)
+crm-pipeline.json               ← APOSENTADO (vazio). Não gravar leads aqui. Mantido só
+                                   para não quebrar o deploy
 index.html                      ← PAINEL DA EQUIPE: login único (senha da equipe) com
                                    3 abas — Prospecção · Contratos · Relatórios
-prospector-medicos.html         ← CRM visual de leads médicos
+prospector-medicos.html         ← ★ FONTE ÚNICA DO CRM: todos os leads (médicos e locais)
+                                   vivem aqui. Registro mínimo por lead = ETAPA ATUAL +
+                                   DATA DO PRÓXIMO TOQUE, na 1ª linha das Observações
+                                   (formato: [ETAPA] prox DD/MM · h<horas> · nota)
 relatorios.html                 ← Relatórios de tráfego Meta/Google Ads para clientes
                                    (importa colando texto, análise com benchmarks,
                                    PDF, link compartilhável, nuvem Supabase)

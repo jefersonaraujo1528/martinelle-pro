@@ -8,4 +8,9 @@ config-notificacoes.json
 .netlify-deploy.zip
 secrets.local.json
 
+# Documentos internos — NÃO publicar. Este repositório é público e o conteúdo
+# abaixo é estratégico/pessoal (situação de caixa, metas, política interna).
+OPERACAO-90-DIAS.md
+LGPD-E-DADOS.md
+
 .claude/

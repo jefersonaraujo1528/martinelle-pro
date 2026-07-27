@@ -1,6 +1,7 @@
 /**
  * Servidor Local — Consultoria MRTN
- * Proxy para API do Asaas e Autentique
+ * Serve os arquivos do sistema e o envio de e-mail de boas-vindas.
+ * (Assinatura eletrônica foi removida: o contrato é gerado e baixado em PDF.)
  *
  * Como usar:
  *   No terminal: node servidor-local.js
@@ -16,12 +17,9 @@ const { exec } = require('child_process');
 // Segredos ficam FORA do código público — em secrets.local.json (está no .gitignore).
 const SECRETS = (() => {
   try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'secrets.local.json'), 'utf8')); }
-  catch (e) { console.warn('⚠ secrets.local.json não encontrado — Asaas/Autentique ficarão inativos.'); return {}; }
+  catch (e) { console.warn('⚠ secrets.local.json não encontrado — envio de e-mail ficará inativo.'); return {}; }
 })();
-const ASAAS_KEY = process.env.ASAAS_KEY || SECRETS.ASAAS_KEY || '';
-const AUTENTIQUE_TOKEN = process.env.AUTENTIQUE_TOKEN || SECRETS.AUTENTIQUE_TOKEN || '';
 const EMAIL_JEFERSON = 'agenciamartinelle@gmail.com';
-const BASE_ASAAS = 'https://www.asaas.com/api/v3';
 const PORT = 3765;
 const ROOT = __dirname;
 
@@ -42,80 +40,6 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type',
   'Content-Type': 'application/json',
 };
-
-function venc(dia) {
-  const d = new Date(), v = new Date(d.getFullYear(), d.getMonth(), parseInt(dia || 10));
-  if (v <= d) v.setMonth(v.getMonth() + 1);
-  return v.toISOString().split('T')[0];
-}
-function num(s) { return parseFloat((s || '0').replace(/\./g, '').replace(',', '.')) || 0; }
-function parc(v, n, t) { return (n <= 1 || t <= 0) ? v : v * (t * Math.pow(1 + t, n)) / (Math.pow(1 + t, n) - 1); }
-
-async function asaasAPI(path, body) {
-  const data = JSON.stringify(body);
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'www.asaas.com',
-      path: '/api/v3' + path,
-      method: 'POST',
-      headers: { 'User-Agent': 'Consultoria-MRTN/1.0', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), access_token: ASAAS_KEY },
-    }, res => {
-      let raw = '';
-      res.on('data', c => raw += c);
-      res.on('end', () => resolve(JSON.parse(raw)));
-    });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
-}
-
-async function handleAsaas(body) {
-  const { pgto, valor, diaVencimento, plano } = body;
-  const v = num(valor), due = venc(diaVencimento);
-  const pl = { google: 'Google Ads Pro', meta: 'Meta Ads Pro', youtube: 'YouTube Ads Pro' }[plano] || plano;
-  const desc = `Taxa Gerenciamento ${pl} — Consultoria MRTN`;
-
-  const cli = await asaasAPI('/customers', {
-    name: body.nome,
-    cpfCnpj: (body.documento || '').replace(/\D/g, ''),
-    email: body.email,
-    notificationDisabled: false,
-  });
-  if (cli.errors) throw new Error(cli.errors[0].description);
-  const cid = cli.id;
-  const cobranças = [];
-
-  if (pgto === 'boleto') {
-    const c = await asaasAPI('/payments', { customer: cid, billingType: 'BOLETO', value: v, dueDate: due, description: desc, fine: { value: 2 }, interest: { value: 1 } });
-    cobranças.push({ tipo: 'Boleto', link: c.bankSlipUrl || c.invoiceUrl, invoiceUrl: c.invoiceUrl, vencimento: due, valor: v });
-  } else if (pgto === 'pix') {
-    const c = await asaasAPI('/payments', { customer: cid, billingType: 'PIX', value: v, dueDate: due, description: desc });
-    cobranças.push({ tipo: 'PIX', link: c.invoiceUrl, invoiceUrl: c.invoiceUrl, vencimento: due, valor: v });
-  } else if (pgto === 'cartao') {
-    const n = parseInt(body.parcelas || 1), t = parseFloat(body.taxaJuros || 0) / 100;
-    const p = parc(v, n, t), tot = parseFloat((p * n).toFixed(2));
-    const b = { customer: cid, billingType: 'CREDIT_CARD', value: tot, dueDate: due, description: desc + (n > 1 ? ` (${n}x)` : '') };
-    if (n > 1) { b.installmentCount = n; b.totalValue = tot; }
-    const c = await asaasAPI('/payments', b);
-    cobranças.push({ tipo: n > 1 ? `Cartão ${n}x` : 'Cartão 1x', link: c.invoiceUrl, invoiceUrl: c.invoiceUrl, vencimento: due, valor: p, total: n > 1 ? tot : undefined });
-  } else if (pgto === 'misto') {
-    const ent = num(body.entrada), tipo = body.formEntrada === 'pix' ? 'PIX' : 'BOLETO';
-    const bE = { customer: cid, billingType: tipo, value: ent, dueDate: due, description: desc + ' — Entrada' };
-    if (tipo === 'BOLETO') { bE.fine = { value: 2 }; bE.interest = { value: 1 }; }
-    const cE = await asaasAPI('/payments', bE);
-    cobranças.push({ tipo: `Entrada (${body.formEntrada})`, link: tipo === 'PIX' ? cE.invoiceUrl : (cE.bankSlipUrl || cE.invoiceUrl), vencimento: due, valor: ent });
-    const rest = v - ent, n2 = parseInt(body.parcelasMisto || 1), t2 = parseFloat(body.taxaJurosMisto || 0) / 100;
-    const p2 = parc(rest, n2, t2), tot2 = parseFloat((p2 * n2).toFixed(2));
-    const due2 = new Date(new Date(due).getTime() + 30 * 864e5).toISOString().split('T')[0];
-    const bR = { customer: cid, billingType: 'CREDIT_CARD', value: tot2, dueDate: due2, description: desc + (n2 > 1 ? ` — Restante ${n2}x` : ' — Restante') };
-    if (n2 > 1) { bR.installmentCount = n2; bR.totalValue = tot2; }
-    const cR = await asaasAPI('/payments', bR);
-    cobranças.push({ tipo: n2 > 1 ? `Restante Cartão ${n2}x` : 'Restante Cartão', link: cR.invoiceUrl, vencimento: due2, valor: p2, total: n2 > 1 ? tot2 : undefined });
-  }
-
-  return { ok: true, customerId: cid, cobranças };
-}
 
 // E-mail de boas-vindas via Resend.com (gratuito 3000/mês)
 // Para ativar: criar conta em resend.com e colar a API key abaixo
@@ -186,32 +110,6 @@ async function enviarBoasVindas({ nomeCliente, emailCliente, plano, dataInicio, 
   });
 }
 
-// Proxy para API do Autentique (mantém token server-side)
-async function handleAutentiqueProxy({ operations, pdfBase64 }) {
-  if (!operations || !pdfBase64) throw new Error('operations e pdfBase64 são obrigatórios');
-  const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-  const boundary = 'MartinelleBoundary' + Date.now();
-  const pre = Buffer.from(
-    `--${boundary}\r\nContent-Disposition: form-data; name="operations"\r\n\r\n${operations}\r\n` +
-    `--${boundary}\r\nContent-Disposition: form-data; name="map"\r\n\r\n{"0":["variables.file"]}\r\n` +
-    `--${boundary}\r\nContent-Disposition: form-data; name="0"; filename="contrato.pdf"\r\nContent-Type: application/pdf\r\n\r\n`, 'utf8');
-  const post = Buffer.from(`\r\n--${boundary}--\r\n`, 'utf8');
-  const bodyBuffer = Buffer.concat([pre, pdfBuffer, post]);
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'api.autentique.com.br', path: '/v2/graphql', method: 'POST',
-      headers: { Authorization: `Bearer ${AUTENTIQUE_TOKEN}`, 'Content-Type': `multipart/form-data; boundary=${boundary}`, 'Content-Length': bodyBuffer.length },
-    }, (r) => {
-      let raw = '';
-      r.on('data', c => raw += c);
-      r.on('end', () => { try { resolve(JSON.parse(raw)); } catch (e) { reject(new Error('Resposta inválida: ' + raw.slice(0, 200))); } });
-    });
-    req.on('error', reject);
-    req.write(bodyBuffer);
-    req.end();
-  });
-}
-
 const server = http.createServer(async (req, res) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -240,12 +138,8 @@ const server = http.createServer(async (req, res) => {
       const data = JSON.parse(body || '{}');
       let result;
 
-      if (req.url === '/api/asaas') {
-        result = await handleAsaas(data);
-      } else if (req.url === '/api/boas-vindas') {
+      if (req.url === '/api/boas-vindas') {
         result = await enviarBoasVindas(data);
-      } else if (req.url === '/api/autentique-proxy') {
-        result = await handleAutentiqueProxy(data);
       } else {
         res.writeHead(404, CORS);
         return res.end(JSON.stringify({ erro: 'Endpoint não encontrado: ' + req.url }));

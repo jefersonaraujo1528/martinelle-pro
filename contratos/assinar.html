@@ -288,33 +288,43 @@
 
   // Renderizar o texto do contrato
   function renderizarContrato(d) {
-    const planos = {
-      google: { nome: 'Google Ads Pro' },
-      meta:   { nome: 'Meta Ads Pro' },
-      youtube:{ nome: 'YouTube Ads Pro' },
+    // O nome do plano muda conforme o público: médico compra o pacote Pro,
+    // negócio local compra Start (1 canal) ou Plus (2 canais).
+    const NOMES = {
+      medico: { google: 'Google Ads Pro', meta: 'Meta Ads Pro', youtube: 'YouTube Ads Pro' },
+      local:  { google: 'Plano Start — Google Ads', meta: 'Plano Start — Meta Ads', plus: 'Plano Plus — Google Ads + Meta Ads' },
     };
-    // Helpers financeiros — cartão cobra o VALOR TOTAL (mensal × duração); juros do
-    // parcelamento são aplicados pela operadora/Asaas, nunca somados manualmente.
+    const _pub = ehMedico(d) ? 'medico' : 'local';
+    const planos = {};
+    Object.entries(NOMES[_pub] || {}).forEach(([k, nome]) => { planos[k] = { nome }; });
+    // Helpers financeiros — cartão cobra o VALOR TOTAL (mensal × duração).
+    // A CONTRATADA nunca soma juros: o contrato registra total e nº de parcelas.
     const _moeda = _parseBR;
     const _fmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const _meses = parseInt(d.duracao || '0') || 0;
+    // Valor mensal exibido. Plano com preço ainda em revisão (ex.: YouTube Ads Pro)
+    // sai como marcador "[A DEFINIR]" — nunca como zero nem como número inventado.
+    const valorMes = _parseBR(d.valor) > 0 ? d.valor : '[A DEFINIR]';
     const _total = _moeda(d.valor) * (_meses > 0 ? _meses : 1);
     const pgtoCartao = () => {
       const raw = d.parcelas || '';                 // '' = cliente escolhe no checkout
       const n = parseInt(raw) || 1;
-      if (raw === '') return `cartão de crédito, no valor total de R$ ${_fmt(_total)}, com o parcelamento a critério do CONTRATANTE no momento do pagamento (juros do parcelamento aplicados pela operadora/Asaas)`;
+      // Preço ainda em revisão: não imprime "R$ 0,00" — remete ao valor a definir.
+      if (!(_total > 0)) return `cartão de crédito, sobre o valor total do contrato, a ser apurado após a definição expressa do valor mensal pelas Partes`;
+      if (raw === '') return `cartão de crédito, no valor total de R$ ${_fmt(_total)}, com o parcelamento a critério do CONTRATANTE no momento do pagamento`;
       if (n <= 1) return `cartão de crédito à vista, no valor total de R$ ${_fmt(_total)}`;
-      return `cartão de crédito em até ${n}x sobre o valor total de R$ ${_fmt(_total)} (parcelamento com juros aplicados pela operadora/Asaas)`;
+      return `cartão de crédito em até ${n}x sobre o valor total de R$ ${_fmt(_total)}`;
     };
     const pgtoMisto = () => {
       const ent = _moeda(d.entrada), rest = _total - ent;
       const raw = d.parcelasMisto || '';            // '' = cliente escolhe no checkout
       const n = parseInt(raw) || 1;
       const base = `entrada de R$ ${d.entrada} via ${d.formEntrada}`;
+      if (!(_total > 0)) return `${base} + restante no cartão sobre o valor total do contrato, a ser apurado após a definição expressa do valor mensal pelas Partes`;
       if (rest <= 0) return `${base} (quita o valor total de R$ ${_fmt(_total)})`;
-      if (raw === '') return `${base} + restante de R$ ${_fmt(rest)} no cartão, com o parcelamento a critério do CONTRATANTE (juros pela operadora/Asaas; valor total R$ ${_fmt(_total)})`;
+      if (raw === '') return `${base} + restante de R$ ${_fmt(rest)} no cartão, com o parcelamento a critério do CONTRATANTE (valor total R$ ${_fmt(_total)})`;
       if (n <= 1) return `${base} + restante de R$ ${_fmt(rest)} em 1x no cartão (valor total R$ ${_fmt(_total)})`;
-      return `${base} + restante de R$ ${_fmt(rest)} em até ${n}x no cartão (juros do parcelamento pela operadora/Asaas; valor total R$ ${_fmt(_total)})`;
+      return `${base} + restante de R$ ${_fmt(rest)} em até ${n}x no cartão (valor total R$ ${_fmt(_total)})`;
     };
     const pgtoTexto = {
       boleto: 'boleto bancário',
@@ -353,19 +363,24 @@
       <div class="clausula">
         <h3>1. Das Definições</h3>
         <p><strong>1.1</strong> Para os fins deste contrato, considera-se:</p>
-        <p>(a) <strong>"Campanha"</strong> — Conjunto de anúncios criados e gerenciados pela CONTRATADA na plataforma ${nomePlataforma(d.plano)};</p>
+        <p>(a) <strong>"Campanha"</strong> — Conjunto de anúncios estruturados, configurados e gerenciados pela CONTRATADA na plataforma ${nomePlataforma(d.plano)}, veiculados a partir do Material Publicitário fornecido e aprovado pelo CONTRATANTE;</p>
         <p>(b) <strong>"Verba de Mídia"</strong> — Valor investido diretamente na plataforma de anúncios pelo CONTRATANTE, distinto e não incluído na taxa de gerenciamento;</p>
         <p>(c) <strong>"Taxa de Gerenciamento"</strong> — Valor mensal pago à CONTRATADA pelos serviços de gestão, estratégia e otimização das campanhas;</p>
         <p>(d) <strong>"Setup Inicial"</strong> — Configuração inicial das campanhas, realizada uma única vez no início do contrato, isenta de cobrança adicional neste pacote;</p>
-        <p>(e) <strong>"Relatório"</strong> — Documento mensal com dados de desempenho das campanhas (cliques, impressões, CTR, CPC médio e conversões).</p>
+        <p>(e) <strong>"Relatório"</strong> — Documento mensal com dados de desempenho das campanhas (cliques, impressões, CTR, CPC médio e conversões);</p>
+        <p>(f) <strong>"Material Publicitário"</strong> — Textos, imagens, vídeos, áudios, marcas, fotos e demais peças criativas utilizadas nos anúncios, de fornecimento e responsabilidade do CONTRATANTE, cabendo à CONTRATADA a orientação estratégica sobre esse material.</p>
       </div>
 
       <div class="clausula">
         <h3>2. Do Objeto</h3>
-        <p><strong>2.1</strong> O presente contrato tem por objeto a prestação de serviços de gestão de tráfego pago no âmbito do plano <strong>${plano.nome}</strong>, sendo este documento autossuficiente e não dependente de qualquer anexo ou proposta complementar.</p>
-        ${setupPorPlano(d.plano, d.cl_setup)}
-        ${servicosPorPlano(d.plano)}
-        <p><strong>Parágrafo Único:</strong> A Verba de Mídia (investimento direto em anúncios) <strong>NÃO está incluída</strong> na Taxa de Gerenciamento e deverá ser paga diretamente pelo CONTRATANTE à plataforma ${nomePlataforma(d.plano)}, sendo recomendado o investimento mínimo de R$ 50,00 (cinquenta reais) por dia.</p>
+        <p><strong>2.1</strong> O presente contrato tem por objeto a prestação de serviços de <strong>estratégia, estruturação, configuração, gestão e otimização de campanhas de tráfego pago</strong> no âmbito do plano <strong>${plano.nome}</strong>, sendo este documento autossuficiente e não dependente de qualquer anexo ou proposta complementar.</p>
+        ${setupPorPlano(d.plano, d.cl_setup, d)}
+        ${servicosPorPlano(d.plano, d)}
+        <p><strong>2.4 Do Material Publicitário (criativos):</strong> A CONTRATADA <strong>não é produtora de material criativo</strong>. Não estão incluídos neste contrato serviços de design, produção de imagens, gravação ou edição de vídeo, fotografia, produção de conteúdo orgânico ou gestão de redes sociais.</p>
+        <p><strong>2.4.1</strong> Cabe à CONTRATADA <strong>orientar e instruir</strong> o CONTRATANTE quanto ao Material Publicitário — formatos, mensagens, ângulos de comunicação, boas práticas das plataformas e adequação às políticas de anúncio — bem como estruturar os anúncios dentro das plataformas a partir do material recebido.</p>
+        <p><strong>2.4.2</strong> Cabe ao CONTRATANTE <strong>fornecer o Material Publicitário e aprová-lo por escrito (e-mail ou WhatsApp) antes da veiculação</strong>, respondendo integralmente pela sua veracidade, autoria, licenças de uso, direitos de imagem e conformidade com a legislação aplicável e com as normas do seu órgão de classe.</p>
+        <p><strong>2.4.3</strong> A CONTRATADA poderá recusar a veiculação de material que, a seu ver técnico, viole políticas das plataformas de anúncio ou normas aplicáveis, sem que isso configure descumprimento contratual.</p>
+        <p><strong>Parágrafo Único:</strong> A Verba de Mídia (investimento direto em anúncios) <strong>NÃO está incluída</strong> na Taxa de Gerenciamento, é de titularidade e custeio exclusivos do CONTRATANTE e deverá ser paga diretamente por ele à plataforma ${nomePlataforma(d.plano)}, sendo recomendado o investimento mínimo de R$ 50,00 (cinquenta reais) por dia. Os dois valores são independentes e jamais se confundem ou se somam.</p>
       </div>
 
       <div class="clausula">
@@ -378,7 +393,7 @@
         <p><strong>4.1</strong> O CONTRATANTE se obriga a:</p>
         <p><strong>4.1.1</strong> Efetuar o pagamento da Taxa de Gerenciamento nas datas acordadas e manter a Verba de Mídia ativa na plataforma ${nomePlataforma(d.plano)};</p>
         <p><strong>4.1.2</strong> Fornecer à CONTRATADA, sempre que solicitado e no prazo acordado, todas as informações, acessos e aprovações necessárias ao desenvolvimento dos serviços;</p>
-        <p><strong>4.1.3</strong> Aprovar previamente todo conteúdo publicado em seu nome, respondendo perante consumidores, autoridades, CONAR e terceiros pela qualidade, autenticidade e legalidade das informações divulgadas;</p>
+        <p><strong>4.1.3</strong> Fornecer o Material Publicitário e <strong>aprová-lo por escrito antes da veiculação</strong>, respondendo perante consumidores, autoridades, CONAR, órgãos de classe e terceiros pela qualidade, autenticidade, veracidade e legalidade das informações divulgadas;</p>
         <p><strong>4.1.4</strong> Fornecer informações verdadeiras, corretas, atuais e completas, mantendo-as sempre atualizadas;</p>
         <p><strong>4.1.5</strong> Resguardar a CONTRATADA de quaisquer demandas judiciais ou administrativas em decorrência do conteúdo das campanhas, assumindo toda a responsabilidade e ônus daí advindos;</p>
         <p><strong>4.2</strong> O CONTRATANTE é o único responsável pelo conteúdo e veracidade das informações contidas nas campanhas, eximindo a CONTRATADA de quaisquer responsabilidades perante terceiros, autoridades reguladoras e órgãos de classe.</p>
@@ -388,7 +403,7 @@
         <h3>5. Das Obrigações e Responsabilidades da Contratada</h3>
         <p><strong>5.1</strong> A CONTRATADA se obriga a:</p>
         <p><strong>5.1.1</strong> Executar os serviços descritos na Cláusula 2 com qualidade, técnica e profissionalismo;</p>
-        <p><strong>5.1.2</strong> Manter o CONTRATANTE informado sobre o andamento das campanhas por meio de relatório mensal, entregue até o 5º dia útil do mês subsequente;</p>
+        <p><strong>5.1.2</strong> Manter o CONTRATANTE informado sobre o andamento das campanhas por meio de <strong>relatório mensal</strong>, entregue até o 5º dia útil do mês subsequente. Nos <strong>primeiros 60 (sessenta) dias</strong> de vigência, a CONTRATADA enviará adicionalmente um <strong>pulso quinzenal</strong> — comunicação resumida de acompanhamento, sem a formalidade do relatório mensal;</p>
         <p><strong>5.1.3</strong> Manter sigilo absoluto sobre informações confidenciais e dados do CONTRATANTE obtidos em decorrência deste contrato;</p>
         <p><strong>5.1.4</strong> Comunicar ao CONTRATANTE alterações relevantes nas plataformas de anúncio que possam impactar as campanhas.</p>
       </div>
@@ -402,10 +417,10 @@
 
       <div class="clausula">
         <h3>7. Do Valor e Forma de Pagamento</h3>
-        <p><strong>7.1</strong> Pela prestação dos serviços, o CONTRATANTE pagará à CONTRATADA a Taxa de Gerenciamento de <strong>R$ ${d.valor}/mês</strong>, com vencimento no dia <strong>${d.diaVencimento}</strong> de cada mês, mediante <strong>${pgtoTexto[d.pgto] || d.pgto}</strong>.</p>
+        <p><strong>7.1</strong> Pela prestação dos serviços, o CONTRATANTE pagará à CONTRATADA a Taxa de Gerenciamento de <strong>R$ ${valorMes}/mês</strong>, com vencimento no dia <strong>${d.diaVencimento}</strong> de cada mês, mediante <strong>${pgtoTexto[d.pgto] || d.pgto}</strong>. <strong>A Taxa de Gerenciamento remunera exclusivamente os serviços da CONTRATADA e não inclui a Verba de Mídia</strong>, paga pelo CONTRATANTE diretamente à plataforma, conforme Cláusula 2.</p>
         ${totalContratoTexto(d.valor, d.duracao)}
         ${descontoTexto(d.cl_desconto, d.valor)}
-        <p><strong>7.2</strong> Caso o contrato se inicie após o dia 1º do mês, o primeiro mês de gerenciamento poderá ser cobrado de forma proporcional (pro rata die) aos dias restantes, sem prejuízo do Desconto de Pontualidade, que se aplica igualmente a todos os meses de vigência, inclusive o primeiro.</p>
+        <p><strong>7.2</strong> Caso o contrato se inicie após o dia 1º do mês, o primeiro mês de gerenciamento poderá ser cobrado de forma proporcional (pro rata die) aos dias restantes.</p>
         <p><strong>7.3</strong> O atraso no pagamento implicará multa moratória de 2% (dois por cento) sobre o valor devido, acrescida de juros de mora de 1% (um por cento) ao mês, calculados pro rata die.</p>
         <p><strong>7.4</strong> O não pagamento por período superior a <strong>${d.cl_suspensao || '7'} (${porExtensoNum(d.cl_suspensao || '7')}) dias</strong> ensejará a suspensão dos serviços pela CONTRATADA, sem prejuízo da cobrança dos valores devidos.</p>
         ${d.cl_reajuste && d.cl_reajuste !== 'sem_reajuste' ? `<p><strong>7.5</strong> Os valores serão reajustados anualmente pelo índice <strong>${d.cl_reajuste}</strong>, acumulado no período.</p>` : (d.cl_reajuste === 'sem_reajuste' ? '<p><strong>7.5</strong> Fica acordado entre as partes que não haverá reajuste automático de valores durante o período de vigência deste contrato.</p>' : '<p><strong>7.5</strong> Os valores serão reajustados anualmente pelo índice <strong>IGP-M/FGV</strong>, acumulado no período.</p>')}
@@ -425,18 +440,23 @@
 
       <div class="clausula">
         <h3>9. Da Ausência de Garantia de Resultado</h3>
-        <p><strong>9.1</strong> A CONTRATADA se compromete a executar as atividades descritas neste contrato com empenho, técnica e profissionalismo. Contudo, <strong>não garante resultados específicos</strong> em número de cliques, leads, consultas, vendas ou retorno sobre investimento (ROI), uma vez que tais resultados dependem de fatores externos não controláveis, incluindo condições de mercado, concorrência, valor da Verba de Mídia, sazonalidade e comportamento dos usuários.</p>
+        <p><strong>9.1</strong> A CONTRATADA se compromete a executar as atividades descritas neste contrato com empenho, técnica e profissionalismo, obrigando-se por <strong>meio</strong> e nunca por <strong>resultado</strong>. Marketing digital <strong>não garante resultado</strong>: a CONTRATADA <strong>não promete nem garante</strong> número de cliques, leads, contatos, agendamentos, pacientes, clientes, vendas, faturamento ou retorno sobre investimento (ROI), uma vez que tais resultados dependem de fatores externos não controláveis, incluindo condições de mercado, concorrência, valor da Verba de Mídia, qualidade do Material Publicitário fornecido pelo CONTRATANTE, capacidade de atendimento do CONTRATANTE, sazonalidade e comportamento dos usuários.</p>
         <p><strong>9.2</strong> A eventual não obtenção dos resultados esperados pelo CONTRATANTE não configura descumprimento contratual pela CONTRATADA, desde que os serviços descritos na Cláusula 2 tenham sido devidamente executados.</p>
+        <p><strong>9.3</strong> Nenhuma comunicação verbal, mensagem, apresentação, proposta ou material comercial trocado entre as Partes pode ser interpretado como promessa ou garantia de resultado, prevalecendo sobre eles o disposto nesta cláusula.</p>
+        <p><strong>9.4</strong> As plataformas de anúncio (Google, Meta e YouTube) são terceiros independentes, com políticas próprias de aprovação, reprovação, restrição de contas e alteração de regras. A CONTRATADA não responde por reprovação de anúncios, bloqueio ou suspensão de contas e perfis pelas plataformas, tampouco por indisponibilidade ou mudanças de política por elas promovidas.</p>
       </div>
 
       <div class="clausula">
         <h3>10. Da Proteção de Dados (LGPD)</h3>
         <p><strong>10.1</strong> As partes se comprometem a tratar os dados pessoais obtidos em decorrência deste contrato em conformidade com a Lei Geral de Proteção de Dados (Lei 13.709/2018), utilizando-os exclusivamente para as finalidades previstas neste instrumento, adotando medidas adequadas de proteção contra acesso não autorizado ou uso indevido.</p>
+        <p><strong>10.2</strong> Em relação aos dados pessoais de terceiros captados pelas campanhas (leads), o <strong>CONTRATANTE é o Controlador</strong> e a <strong>CONTRATADA atua como Operadora</strong>, tratando os dados apenas conforme instruções do CONTRATANTE. Cabe ao CONTRATANTE definir a base legal do tratamento, informar a finalidade e obter o consentimento no <strong>ponto de coleta</strong> (formulário, landing page ou anúncio), bem como atender às solicitações dos titulares.</p>
+        <p><strong>10.3</strong> Encerrado o contrato, a CONTRATADA <strong>eliminará ou devolverá</strong> ao CONTRATANTE os dados pessoais a que teve acesso em até 30 (trinta) dias, salvo obrigação legal de guarda, mantendo o dever de sigilo mesmo após o término deste instrumento.</p>
       </div>
 
       <div class="clausula">
         <h3>11. Da Propriedade Intelectual</h3>
-        <p><strong>11.1</strong> Os criativos, estruturas de campanha, listas de palavras-chave e estratégias desenvolvidas pela CONTRATADA são de sua propriedade intelectual. Ao término do contrato, o CONTRATANTE terá direito de acesso aos dados históricos de campanhas diretamente na plataforma, desde que possua conta própria vinculada.</p>
+        <p><strong>11.1</strong> As estruturas de campanha, listas de palavras-chave, segmentações e estratégias desenvolvidas pela CONTRATADA são de sua propriedade intelectual. Ao término do contrato, o CONTRATANTE terá direito de acesso aos dados históricos de campanhas diretamente na plataforma, desde que possua conta própria vinculada.</p>
+        <p><strong>11.2</strong> O <strong>Material Publicitário fornecido pelo CONTRATANTE</strong> (imagens, vídeos, textos, marca e demais peças) permanece de sua exclusiva propriedade, sendo utilizado pela CONTRATADA apenas para a veiculação das campanhas durante a vigência deste contrato.</p>
       </div>
 
       <div class="clausula">
@@ -444,9 +464,9 @@
         <p><strong>12.1</strong> As partes elegem o Foro da Comarca de <strong>Teresina/PI</strong> para dirimir quaisquer controvérsias decorrentes do presente contrato, com renúncia expressa a qualquer outro, por mais privilegiado que seja.</p>
       </div>
 
-      ${clausulaCFM(d.tipoCliente)}
+      ${clausulaCFM(d.tipoCliente, d.plano)}
 
-      <p style="margin-top:24px">E por estarem assim justos e acertados, as partes firmam o presente instrumento eletronicamente, com plena validade jurídica nos termos da MP 2.200-2/2001 e Lei 14.063/2020, na data de sua assinatura digital.</p>
+      <p style="margin-top:24px">E por estarem assim justos e acertados, as partes firmam o presente instrumento em duas vias de igual teor. A manifestação de concordância por <strong>meio eletrônico</strong> — inclusive por resposta de e-mail confirmando o aceite deste contrato — é reconhecida pelas partes como válida e vinculante, nos termos do art. 107 do Código Civil e da Lei 14.063/2020, produzindo os mesmos efeitos da assinatura manuscrita.</p>
 
       <div class="data-local">Teresina/PI, ${hoje}</div>
 
@@ -466,6 +486,10 @@
     return m[String(n)] || String(n);
   }
 
+  // ATENÇÃO — Desconto de pontualidade é EXCEÇÃO negociada, nunca o padrão.
+  // O preço de tabela é limpo (Google/Meta Pro = R$ 1.200/mês). Esta cláusula só
+  // entra quando Jeferson escolhe um desconto no gerador; o padrão é "0" (sem desconto),
+  // e então nada é impresso — sem âncora de "preço cheio".
   function descontoTexto(cl, valorCheio) {
     if (!cl || cl === '0') return '';
     const [pct, dia] = cl.split('_');
@@ -474,7 +498,7 @@
     const valorDesc = valorNum * (1 - pctNum / 100);
     const fmtDesc = 'R$ ' + valorDesc.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const diaLabel = dia === '1' ? 'primeiro' : dia === '5' ? 'cinco' : dia === '10' ? 'dez' : dia;
-    return `<p><strong>Desconto de Pontualidade:</strong> Em <strong>todos os meses</strong> de vigência do contrato, o pagamento da Taxa de Gerenciamento realizado entre o dia 1º (primeiro) e o dia <strong>${dia} (${diaLabel})</strong> do mês de competência concederá ao CONTRATANTE desconto de <strong>${pct}% (${pct === '20' ? 'vinte' : pct === '30' ? 'trinta' : pct === '10' ? 'dez' : pct} por cento)</strong>, totalizando <strong>${fmtDesc}/mês</strong>. Os pagamentos efetuados após o dia ${dia} não farão jus ao desconto, aplicando-se o valor integral de <strong>R$ ${valorCheio}/mês</strong>. O desconto é benefício mensal e recorrente, condicionado exclusivamente à pontualidade do pagamento, não constituindo redução do valor contratual.</p>`;
+    return `<p><strong>Desconto de Pontualidade (condição especial negociada entre as Partes):</strong> Em <strong>todos os meses</strong> de vigência do contrato, o pagamento da Taxa de Gerenciamento realizado entre o dia 1º (primeiro) e o dia <strong>${dia} (${diaLabel})</strong> do mês de competência concederá ao CONTRATANTE desconto de <strong>${pct}% (${pct === '20' ? 'vinte' : pct === '30' ? 'trinta' : pct === '10' ? 'dez' : pct} por cento)</strong>, totalizando <strong>${fmtDesc}/mês</strong>. Os pagamentos efetuados após o dia ${dia} não farão jus ao desconto, aplicando-se o valor integral de <strong>R$ ${valorCheio}/mês</strong>. O desconto é benefício mensal e recorrente, condicionado exclusivamente à pontualidade do pagamento, não constituindo redução do valor contratual.</p>`;
   }
 
   function multaTexto(cl) {
@@ -495,11 +519,16 @@
   }
 
   function nomePlataforma(plano) {
-    const p = { google: 'Google', meta: 'Meta (Facebook/Instagram)', youtube: 'YouTube/Google' };
-    return p[plano] || plano;
+    const p = {
+      google:  'Google',
+      meta:    'Meta (Facebook/Instagram)',
+      youtube: 'YouTube/Google',
+      plus:    'Google e Meta (Facebook/Instagram)',
+    };
+    return p[plano] || 'plataforma de anúncios contratada';
   }
 
-  function setupPorPlano(plano, prazoSetup) {
+  function setupPorPlano(plano, prazoSetup, d) {
     const prazo = prazoSetup || '15';
     const ext = { '5': 'cinco', '10': 'dez', '15': 'quinze' }[String(prazo)] || prazo;
     const head = `<p><strong>2.2 Setup Inicial (isento de cobrança adicional — prazo de entrega: ${prazo} (${ext}) dias úteis):</strong></p>`;
@@ -510,14 +539,14 @@
           <li>Pesquisa personalizada de palavras-chave de branding, relevantes ao negócio e dos principais concorrentes;</li>
           <li>Estruturação de campanhas, grupos de anúncios e extensões;</li>
           <li>Configuração do Google Analytics e Google Tag Manager;</li>
-          <li>Configuração do Google Meu Negócio (se aplicável).</li>
+          <li><strong>Otimização do Perfil da Empresa no Google (Google Meu Negócio) — inclusa no plano.</strong></li>
         </ul>`,
       meta: head + `
         <ul>
           <li>Configuração do Gerenciador de Anúncios do Meta (campanhas, públicos, conjuntos de anúncios, orçamentos, Pixel personalizado);</li>
-          <li>Criação de até 5 (cinco) campanhas com até 5 (cinco) conjuntos de anúncios cada, com mínimo de 3 (três) anúncios por conjunto;</li>
+          <li>Estruturação de até 5 (cinco) campanhas com até 5 (cinco) conjuntos de anúncios cada, com mínimo de 3 (três) anúncios por conjunto, montados a partir do Material Publicitário fornecido pelo CONTRATANTE;</li>
           <li>Construção e desenvolvimento estratégico de públicos-alvo, interesses e segmentações do negócio;</li>
-          <li>Configuração de Website Smart Links (página de captura vinculada à campanha, hospedagem inclusa).</li>
+          <li>Configuração de Website Smart Links (página de captura vinculada à campanha, hospedada na própria plataforma, sem custo adicional). Landing page em domínio próprio, quando contratada, segue a cláusula específica de Landing Page.</li>
         </ul>`,
       youtube: head + `
         <ul>
@@ -526,47 +555,97 @@
           <li>Estruturação de campanhas com segmentação geográfica, demográfica e por dispositivo;</li>
           <li>Configuração de remarketing via YouTube.</li>
         </ul>`,
-    };
-    return setup[plano] || '';
-  }
-
-  function servicosPorPlano(plano) {
-    const servicos = {
-      google: `<p><strong>2.3 Gerenciamento Mensal:</strong></p>
+      plus: head + `
         <ul>
-          <li>Pesquisa e orientação contínua para escolha de palavras-chave de maior retorno;</li>
-          <li>Criação de anúncios de texto otimizados para CTR e conversão;</li>
-          <li>Monitoramento constante de posição, CTR, CPC, Índice de Qualidade, custo e conversões;</li>
-          <li>Otimização contínua de lances, segmentações e grupos de anúncios;</li>
-          <li>Emissão de relatório mensal de desempenho (cliques, impressões, CTR, CPC médio, conversões e custo);</li>
-          <li>Reunião mensal de alinhamento via Zoom ou WhatsApp, não cumulativa;</li>
-          <li>Suporte via WhatsApp em horário comercial (segunda a sexta, 8h às 18h).</li>
-        </ul>`,
-      meta: `<p><strong>2.3 Gerenciamento Mensal:</strong></p>
-        <ul>
-          <li>Otimização de desempenho das campanhas e conjuntos de anúncios;</li>
-          <li>Testes A/B de criativos, públicos e conjuntos de anúncios;</li>
-          <li>Monitoramento constante do Custo por Resultado, relevância e alcance;</li>
-          <li>Criação e atualização de públicos personalizados e semelhantes (Lookalike);</li>
-          <li>Emissão de relatório mensal de desempenho (alcance, cliques, CPL, conversões e custo);</li>
-          <li>Reunião mensal de alinhamento via Zoom ou WhatsApp, não cumulativa;</li>
-          <li>Suporte via WhatsApp em horário comercial (segunda a sexta, 8h às 18h).</li>
-        </ul>`,
-      youtube: `<p><strong>2.3 Gerenciamento Mensal:</strong></p>
-        <ul>
-          <li>Otimização contínua de campanhas, públicos, segmentações e lances;</li>
-          <li>Monitoramento de visualizações, retenção, CTR e engajamento;</li>
-          <li>Análise de desempenho por canal, tópico e público-alvo;</li>
-          <li>Emissão de relatório mensal de desempenho (visualizações, CPV, CTR, engajamento e custo);</li>
-          <li>Reunião semanal de alinhamento via Zoom ou WhatsApp, não cumulativa;</li>
-          <li>Suporte via WhatsApp em horário comercial (segunda a sexta, 8h às 18h).</li>
+          <li>Configuração completa da conta Google Ads (orçamento, CPC, segmentações, extensões, públicos-alvo, dispositivos e pagamentos);</li>
+          <li>Pesquisa personalizada de palavras-chave relevantes ao negócio e aos principais concorrentes;</li>
+          <li>Configuração do Gerenciador de Anúncios do Meta (campanhas, públicos, conjuntos de anúncios, orçamentos e Pixel);</li>
+          <li>Estruturação de campanhas nos dois canais, montadas a partir do Material Publicitário fornecido pelo CONTRATANTE;</li>
+          <li>Configuração do Google Analytics e Google Tag Manager;</li>
+          <li><strong>Otimização do Perfil da Empresa no Google (Google Meu Negócio) — inclusa no plano.</strong></li>
         </ul>`,
     };
-    return servicos[plano] || '';
+    return (setup[plano] || '') + bonusGMN(plano, d);
   }
 
-  function clausulaCFM(tipoCliente) {
-    if (tipoCliente !== 'medico') return '';
+  // Google Meu Negócio: faz parte do trabalho de Google, então já vem INCLUSO em
+  // qualquer plano com Google Ads. Nos planos só de Meta ou de YouTube ele entra
+  // como BÔNUS — e apenas quando o contrato é de 12 meses.
+  function bonusGMN(plano, d) {
+    const p = String(plano || '').toLowerCase();
+    if (p === 'google' || p === 'plus') return '';        // já está incluso na lista acima
+    if (p !== 'meta' && p !== 'youtube') return '';
+    const meses = parseInt(d && d.duracao || '0') || 0;
+    if (meses < 12) return '';                            // bônus é exclusivo do plano anual
+    return `<div class="clausula" style="background:#f2fbf5;border:1px solid #a8d8bb;border-radius:6px;padding:12px 15px;margin-top:10px;">
+        <p style="margin:0"><strong>2.2.1 Bônus do Plano Anual — Perfil da Empresa no Google:</strong> por se tratar de contratação de <strong>12 (doze) meses</strong>, a CONTRATADA realizará, sem custo adicional, a <strong>otimização do Perfil da Empresa no Google (Google Meu Negócio)</strong> do CONTRATANTE. O bônus é executado uma única vez, durante o período de setup, e não é convertível em desconto, abatimento ou valor em dinheiro.</p>
+      </div>`;
+  }
+
+  function servicosPorPlano(plano, d) {
+    // O QUE é gerenciado muda com o canal; COMO o cliente é acompanhado muda com
+    // o público. Médico paga mais e recebe acompanhamento próximo (reunião mensal).
+    // Negócio local é focado na gestão do tráfego, com contato por WhatsApp/ligação.
+    const tecnico = {
+      google: [
+        'Pesquisa e orientação contínua para escolha de palavras-chave de maior retorno',
+        'Redação e estruturação dos anúncios de texto (títulos e descrições) dentro da plataforma, submetidos à aprovação prévia do CONTRATANTE',
+        'Monitoramento constante de posição, CTR, CPC, Índice de Qualidade, custo e conversões',
+        'Otimização contínua de lances, segmentações e grupos de anúncios',
+      ],
+      meta: [
+        'Otimização de desempenho das campanhas e conjuntos de anúncios',
+        'Testes A/B com os criativos fornecidos pelo CONTRATANTE, públicos e conjuntos de anúncios',
+        'Monitoramento constante do Custo por Resultado, relevância e alcance',
+        'Criação e atualização de públicos personalizados e semelhantes (Lookalike)',
+      ],
+      youtube: [
+        'Otimização contínua de campanhas, públicos, segmentações e lances',
+        'Monitoramento de visualizações, retenção, CTR e engajamento',
+        'Análise de desempenho por canal, tópico e público-alvo',
+      ],
+      plus: [
+        'Gestão simultânea das campanhas de Google Ads e Meta Ads',
+        'Otimização contínua de lances, palavras-chave, públicos e segmentações nos dois canais',
+        'Testes A/B com os criativos fornecidos pelo CONTRATANTE',
+        'Monitoramento de CTR, CPC, Custo por Resultado e conversões',
+      ],
+    };
+    const itens = tecnico[plano];
+    if (!itens) return '';
+    const medico = ehMedico(d);
+    const relatorio = 'Emissão de relatório mensal de desempenho (investimento, cliques, custo por resultado e conversões)';
+    // Acompanhamento diferenciado por público:
+    const atendimento = medico
+      ? [ relatorio,
+          'Reunião mensal de alinhamento via Zoom ou WhatsApp, não cumulativa',
+          'Acompanhamento próximo e direto com o responsável pela conta, via WhatsApp, em horário comercial (segunda a sexta, 8h às 18h)' ]
+      : [ relatorio,
+          'Atendimento por WhatsApp em horário comercial (segunda a sexta, 8h às 18h) e, quando necessário, por ligação',
+          'O Plano não inclui reuniões periódicas de alinhamento; a comunicação é feita pelos canais acima' ];
+    const li = [...itens, ...atendimento].map(x => `<li>${x}</li>`).join('\n          ');
+    return `<p><strong>2.3 Gerenciamento Mensal:</strong></p>
+        <ul>
+          ${li}
+        </ul>`;
+  }
+
+  // Google e Meta são vendidos aos DOIS públicos (Pro para médico, Start para
+  // negócio local) — então o plano sozinho não diz o público. Quem manda é o
+  // tipo de cliente escolhido no cadastro.
+  // As duas exceções são seguras porque o plano só existe para um público:
+  //   youtube → só médico   |   plus → só negócio local
+  function tipoClienteEfetivo(tipoCliente, plano) {
+    const p = String(plano || '').trim().toLowerCase();
+    if (p === 'youtube') return 'medico';
+    if (p === 'plus')    return 'local';
+    return String(tipoCliente || '').trim().toLowerCase();
+  }
+  function ehMedico(d) { return tipoClienteEfetivo(d.tipoCliente, d.plano) === 'medico'; }
+
+  function clausulaCFM(tipoCliente, plano) {
+    // Blindagem: entra se o cadastro diz "médico" OU se o plano contratado é Pro.
+    if (tipoClienteEfetivo(tipoCliente, plano) !== 'medico') return '';
     return `
       <div class="clausula" style="background:#fff8f0;border:1px solid #f0c060;border-radius:6px;padding:14px 16px;margin-top:16px;">
         <h3 style="color:#a06000">Cláusula Específica — Publicidade Médica (CFM)</h3>
@@ -575,10 +654,12 @@
           <li>É vedado prometer resultados ou garantir número de consultas, pacientes ou procedimentos;</li>
           <li>É vedado o uso de expressões como "o melhor", "o mais qualificado" ou similares;</li>
           <li>É vedada a divulgação de depoimentos identificados de pacientes;</li>
+          <li>É vedada a divulgação de imagens de "antes e depois" de pacientes;</li>
           <li>É vedado qualquer conteúdo que induza o paciente a tratamentos desnecessários;</li>
           <li>Todo conteúdo deve prezar pela dignidade da profissão médica e pela ética publicitária.</li>
         </ul>
-        <p>A CONTRATADA executará as campanhas em conformidade com as diretrizes acima, ficando isenta de qualquer responsabilidade por eventuais infrações decorrentes de conteúdo aprovado e fornecido pelo CONTRATANTE em desacordo com a Resolução CFM nº 2.336/2023.</p>
+        <p><strong>Políticas das plataformas de anúncio (camada adicional e independente do CFM):</strong> além das normas do CFM, o Material Publicitário deve respeitar as políticas de saúde das plataformas. O Meta veda anúncios com <strong>"Atributos Pessoais"</strong> — o anúncio não pode afirmar ou insinuar conhecimento sobre a condição, o estado de saúde ou as características pessoais de quem o vê (por exemplo, perguntar diretamente "Você tem [condição]?"). O Google e o YouTube possuem política própria para conteúdo de saúde. As duas camadas — CFM e plataforma — precisam ser atendidas simultaneamente.</p>
+        <p>A CONTRATADA executará as campanhas em conformidade com as diretrizes acima e orientará o CONTRATANTE sobre elas, ficando isenta de qualquer responsabilidade por eventuais infrações decorrentes de conteúdo fornecido e aprovado pelo CONTRATANTE em desacordo com a Resolução CFM nº 2.336/2023 ou com as políticas das plataformas.</p>
       </div>`;
   }
 
@@ -605,8 +686,12 @@
     const n = parseInt(duracao || '0');
     if (!n) return '';
     const mensal = _parseBR(valor);
+    // Valor ainda não definido (ex.: plano com preço em revisão) — não inventa total zerado.
+    if (!(mensal > 0)) {
+      return `<p><strong>7.1.1 Valor total do período contratado:</strong> a apurar — ${n} (${porExtenso(String(n))}) meses × valor mensal acordado. O total só é exigível após a definição expressa do valor mensal pelas Partes.</p>`;
+    }
     const total = (mensal * n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return `<p><strong>7.1.1 Valor total do período contratado:</strong> ${n} (${porExtenso(String(n))}) meses × R$ ${valor}/mês = <strong>R$ ${total}</strong>. Este é o valor de referência da Taxa de Gerenciamento e a base para pagamento à vista ou parcelado no cartão de crédito. Eventuais juros de parcelamento são aplicados pela operadora do cartão/Asaas no momento do checkout, não havendo acréscimo manual pela CONTRATADA. Descontos de pontualidade, quando aplicáveis, incidem sobre a parcela mensal.</p>`;
+    return `<p><strong>7.1.1 Valor total do período contratado:</strong> ${n} (${porExtenso(String(n))}) meses × R$ ${valor}/mês = <strong>R$ ${total}</strong>. Este é o valor de referência da Taxa de Gerenciamento e a base para pagamento à vista ou parcelado no cartão de crédito. A CONTRATADA não acrescenta juros ao valor aqui previsto; eventuais encargos de parcelamento são de responsabilidade do CONTRATANTE junto à sua instituição financeira. O total <strong>não inclui a Verba de Mídia</strong>.</p>`;
   }
 
   // Cláusula de Land Page (bônus do anual ou adicional negociado)
