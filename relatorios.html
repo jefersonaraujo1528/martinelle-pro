@@ -418,7 +418,16 @@ h2.sec{font-size:18px;margin:6px 0 14px}
 /* ============================================================
    ⚙️ CONFIGURAÇÃO
 ============================================================ */
-const TEAM_PASSWORD = '28082019';
+const TEAM_PASS_HASH = '2336a3c1d102fb98e8f5607fb8914a89eef9b259e86bcd893361ec3589ba51f3';   // trocar com: python3 trocar-senha.py <hash>
+// Compara senha por HASH — a senha em si nunca fica escrita no código.
+// (Isso impede que alguém leia sua senha no fonte. NÃO protege os dados
+//  sozinho: quem protege é o RLS do Supabase — ver SEGURANCA-URGENTE.md.)
+async function mrtnHash(txt){
+  const b = new TextEncoder().encode(String(txt));
+  const d = await crypto.subtle.digest('SHA-256', b);
+  return [...new Uint8Array(d)].map(x => x.toString(16).padStart(2,'0')).join('');
+}
+
 const SUPA_URL = 'https://wtirdmwrttoxpljxsoci.supabase.co';
 const SUPA_KEY = 'sb_publishable_9UF6Ebv3mkxVP2x4kx-eZA_5dDPPuf0';
 const TABELA   = 'medicos';            // mesma tabela do Prospector — cada app usa uma linha
@@ -1133,9 +1142,9 @@ async function puxarMeta(){
 /* ============================================================
    🔐 LOGIN
 ============================================================ */
-function tryLogin(){
-  if($('gatePass').value === TEAM_PASSWORD){
-    localStorage.setItem(AUTH_KEY, TEAM_PASSWORD);   // mesmo valor que o Prospector e o Painel usam
+async function tryLogin(){
+  if(await mrtnHash($('gatePass').value) === TEAM_PASS_HASH){
+    localStorage.setItem(AUTH_KEY, TEAM_PASS_HASH);   // mesmo valor que o Prospector e o Painel usam
     $('gate').classList.add('hide'); $('topbar').classList.remove('hide');
     go('home'); cloudBoot();
   } else $('gateMsg').textContent = 'Senha incorreta';
@@ -2134,7 +2143,7 @@ async function bootShare(verId){
   if(ver){ bootShare(ver); return; }
   if(window.self !== window.top) document.documentElement.classList.add('emb');  // dentro do Painel
   load();
-  if(localStorage.getItem(AUTH_KEY)===TEAM_PASSWORD){
+  if(localStorage.getItem(AUTH_KEY)===TEAM_PASS_HASH){
     $('gate').classList.add('hide'); $('topbar').classList.remove('hide');
     go('home'); cloudBoot();
   } else {

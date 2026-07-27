@@ -100,13 +100,19 @@
   // Mesma chave usada pelo Painel, Prospector e Relatórios — login único da equipe.
   // A página pública de assinatura (assinar.html) NÃO tem senha: o cliente assina direto.
   (function(){
-    var SENHA = '28082019', CHAVE = 'martinelle_auth';
-    window.gateEqEntrar = function(){
+    var SENHA_HASH = '2336a3c1d102fb98e8f5607fb8914a89eef9b259e86bcd893361ec3589ba51f3', CHAVE = 'martinelle_auth';   // trocar com: python3 trocar-senha.py <hash>
+    // A senha nunca fica escrita aqui — só o hash dela.
+    async function mrtnHash(txt){
+      var b = new TextEncoder().encode(String(txt));
+      var d = await crypto.subtle.digest('SHA-256', b);
+      return [].slice.call(new Uint8Array(d)).map(function(x){ return x.toString(16).padStart(2,'0'); }).join('');
+    }
+    window.gateEqEntrar = async function(){
       var v = document.getElementById('gateEqSenha').value;
-      if(v === SENHA){ localStorage.setItem(CHAVE, SENHA); document.getElementById('gateEq').remove(); }
+      if(await mrtnHash(v) === SENHA_HASH){ localStorage.setItem(CHAVE, SENHA_HASH); document.getElementById('gateEq').remove(); }
       else document.getElementById('gateEqMsg').textContent = 'Senha incorreta';
     };
-    if(localStorage.getItem(CHAVE) === SENHA) document.getElementById('gateEq').remove();
+    if(localStorage.getItem(CHAVE) === SENHA_HASH) document.getElementById('gateEq').remove();
     else setTimeout(function(){ document.getElementById('gateEqSenha').focus(); }, 150);
   })();
 </script>

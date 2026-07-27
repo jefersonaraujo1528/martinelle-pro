@@ -115,7 +115,16 @@ body.aberto .gate{display:none}
    Prospector, os Contratos e os Relatórios verificam — ou seja,
    login aqui destrava as três ferramentas de uma vez.
 ============================================================ */
-const TEAM_PASSWORD = '28082019';
+const TEAM_PASS_HASH = '2336a3c1d102fb98e8f5607fb8914a89eef9b259e86bcd893361ec3589ba51f3';   // trocar com: python3 trocar-senha.py <hash>
+// Compara senha por HASH — a senha em si nunca fica escrita no código.
+// (Isso impede que alguém leia sua senha no fonte. NÃO protege os dados
+//  sozinho: quem protege é o RLS do Supabase — ver SEGURANCA-URGENTE.md.)
+async function mrtnHash(txt){
+  const b = new TextEncoder().encode(String(txt));
+  const d = await crypto.subtle.digest('SHA-256', b);
+  return [...new Uint8Array(d)].map(x => x.toString(16).padStart(2,'0')).join('');
+}
+
 const AUTH_KEY = 'martinelle_auth';
 const TAB_KEY  = 'martinelle_hub_aba';
 
@@ -129,10 +138,10 @@ let abaAtiva = null;
 
 const $ = id => document.getElementById(id);
 
-function entrar(){
+async function entrar(){
   const inp = $('senha');
-  if(inp.value === TEAM_PASSWORD){
-    localStorage.setItem(AUTH_KEY, TEAM_PASSWORD);
+  if(await mrtnHash(inp.value) === TEAM_PASS_HASH){
+    localStorage.setItem(AUTH_KEY, TEAM_PASS_HASH);
     abrirPainel();
   } else {
     $('gmsg').textContent = 'Senha incorreta';
@@ -183,7 +192,7 @@ function sair(){
 }
 
 montarAbas();
-if(localStorage.getItem(AUTH_KEY) === TEAM_PASSWORD){
+if(localStorage.getItem(AUTH_KEY) === TEAM_PASS_HASH){
   abrirPainel();
 } else {
   setTimeout(()=>$('senha').focus(), 150);
