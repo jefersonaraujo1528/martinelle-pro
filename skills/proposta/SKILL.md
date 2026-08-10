@@ -1,6 +1,6 @@
 ---
 name: proposta
-description: Gerador de Propostas Comerciais da Consultoria MRTN. Use quando Jeferson precisar gerar uma proposta formatada para apresentar a um prospect. Conhece todos os planos, preços, diferenciais e a estrutura de onboarding. Gera o documento completo pronto para usar.
+description: Gerador de propostas comerciais. Use para montar a proposta formatada de um prospect — planos, preços, diferenciais e onboarding, pronta para apresentar.
 user-invocable: true
 allowed-tools:
   - Read
@@ -8,6 +8,8 @@ allowed-tools:
 ---
 
 # /proposta — Gerador de Propostas Comerciais
+
+> **Fonte única de preços: `CLAUDE.md`, seção 4.** Se algum número aqui divergir de lá, o CLAUDE.md vence — e corrija este arquivo.
 
 Você é o **responsável por Propostas Comerciais** da Consultoria MRTN. Quando Jeferson precisa enviar ou apresentar uma proposta, você gera o documento completo — formatado, com os preços corretos, no tom certo para o público.
 
@@ -25,13 +27,16 @@ Você é o **responsável por Propostas Comerciais** da Consultoria MRTN. Quando
 
 ### MÉDICOS — Pacotes Pro (12 meses)
 
-| Pacote | Fee de gestão | Canal |
-|--------|--------------|-------|
-| Google Ads Pro | R$1.200/mês | Google Ads |
-| Meta Ads Pro | R$1.200/mês | Meta Ads |
-| YouTube Ads Pro | R$2.500/mês | YouTube Ads |
+| Pacote | Taxa cheia (6 meses) | Preço protagonista (12 meses) | Canal |
+|--------|---------------------|-------------------------------|-------|
+| Google Ads Pro | R$1.500/mês | R$1.200/mês | Google Ads |
+| Meta Ads Pro | R$1.500/mês | R$1.200/mês | Meta Ads |
+| YouTube Ads Pro | R$4.500/mês | R$3.500/mês | YouTube Ads |
 
-> **Preço limpo.** R$1.200 é o preço. Não existe "preço regular de R$1.500" nem "desconto de 20% por pontualidade" — nunca escrever âncora fictícia nem valor riscado em proposta nenhuma.
+> **Os dois preços são reais — não é âncora fictícia.** A taxa cheia é o preço praticado no
+> contrato de 6 meses; o preço protagonista é a condição do contrato de 12 meses, apresentada
+> só na hora da proposta. **Continua proibido:** valor riscado que ninguém paga, "preço regular"
+> inventado e desconto de pontualidade recorrente (esse acabou — foi substituído por esta condição).
 
 ### Google Meu Negócio (GMN) — regra fixa
 - **Google Ads Pro** (e Start·Google / Plus): o **GMN já vem incluso no pacote**. Não é bônus, é parte do trabalho de Google. Não tem como fugir disso.
@@ -110,7 +115,8 @@ PROPOSTA — [NOME DO PACOTE]
 SERVIÇO: [Google Ads Pro / Meta Ads Pro / YouTube Ads Pro]
 CANAL: [Google / Meta / YouTube]
 
-FEE DE GESTÃO: R$[1.200 Google/Meta Pro | 2.500 YouTube Pro]/mês
+FEE DE GESTÃO: R$[1.200 Google/Meta Pro | 3.500 YouTube Pro]/mês (contrato de 12 meses)
+Taxa cheia fora dessa condição: R$[1.500 | 4.500]/mês (contrato de 6 meses)
 VERBA DE MÍDIA: definida por você, paga diretamente a [Google/Meta] — NÃO está inclusa no fee
 Sugestão inicial de verba para [especialidade] em [cidade]: R$[X]/mês
 
@@ -242,7 +248,7 @@ Reler a proposta gerada e confirmar item a item:
 - [ ] Nenhum depoimento identificado de paciente, nenhum antes/depois
 - [ ] Nenhum "nossa equipe", "time", "nossos especialistas" nem número de clientes atendidos
 - [ ] Escassez só se for real ("acompanho poucos consultórios por vez", exclusividade por especialidade)
-- [ ] Preço correto: R$1.200 Google Pro / R$1.200 Meta Pro / R$2.500 YouTube Pro / R$650 Start / R$1.300 Plus — sem âncora de preço cheio nem desconto de pontualidade
+- [ ] Preço correto: Google/Meta Pro R$1.500 (6m) ou R$1.200 (12m) / YouTube Pro R$4.500 (6m) ou R$3.500 (12m) / R$650 Start / R$1.300 Plus — sem valor riscado e sem desconto de pontualidade
 - [ ] Verba de mídia aparece como linha separada e explicitamente fora do fee
 - [ ] Nada de relatório semanal prometido — mensal + pulso quinzenal nos 60 primeiros dias
 - [ ] Escopo de criativo descrito como direção estratégica, nunca como produção

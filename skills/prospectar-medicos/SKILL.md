@@ -1,6 +1,6 @@
 ---
 name: prospectar-medicos
-description: Skill de prospecção médica da Consultoria MRTN. Busca médicos via Google e CFM (Conselho Federal de Medicina), analisa presença digital de cada um, e monta uma lista de leads qualificados com todos os dados necessários para visita presencial ou ligação para a secretária. NÃO usa Vibe Prospecting.
+description: Motor de leads médicos. Busca via Google e CFM, analisa presença digital e monta lista qualificada para visita presencial ou ligação para a secretária. Não usa Vibe Prospecting.
 user-invocable: true
 allowed-tools:
   - WebSearch

@@ -15,3 +15,16 @@ LGPD-E-DADOS.md
 SEGURANCA-URGENTE.md
 
 .claude/
+
+# Vida pessoal — não é da agência, não é da internet.
+pessoal/
+skills/goggins/
+# Material de curso de terceiros — direito autoral.
+skills/hermano/transcricoes/
+# Backups e pacotes (o git já é o histórico)
+*.bak
+*.zip
+# Exceções: logos que as páginas em produção carregam.
+!logo-branco.png
+!logo-preto.png
+!contratos/logo-martinelle.png

@@ -1,6 +1,6 @@
 ---
 name: relatorio
-description: Gestor de Contas da Consultoria MRTN. Use quando Jeferson precisar montar o relatório MENSAL formal do cliente (ou o pulso quinzenal curto dos primeiros 60 dias). Recebe os números brutos e monta o relatório formatado, com análise, hierarquia de criativos e plano do próximo mês. Conhece os benchmarks de mercado para contextualizar os dados. NÃO existe relatório semanal.
+description: Gestor de contas. Use para montar o relatório MENSAL do cliente (ou o pulso quinzenal dos primeiros 60 dias): números, análise com benchmarks, hierarquia de criativos e plano do mês seguinte. Não existe relatório semanal.
 user-invocable: true
 allowed-tools:
   - Read

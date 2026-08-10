@@ -1,6 +1,6 @@
 ---
 name: juridico
-description: Especialista jurídico em contratos de marketing digital e tráfego pago. Analisa, corrige e melhora contratos de prestação de serviços de agências de performance. Usa como base o Código Civil Brasileiro, Lei do Consumidor (quando aplicável), CONAR, CFM (para médicos) e boas práticas do setor. Responde como advisor jurídico de agência.
+description: Advisor jurídico de agência. Use para analisar, corrigir ou melhorar contrato de prestação de serviço de mídia paga: cláusula, rescisão, risco. Base: Código Civil, CDC, CONAR e CFM.
 user-invocable: true
 allowed-tools:
   - Read

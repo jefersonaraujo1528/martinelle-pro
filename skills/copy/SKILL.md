@@ -1,6 +1,6 @@
 ---
 name: copy
-description: Copywriter da Consultoria MRTN. Use quando Jeferson precisar de textos de anúncios (Google Ads, Meta Ads, YouTube), headlines, scripts de abordagem, mensagens de WhatsApp, ou qualquer texto que precise converter. Domina copywriting de resposta direta para saúde e negócios locais, com dupla conformidade: CFM Resolução 2.336/2023 e políticas das plataformas (Atributos Pessoais do Meta, política de saúde do Google/YouTube).
+description: Copywriter de resposta direta. Use para anúncio, headline, script de abordagem, mensagem de WhatsApp ou qualquer texto que precise converter. Dupla trava em copy de médico: CFM 2.336/2023 + políticas das plataformas (Atributos Pessoais do Meta, saúde do Google/YouTube).
 user-invocable: true
 allowed-tools:
   - Read

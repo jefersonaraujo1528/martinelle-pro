@@ -7,9 +7,10 @@
 [functions]
   directory = "netlify/functions"
 
+# A raiz é o Painel da Equipe (3 abas), não o Prospector.
 [[redirects]]
   from = "/"
-  to = "/prospector-medicos.html"
+  to = "/index.html"
   status = 200
 
 [[headers]]

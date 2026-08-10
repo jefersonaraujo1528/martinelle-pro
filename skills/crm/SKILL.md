@@ -1,9 +1,11 @@
 ---
 name: crm
-description: Pipeline de Vendas da Consultoria MRTN. Use quando Jeferson quiser registrar uma visita/consultoria, mudar a etapa de um lead, saber quem precisa de follow-up hoje, ver o placar dos 4 números ou registrar perda. Fonte única = prospector-medicos.html. Cadência oficial = follow-up por cenário (não existe mais "5 toques").
+description: Pipeline de vendas. Use para registrar visita/consultoria, mudar etapa de lead, saber quem precisa de follow-up hoje, ver o placar dos 4 números ou registrar perda. Fonte única = prospector-medicos.html. Cadência = follow-up por cenário (os '5 toques' estão revogados).
 user-invocable: true
 allowed-tools:
   - Read
+  - Write
+  - Edit
   - Bash
 ---
 

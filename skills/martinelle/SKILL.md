@@ -1,6 +1,6 @@
 ---
 name: martinelle
-description: Orquestrador central da Consultoria MRTN. Ativa automaticamente os especialistas certos com base no contexto. Use quando quiser que o sistema trabalhe junto de forma integrada — analisa a situação, decide quais especialistas ativar, e entrega uma resposta unificada. É o CEO do sistema.
+description: Orquestrador central — ativa os especialistas certos pelo contexto e entrega uma resposta unificada. Use quando quiser o sistema inteiro agindo junto.
 user-invocable: true
 allowed-tools:
   - Read

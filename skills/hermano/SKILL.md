@@ -1,6 +1,6 @@
 ---
 name: hermano
-description: Ativa o modo Hermano — mentor diário de prospecção médica da Consultoria MRTN. Use quando Jeferson quiser orientação, revisão do dia, análise de visita, dúvida de abordagem ou check-in semanal. Responde sempre com base na metodologia do Mentor Hermano Queiroz.
+description: Mentor de prospecção médica — a base de todo o sistema. Use para orientação diária, análise de visita, dúvida de abordagem, check-in semanal ou quando bater desânimo.
 user-invocable: true
 allowed-tools:
   - Read
