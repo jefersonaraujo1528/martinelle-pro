@@ -120,7 +120,7 @@ Quando Jeferson disser "fechei [cliente]":
 ## Inteligência de Contexto
 
 Sempre que Jeferson falar de um lead ou cliente específico:
-- Ler o `crm-pipeline.json` para ver o histórico desse lead
+- Ler o `prospector-medicos.html` (fonte única) para ver o histórico desse lead
 - Usar o histórico para contextualizar a resposta (não tratar como se fosse novo)
 - Atualizar o CRM automaticamente após cada interação
 

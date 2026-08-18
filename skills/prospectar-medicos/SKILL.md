@@ -139,10 +139,11 @@ Para cada médico que passou pelos filtros (CRM ativo + consultório particular 
 
 ## Passo 6 — Registrar no CRM
 
-Após montar a lista, atualizar o `crm-pipeline.json`:
+Após montar a lista, registrar no `prospector-medicos.html` — **fonte única**:
 - Adicionar cada lead qualificado com etapa `PROSPECTADO`
+- Registro mínimo na 1ª linha das Observações: `[ETAPA] prox DD/MM · h<horas> · nota`
 - Registrar score e argumento de entrada
-- Não duplicar leads que já estejam no arquivo
+- Não duplicar leads que já estejam lá
 
 ---
 

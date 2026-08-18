@@ -1,30 +1,49 @@
-.DS_Store
-*.png
-*.jpg
-medicos_importados.json
-config-notificacoes.json
+# ⚠️ ESTE REPOSITÓRIO É PÚBLICO (github.com/jefersonaraujo1528/martinelle-pro).
+# Tudo que não estiver bloqueado aqui é visível para qualquer pessoa na internet.
+
+# ── Segredos: NUNCA commitar ────────────────────────────────────────────────
 .netlify-token
 .netlify-site-id
-.netlify-deploy.zip
 secrets.local.json
+.env
+**/.env
+skills/trafego-meta/data/meta-api-credentials.md
 
-# Documentos internos — NÃO publicar. Este repositório é público e o conteúdo
-# abaixo é estratégico/pessoal (situação de caixa, metas, política interna).
+# ── Estratégia e dinheiro: interno, não publicar ────────────────────────────
+DIAGNOSTICO-EMPRESA.md
+# Descreve falha ainda ABERTA (RLS do Supabase). Publicar = entregar o roteiro
+# de ataque. Só liberar depois que o item 2 estiver fechado.
+SEGURANCA.md
 OPERACAO-90-DIAS.md
 LGPD-E-DADOS.md
 SEGURANCA-URGENTE.md
+vendas/
 
-.claude/
+# ── Dados de lead (LGPD): não expor nome/telefone de médico ─────────────────
+medicos_importados.json
+config-notificacoes.json
 
-# Vida pessoal — não é da agência, não é da internet.
+# ── Vida pessoal: não é da agência ──────────────────────────────────────────
 pessoal/
 skills/goggins/
-# Material de curso de terceiros — direito autoral.
+
+# ── Curso pago de terceiro: direito autoral ─────────────────────────────────
 skills/hermano/transcricoes/
-# Backups e pacotes (o git já é o histórico)
+skills/closer360/
+
+# ── Ambiente e lixo de build ────────────────────────────────────────────────
+.DS_Store
+.claude/
+supabase/.temp/
+.netlify-deploy.zip
 *.bak
 *.zip
-# Exceções: logos que as páginas em produção carregam.
+
+# ── Imagens: bloqueadas por padrão, exceto as que estão em produção ─────────
+*.png
+*.jpg
 !logo-branco.png
 !logo-preto.png
 !contratos/logo-martinelle.png
+!site/assets/*.png
+!ferramentas/gerador-pptx/*.png

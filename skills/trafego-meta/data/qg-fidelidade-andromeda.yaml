@@ -1,0 +1,437 @@
+# QG-FA-001 — Quality Gate de Fidelidade Andromeda
+# 47 checks programáticos contra payload de campanha antes do POST.
+# Score mínimo: 47/47 OU gaps explicitamente declarados ao usuário no preview.
+#
+# Cada check tem:
+#   - id: identificador único
+#   - level: campaign | adset | creative | ad | account
+#   - severity: blocker | warning | info
+#   - check: descrição operacional
+#   - rule: lógica de validação (sintaxe pseudo-jq aplicada ao payload)
+#   - source: citação Andromeda + path da seção do SOP
+#
+# Severity:
+#   - blocker: bloqueia preview (precisa corrigir ou declarar gap explícito)
+#   - warning: alerta no preview mas não bloqueia
+#   - info: registra mas não alerta
+
+version: "1.0.0"
+date: "2026-05-08"
+total_checks: 47
+target_score: 47
+
+checks:
+
+  # ─────────────────────────────────────────────────────────────
+  # NÍVEL 1 — CAMPANHA (10 checks)
+  # ─────────────────────────────────────────────────────────────
+
+  - id: FA-CAMP-01
+    level: campaign
+    severity: blocker
+    check: "Objective casa com destino do tráfego"
+    rule: "campaign.objective deve ser OUTCOME_LEADS, OUTCOME_SALES, OUTCOME_ENGAGEMENT, OUTCOME_TRAFFIC ou OUTCOME_AWARENESS"
+    rule_logic: "campaign.objective in ['OUTCOME_LEADS','OUTCOME_SALES','OUTCOME_ENGAGEMENT','OUTCOME_TRAFFIC','OUTCOME_AWARENESS']"
+    source: "sop-campanha-api.md §1.1 / Aula 09-Q&A"
+
+  - id: FA-CAMP-02
+    level: campaign
+    severity: blocker
+    check: "Bid strategy é LOWEST_COST_WITHOUT_CAP (sem CPA Máx na escala)"
+    rule_logic: "campaign.bid_strategy == 'LOWEST_COST_WITHOUT_CAP'"
+    source: "sop-campanha-api.md §1.5 / Aula 03-Escala"
+    exception: "[TESTE] pode ser COST_CAP ou LOWEST_COST_WITH_MIN_ROAS"
+
+  - id: FA-CAMP-03
+    level: campaign
+    severity: blocker
+    check: "Special ad categories vazia (não é categoria especial)"
+    rule_logic: "campaign.special_ad_categories == []"
+    source: "Validado em campanha real do Fred Dias"
+
+  - id: FA-CAMP-04
+    level: campaign
+    severity: blocker
+    check: "Buying type é AUCTION"
+    rule_logic: "campaign.buying_type == 'AUCTION'"
+    source: "sop-campanha-api.md / Default Andromeda"
+
+  - id: FA-CAMP-05
+    level: campaign
+    severity: blocker
+    check: "Status inicial é PAUSED (preview obrigatório antes de ativar)"
+    rule_logic: "campaign.status == 'PAUSED'"
+    source: "preview-campanha-tmpl.md / Regra inegociável do squad"
+
+  - id: FA-CAMP-06
+    level: campaign
+    severity: warning
+    check: "Modo orçamento é ABO (sem daily_budget na campanha)"
+    rule_logic: "!campaign.daily_budget && !campaign.lifetime_budget"
+    source: "Aula 03-Escala: 'Eu sempre uso ABO. Dificilmente eu uso CBO.'"
+    exception: "[TESTE] pode testar CBO"
+
+  - id: FA-CAMP-07
+    level: campaign
+    severity: warning
+    check: "Partilha de orçamento ATIVA (se modo for CBO ou opção disponível)"
+    rule_logic: "se CBO: campaign.campaign_budget_optimization == true"
+    source: "Aula 03-Escala: 'recomendo que você deixe ela ativa'"
+    exception: "Se em ABO e usuário planeja usar CPA Máx, partilha bloqueia o campo — pode desativar"
+
+  - id: FA-CAMP-08
+    level: campaign
+    severity: blocker
+    check: "Nome da campanha segue padrão semântico (prefixo ANDRO_ ou TESTE_)"
+    rule_logic: "campaign.name.startsWith('ANDRO_') || campaign.name.startsWith('TESTE_')"
+    source: "nomenclatura-protocol.md"
+
+  - id: FA-CAMP-09
+    level: campaign
+    severity: info
+    check: "Skadnetwork attribution desabilitado (irrelevante fora de iOS app campaigns)"
+    rule_logic: "campaign.is_skadnetwork_attribution == false"
+    source: "Validado em campanha real"
+
+  - id: FA-CAMP-10
+    level: campaign
+    severity: info
+    check: "Campanha não tem regra automática agressiva de pause (anti-padrão)"
+    rule_logic: "ad_rules associadas à campanha não têm threshold absurdo"
+    source: "Aula 04-Teste: 'regras automáticas pode usar com cuidado'"
+
+  # ─────────────────────────────────────────────────────────────
+  # NÍVEL 2 — ADSETS (20 checks)
+  # ─────────────────────────────────────────────────────────────
+
+  - id: FA-ADSET-01
+    level: adset
+    severity: blocker
+    check: "Quantidade de adsets entre 3 e 12 (ideal: 6)"
+    rule_logic: "adsets.length >= 3 && adsets.length <= 12"
+    source: "Aula 03-Escala: 'recomendo seis conjuntos, mas 10-12 sem problema'"
+
+  - id: FA-ADSET-02
+    level: adset
+    severity: warning
+    check: "6 adsets canônicos do método (1 puro + 4 sugestões + 1 quente)"
+    rule_logic: "adsets.length == 6 && classificacao_correta"
+    source: "Aula 03-Escala / sop-campanha-ui.md §2.8.1"
+
+  - id: FA-ADSET-03
+    level: adset
+    severity: blocker
+    check: "Pelo menos UM adset é Adv+ Puro (sem flexible_spec, sem custom_audiences, sem age range)"
+    rule_logic: "exists adset where !targeting.flexible_spec && !targeting.custom_audiences && !targeting.age_min"
+    source: "Aula 03-Escala: 'Conjunto 1 = ADV_Puro = grupo controle'"
+
+  - id: FA-ADSET-04
+    level: adset
+    severity: blocker
+    check: "Pelo menos UM adset é Audiência Quente (custom_audiences populado com 4 públicos)"
+    rule_logic: "exists adset where targeting.custom_audiences.length >= 1 (idealmente 4: IG + Video + Site + Email)"
+    source: "Aula 03-Escala: 'Pelo menos em um dos conjuntos, reúna toda a sua audiência quente'"
+
+  - id: FA-ADSET-05
+    level: adset
+    severity: blocker
+    check: "Todos os adsets com Advantage+ Audience ATIVO"
+    rule_logic: "all adsets: targeting.targeting_automation.advantage_audience == 1"
+    source: "Aula 03-Escala / Validado em campanha real (TESTE_NDF_L03)"
+    exception: "[TESTE] pode testar OFF (variável 6 do canivete)"
+
+  - id: FA-ADSET-06
+    level: adset
+    severity: blocker
+    check: "Todos os adsets com Advantage+ Placements (sem publisher_platforms manual)"
+    rule_logic: "all adsets: !targeting.publisher_platforms"
+    source: "Aula 03-Escala: 'Posicionamentos sempre advantage de plus'"
+
+  - id: FA-ADSET-07
+    level: adset
+    severity: blocker
+    check: "optimization_goal correto pra objective"
+    rule_logic: "se OUTCOME_SALES ou OUTCOME_LEADS: optimization_goal == OFFSITE_CONVERSIONS"
+    source: "sop-campanha-api.md §2 / Validado em campanha real"
+
+  - id: FA-ADSET-08
+    level: adset
+    severity: blocker
+    check: "billing_event = IMPRESSIONS (default Andromeda)"
+    rule_logic: "all adsets: billing_event == 'IMPRESSIONS'"
+    source: "Validado em campanha real"
+
+  - id: FA-ADSET-09
+    level: adset
+    severity: blocker
+    check: "promoted_object com pixel_id e custom_event_type corretos"
+    rule_logic: "all adsets: promoted_object.pixel_id && promoted_object.custom_event_type"
+    source: "Aula 03-Escala / sop-campanha-api.md §2.2"
+
+  - id: FA-ADSET-10
+    level: adset
+    severity: blocker
+    check: "Sem bid_amount nos adsets (CPA Máx vazio na Escala)"
+    rule_logic: "all adsets: !bid_amount"
+    source: "Aula 03-Escala: 'a gente não vai colocar CPA máximo aqui'"
+    exception: "[TESTE] pode usar bid_amount com bid_strategy COST_CAP"
+
+  - id: FA-ADSET-11
+    level: adset
+    severity: warning
+    check: "Sem value_rules_set (regras de valor não usadas na Escala)"
+    rule_logic: "all adsets: !value_rules_set"
+    source: "Aula 03-Escala: 'aqui em regras de valor, na via principal, nós não vamos mexer'"
+
+  - id: FA-ADSET-12
+    level: adset
+    severity: warning
+    check: "Attribution_spec é padrão (omitido ou 7d-click ± 1d-view)"
+    rule_logic: "attribution_spec é null ou tem CLICK_THROUGH com window_days <= 7"
+    source: "Aula 03-Escala: 'Janela de atribuição. Nós não vamos mexer com nada.'"
+
+  - id: FA-ADSET-13
+    level: adset
+    severity: blocker
+    check: "Orçamento igual entre todos os adsets (se ABO)"
+    rule_logic: "todos os adsets têm o mesmo daily_budget"
+    source: "Aula 03-Escala: 'eu recomendo que você inicie todos os conjuntos com o mesmo orçamento'"
+
+  - id: FA-ADSET-14
+    level: adset
+    severity: warning
+    check: "Orçamento por adset >= R$5/dia (~US$1, mínimo Meta)"
+    rule_logic: "all adsets: daily_budget >= 500 (em centavos)"
+    source: "Limite Meta API"
+
+  - id: FA-ADSET-15
+    level: adset
+    severity: blocker
+    check: "geo_locations.countries populado (pelo menos 1 país)"
+    rule_logic: "all adsets: targeting.geo_locations.countries.length >= 1"
+    source: "Aula 03-Escala: 'apenas o país, que é importante você colocar o país'"
+
+  - id: FA-ADSET-16
+    level: adset
+    severity: warning
+    check: "Adv+ Puro NÃO tem age_min/age_max definidos"
+    rule_logic: "adset_adv_puro: !targeting.age_min && !targeting.age_max"
+    source: "Aula 03-Escala: 'eu não estou definindo idade'"
+    note: "Validamos que campanha real do Fred Dias tinha 18-65 — divergência consciente"
+
+  - id: FA-ADSET-17
+    level: adset
+    severity: warning
+    check: "Adsets com flexible_spec têm 1 cluster com 3-4 sugestões max (não misturar clusters)"
+    rule_logic: "all adset.flexible_spec[]: interests.length <= 4"
+    source: "Aula 03-Escala: 'Colocar no máximo três sugestões. Acho que 3, no máximo 4, está ok.'"
+
+  - id: FA-ADSET-18
+    level: adset
+    severity: warning
+    check: "Conjunto Quente tem 4 audiências (IG 365d + Video 50% + Site Visitors + Email)"
+    rule_logic: "adset_quente.targeting.custom_audiences.length == 4"
+    source: "Aula 03-Escala: 'Eu considero esses quatro públicos, públicos de audiência quente.'"
+
+  - id: FA-ADSET-19
+    level: adset
+    severity: warning
+    check: "Exclusões aplicadas nos adsets (compradores se SALES, leads se LEADS)"
+    rule_logic: "all adsets: targeting.exclusions.custom_audiences.length >= 1"
+    source: "Aula 05-Públicos: 'é muito importante você ter arquitetado pronto os públicos que você não quer anunciar'"
+
+  - id: FA-ADSET-20
+    level: adset
+    severity: info
+    check: "Nomenclatura dos adsets segue padrão (ADV_Puro, ADV_Int-{cluster}, QUENTE_*)"
+    rule_logic: "all adsets: name matches ^(ADV_Puro|ADV_Int-[a-z-]+|QUENTE_[a-z-]+|ADV_HiperSeg-[a-z-]+|TESTE_[A-Z]+_[a-z-]+)$"
+    source: "nomenclatura-protocol.md"
+
+  # ─────────────────────────────────────────────────────────────
+  # NÍVEL 3 — CREATIVES & ADS (12 checks)
+  # ─────────────────────────────────────────────────────────────
+
+  - id: FA-CREATIVE-01
+    level: creative
+    severity: warning
+    check: "9 creatives totais (3 C1 + 3 C2 + 3 C3) — víscera Andromeda"
+    rule_logic: "creatives.length == 9 (idealmente)"
+    source: "Aula 09-Q&A: 'a víscera do Andromeda. É a gente ter nove criativos. Imutável.'"
+    exception: "Se usuário tem menos, gap declarado é OK"
+
+  - id: FA-CREATIVE-02
+    level: creative
+    severity: warning
+    check: "Pelo menos 1 creative em cada nível (C1, C2, C3)"
+    rule_logic: "exists creative C1 && exists creative C2 && exists creative C3"
+    source: "Aula 06-C1: 'Funil incompleto sem os 3 níveis'"
+
+  - id: FA-CREATIVE-03
+    level: creative
+    severity: warning
+    check: "Hard Sell C2 representa pelo menos 30% dos creatives (idealmente 50%)"
+    rule_logic: "(creatives where C2-HS).length / creatives.length >= 0.30"
+    source: "Aula 04-parte1: 'pelo menos 50% dos seus anúncios sejam feitos no formato hard sell'"
+
+  - id: FA-CREATIVE-04
+    level: creative
+    severity: blocker
+    check: "Mix de formatos: pelo menos 1 vídeo + 1 estático"
+    rule_logic: "exists creative.format == 'video' && exists creative.format in ['image', 'carousel']"
+    source: "Aula 04-parte1: 'OBRIGATÓRIO mesclar vídeo + estático'"
+
+  - id: FA-CREATIVE-05
+    level: creative
+    severity: blocker
+    check: "Todo creative tem call_to_action definido"
+    rule_logic: "all creatives: object_story_spec.*.call_to_action.type"
+    source: "Aula 09-Q&A: 'todo anúncio, 100% do anúncio... precisa ter chamada para ação'"
+
+  - id: FA-CREATIVE-06
+    level: creative
+    severity: blocker
+    check: "Todo creative tem object_story_spec.page_id"
+    rule_logic: "all creatives: object_story_spec.page_id"
+    source: "Marketing API requirement"
+
+  - id: FA-CREATIVE-07
+    level: creative
+    severity: warning
+    check: "Creatives têm instagram_actor_id (anuncia também no IG)"
+    rule_logic: "all creatives: object_story_spec.instagram_actor_id"
+    source: "Best practice — sem isso, anúncio só roda em FB"
+
+  - id: FA-CREATIVE-08
+    level: creative
+    severity: warning
+    check: "Recursos automáticos OPT_IN apenas nos defaults (não 3D animation, não uncrop)"
+    rule_logic: "creatives.degrees_of_freedom_spec.creative_features_spec: image_animation = OPT_OUT && image_uncrop = OPT_OUT"
+    source: "Aula 09-Q&A: 'Esse aqui não tá habilitado, deixa sem, porque vai que faz merda'"
+
+  - id: FA-CREATIVE-09
+    level: creative
+    severity: info
+    check: "Recursos auto OPT_IN: standard_enhancements, text_optimizations"
+    rule_logic: "creatives: standard_enhancements OPT_IN && text_optimizations OPT_IN"
+    source: "Aula 09-Q&A: 'Tudo que está aqui em melhoria, que ele já está ativo, deixa'"
+
+  - id: FA-CREATIVE-10
+    level: creative
+    severity: info
+    check: "Nomenclatura dos creatives segue padrão (C{N}-{SUBTIPO}-{slug})"
+    rule_logic: "all creatives: name matches ^C[1-3]-(CV|QP|DOR|HS|DEMO|COMP|PROVA|OBJ|URG)-[a-z0-9-]+$"
+    source: "nomenclatura-protocol.md / Aula 04-parte2"
+
+  - id: FA-AD-01
+    level: ad
+    severity: blocker
+    check: "Todo ad tem adset_id e creative.creative_id válidos"
+    rule_logic: "all ads: adset_id && creative.creative_id"
+    source: "Marketing API requirement"
+
+  - id: FA-AD-02
+    level: ad
+    severity: blocker
+    check: "Status inicial dos ads é PAUSED"
+    rule_logic: "all ads: status == 'PAUSED'"
+    source: "Regra do squad: tudo PAUSED até preview confirmar"
+
+  # ─────────────────────────────────────────────────────────────
+  # NÍVEL ACCOUNT — CUSTOM AUDIENCES & SETUP (5 checks)
+  # ─────────────────────────────────────────────────────────────
+
+  - id: FA-ACCT-01
+    level: account
+    severity: blocker
+    check: "Pixel ativo na conta (pixel_id válido + last_fired_time recente)"
+    rule_logic: "GET /{pixel_id} retorna is_unavailable=false e last_fired_time < 7d"
+    source: "Pré-requisito de qualquer campanha de conversão"
+
+  - id: FA-ACCT-02
+    level: account
+    severity: warning
+    check: "Custom Audiences do set Andromeda existem na conta"
+    rule_logic: "customaudiences.length >= 4 (mínimo: IG, Video, Site, Buyers/Leads)"
+    source: "Aula 03-Escala / Aula 05-Públicos"
+
+  - id: FA-ACCT-03
+    level: account
+    severity: warning
+    check: "Pelo menos 1 lookalike disponível (caso necessário, embora caminhando pra aposentar)"
+    rule_logic: "exists customaudience where subtype == 'LOOKALIKE'"
+    source: "Aula 09-Q&A: 'caminhando pra matar o Look-alike, mas até lá pode usar'"
+
+  - id: FA-ACCT-04
+    level: account
+    severity: info
+    check: "Token Meta tem permissões mínimas (ads_management, ads_read, business_management)"
+    rule_logic: "GET /debug_token: scopes inclui ads_management AND ads_read AND business_management"
+    source: "data/meta-api-credentials.md"
+
+  - id: FA-ACCT-05
+    level: account
+    severity: info
+    check: "Conta de anúncios não está com débito ou bloqueio"
+    rule_logic: "GET /{ad_account_id}: account_status == 1"
+    source: "Aula 09-Q&A: 'Pode ser conta nova travada — 70% dos casos de gastou zero'"
+
+# ─────────────────────────────────────────────────────────────
+# RESUMO POR NÍVEL
+# ─────────────────────────────────────────────────────────────
+
+summary:
+  by_level:
+    campaign: 10
+    adset: 20
+    creative: 10
+    ad: 2
+    account: 5
+  by_severity:
+    blocker: 22
+    warning: 18
+    info: 7
+  total: 47
+
+# ─────────────────────────────────────────────────────────────
+# COMO O SQUAD USA
+# ─────────────────────────────────────────────────────────────
+
+usage:
+  when: "Antes do preview ser apresentado ao usuário (após Step 4 de setup-scale ou setup-test)"
+  how:
+    - "Squad parseia o payload completo (campaign + adsets + creatives + ads)"
+    - "Pra cada check, aplica rule_logic"
+    - "Conta passes/fails por severity"
+    - "Se algum BLOCKER falhou: bloquear, ajustar payload, re-rodar"
+    - "Se WARNING falhou: declarar gap explícito no preview"
+    - "Score final apresentado: '{N}/47 checks passaram'"
+  output_format: |
+    FIDELIDADE ANDROMEDA: 45/47
+
+    BLOCKERS: 0/22 ✓
+    WARNINGS: 2/18 falharam:
+      ⚠ FA-CREATIVE-01: usuário tem 7 creatives (faltam 2 — não é blocker mas reduz robustez)
+      ⚠ FA-ACCT-02: lista de e-mail vazia (audiência quente vai contar com 3/4)
+    INFO: tudo OK
+
+# ─────────────────────────────────────────────────────────────
+# REVALIDAÇÃO PERIÓDICA
+# ─────────────────────────────────────────────────────────────
+
+review_schedule:
+  - frequency: "trimestral"
+  - trigger: "atualização de versão do Marketing API (v22, v23, etc.)"
+  - trigger: "feedback do Fred Dias sobre check redundante ou faltando"
+  - trigger: "mudança de método pelo Andromeda (atualização Bárbara)"
+
+# ─────────────────────────────────────────────────────────────
+# REFERÊNCIAS
+# ─────────────────────────────────────────────────────────────
+
+references:
+  - knowledge/sop-campanha-ui.md
+  - knowledge/sop-campanha-api.md
+  - knowledge/sop-campanha-mapping.md
+  - knowledge/criativos-avaliacao.md
+  - knowledge/andromeda-rules.md
+  - templates/preview-campanha-tmpl.md

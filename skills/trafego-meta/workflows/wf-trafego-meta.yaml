@@ -1,0 +1,193 @@
+workflow:
+  id: wf-trafego-meta
+  name: "Trafego Meta Ads — Workflow Principal"
+  version: "1.0.0"
+  type: "pipeline"
+  description: "Gestao completa de trafego pago Meta Ads via Metodo Andromeda"
+  orchestrator: "@andromeda-chief"
+
+  sequence:
+    - phase: "onboarding"
+      agent: "andromeda-chief"
+      action: "Coletar contexto e configurar infraestrutura Meta (BM, contas, pixel)"
+      creates: "contas configuradas (QG-TA-001)"
+
+    - phase: "campaign-setup"
+      agent: "scale-operator, test-operator"
+      action: "Criar campanhas Andromeda em ambas as contas (escala + teste)"
+      requires: "QG-TA-001"
+      creates: "campanhas estruturadas (QG-TA-002)"
+      checkpoint:
+        id: QG-TA-002
+        blocking: true
+
+    - phase: "operations"
+      agent: "scale-operator, test-operator"
+      action: "Operacao diaria: metricas, pacing, otimizacao, testes, feed"
+      requires: "QG-TA-002"
+      creates: "campanhas otimizadas, reservatorio atualizado"
+
+    - phase: "strategic-review"
+      agent: "traffic-strategist"
+      action: "Analise macro semanal, briefing de criativos, consultoria"
+      creates: "analise estrategica, recomendacoes"
+
+  # ──────────────────────────────────────
+  # DETAILED PHASES
+  # ──────────────────────────────────────
+
+  phases:
+    - phase: 0
+      name: "Onboarding"
+      frequency: "one-time"
+      blocking: true
+
+      tasks:
+        - task_id: "start"
+          agent: "andromeda-chief"
+          description: "Coletar contexto: produto, Estrela Guia, orcamento, pagina"
+          depends_on: []
+
+        - task_id: "onboard"
+          agent: "andromeda-chief"
+          description: "Setup BM, contas, pixel, eventos, dominio"
+          depends_on: ["start"]
+          skip_if: "contas ja existem"
+
+      quality_gate:
+        id: "QG-TA-001"
+        name: "Accounts Ready"
+        blocking: true
+        criteria:
+          - "BM ativo"
+          - "2 contas (teste + escala)"
+          - "Pixel com eventos"
+          - "Dominio verificado"
+          - "Paginas vinculadas"
+
+    # ──────────────────────────────────────
+    # PHASE 1: Campaign Setup (initial)
+    # ──────────────────────────────────────
+
+    - phase: 1
+      name: "Campaign Setup"
+      frequency: "initial + when restructuring"
+      blocking: true
+      parallel: true
+
+      tasks:
+        - task_id: "setup-scale"
+          agent: "scale-operator"
+          description: "Criar campanha Andromeda na conta escala"
+          depends_on: ["QG-TA-001"]
+
+        - task_id: "setup-test"
+          agent: "test-operator"
+          description: "Criar campanha teste na conta teste"
+          depends_on: ["QG-TA-001"]
+
+      quality_gate:
+        id: "QG-TA-002"
+        name: "Campaigns Structured"
+        blocking: true
+        criteria:
+          - "Campanha escala com ~6 conjuntos seguindo nomenclatura"
+          - "Campanha teste com estrutura pronta"
+          - "Criativos subidos (min 9 mix C1+C2+C3)"
+          - "UTMs em todos os anuncios"
+          - "Exclusao compradores 180d"
+
+    # ──────────────────────────────────────
+    # PHASE 2: Operations (recurring daily)
+    # ──────────────────────────────────────
+
+    - phase: 2
+      name: "Operations"
+      frequency: "daily"
+      blocking: false
+      note: "Core loop. Roda todo dia util. Leitura autonoma, escrita com aprovacao."
+
+      tasks:
+        - task_id: "operate-scale"
+          agent: "scale-operator"
+          description: "Operacao diaria: metricas, pacing, otimizacao, escala"
+          depends_on: ["QG-TA-002"]
+          recurring: true
+
+        - task_id: "operate-test"
+          agent: "test-operator"
+          description: "Operar testes, avaliar resultados, manter reservatorio"
+          depends_on: ["QG-TA-002"]
+          recurring: true
+
+        - task_id: "feed-scale"
+          agent: "scale-operator"
+          description: "Alimentar escala com campeoes do teste quando fadiga detectada"
+          depends_on: ["operate-scale", "operate-test"]
+          trigger: "fadiga detectada na escala + reservatorio tem campeoes"
+          recurring: true
+
+      quality_gate:
+        id: "QG-TA-003"
+        name: "Human Approval Gate"
+        blocking: true
+        transversal: true
+        note: "Aplica a TODA operacao de escrita"
+        criteria:
+          - "Agente apresentou recomendacao com dados"
+          - "Usuario aprovou a acao"
+          - "Acao executada conforme aprovado"
+
+    # ──────────────────────────────────────
+    # PHASE 3: Strategic Review (weekly)
+    # ──────────────────────────────────────
+
+    - phase: 3
+      name: "Strategic Review"
+      frequency: "weekly + on-demand"
+      blocking: false
+
+      tasks:
+        - task_id: "strategic-review"
+          agent: "traffic-strategist"
+          description: "Analise macro semanal: metricas, Motor de Arranque, briefing"
+          depends_on: []
+          recurring: true
+
+        - task_id: "consult"
+          agent: "traffic-strategist"
+          description: "Modo consultor: pensar junto sobre estrategia"
+          depends_on: []
+          trigger: "sob demanda do usuario"
+
+      quality_gate:
+        id: "QG-TA-004"
+        name: "Strategic Health"
+        blocking: false
+        criteria:
+          - "CPA dentro da Estrela Guia (media 7d)"
+          - "Motor de Arranque positivo"
+          - "Min criativos ativos cobrindo funil (C1+C2+C3)"
+
+  # ──────────────────────────────────────
+  # HUMAN APPROVAL PROTOCOL
+  # ──────────────────────────────────────
+
+  human_approval:
+    description: "Toda acao que altera estado no Meta Ads precisa de aprovacao humana"
+
+    autonomous:
+      - "GET insights (metricas, performance, spend)"
+      - "Diagnostico e analise"
+      - "Gerar relatorios e recomendacoes"
+      - "Calcular escala / projetar cenarios"
+
+    requires_approval:
+      - "POST campaigns (criar campanha)"
+      - "POST adsets (criar conjuntos)"
+      - "POST adcreatives + ads (subir criativos)"
+      - "PATCH status (pausar/ativar)"
+      - "PATCH daily_budget (alterar orcamento)"
+      - "Migrar criativos teste → escala"
+
+    flow: "agente analisa → recomenda com dados → usuario aprova → agente executa via API"

@@ -411,7 +411,7 @@
       <div class="clausula">
         <h3>6. Do Prazo e Renovação</h3>
         <p><strong>6.1</strong> O presente contrato vigorará por <strong>${duracaoTexto}</strong>, com início em <strong>${dataInicio}</strong>${d.duracao !== '0' ? ` e término previsto em <strong>${dataFim}</strong>` : ''}, renovando-se automaticamente por <strong>12 (doze) meses</strong>, salvo manifestação contrária de qualquer das partes com antecedência mínima de <strong>${d.cl_aviso || '30'} (${porExtensoNum(d.cl_aviso || '30')}) dias</strong>.</p>
-        <p><strong>Prazo mínimo de contratação: ${d.cl_prazoMin || '6'} (${porExtenso(d.cl_prazoMin || '6')}) meses.</strong></p>
+        <p><strong>Prazo mínimo de contratação: ${d.cl_prazoMin || '12'} (${porExtenso(d.cl_prazoMin || '12')}) meses.</strong></p>
         <p><strong>6.2</strong> Na renovação, a CONTRATADA poderá reajustar o valor da Taxa de Gerenciamento, comunicando ao CONTRATANTE com no mínimo ${d.cl_aviso || '30'} (${porExtensoNum(d.cl_aviso || '30')}) dias de antecedência.</p>
       </div>
 
@@ -430,6 +430,7 @@
         <h3>8. Da Rescisão e Multa</h3>
         <p><strong>8.1</strong> Qualquer das partes poderá rescindir o presente contrato mediante notificação prévia de <strong>${d.cl_aviso || '30'} (${porExtensoNum(d.cl_aviso || '30')}) dias</strong> corridos, por escrito ou via e-mail.</p>
         ${multaTexto(d.cl_multa)}
+        ${(d.cl_janela && d.cl_janela !== '0') ? `<p><strong>8.2-A · Janela de Confiança:</strong> excepcionalmente, o CONTRATANTE poderá rescindir este Contrato <strong>sem incidência de qualquer multa</strong>, desde que manifeste sua intenção por escrito até o encerramento do <strong>${d.cl_janela}º (${porExtenso(d.cl_janela)}) mês</strong> de vigência, respeitado o aviso prévio de ${d.cl_aviso || '30'} dias. Após esse período, aplica-se integralmente a cláusula 8.2.</p>` : ''}
         <p><strong>8.3</strong> A rescisão por inadimplência do CONTRATANTE — não pagamento superior a ${d.cl_suspensao || '7'} dias — poderá ser realizada pela CONTRATADA de forma imediata, sem notificação prévia, mantendo o direito à multa prevista.</p>
         <p><strong>8.4</strong> A rescisão por descumprimento comprovado de obrigações pela CONTRATADA não implicará multa ao CONTRATANTE.</p>
       </div>

@@ -1,0 +1,148 @@
+# ===============================================================================
+# SQUAD: Trafego Meta Ads
+# Gestao completa de trafego pago Meta Ads — executor via Meta Marketing API
+# ===============================================================================
+
+name: trafego-meta
+title: "Trafego Meta Ads"
+version: "2.1.0"
+author: "Fred Dias"
+description: >
+  Squad Trafego Meta Ads — gestao de trafego pago usando Metodo Andromeda.
+  Opera 2 contas de anuncio (teste + escala) via Meta Marketing API.
+  Leitura autonoma, escrita com aprovacao humana. 5 agentes:
+  chief (orquestrador), setup-operator (configuracao do zero), 2 operadores (teste + escala), 1 estrategista (advisory).
+
+slash_prefix: "trafegoMeta"
+pattern_prefix: "TA"
+target_user: "Fred Dias (Arka) — gestao de trafego Meta Ads para produtos digitais"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# USE CASES
+# ─────────────────────────────────────────────────────────────────────────────
+use_cases:
+  - id: UC1
+    name: "Daily Operations"
+    description: "Otimizacao diaria: coletar metricas, analisar performance, recomendar acoes, executar com aprovacao"
+  - id: UC2
+    name: "Campaign Setup"
+    description: "Montar estrutura de campanha Andromeda (escala + teste) do zero"
+  - id: UC3
+    name: "Strategic Review"
+    description: "Analise macro de metricas, tendencias, briefing de criativos, proximos passos"
+  - id: UC4
+    name: "Consulting"
+    description: "Pensar junto sobre estrategia, diagnosticar problemas, casos especiais"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TIER SYSTEM
+# ─────────────────────────────────────────────────────────────────────────────
+tiers:
+  orchestrator:
+    - andromeda-chief
+  tier_0:
+    - traffic-strategist
+  tier_1:
+    - setup-operator
+    - scale-operator
+    - test-operator
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TASKS
+# ─────────────────────────────────────────────────────────────────────────────
+tasks:
+  - start
+  - setup
+  - onboard
+  - setup-scale
+  - setup-test
+  - operate-scale
+  - operate-test
+  - feed-scale
+  - strategic-review
+  - consult
+
+# ─────────────────────────────────────────────────────────────────────────────
+# WORKFLOWS
+# ─────────────────────────────────────────────────────────────────────────────
+workflows:
+  - wf-trafego-meta
+
+# ─────────────────────────────────────────────────────────────────────────────
+# QUALITY GATES
+# ─────────────────────────────────────────────────────────────────────────────
+quality_gates:
+  - id: QG-TA-001
+    name: "Accounts Ready"
+    transition: "onboarding → campaign setup"
+    blocking: true
+    criteria: "BM ativo, 2 contas, pixel com eventos, dominio verificado"
+
+  - id: QG-TA-002
+    name: "Campaigns Structured"
+    transition: "setup → operations"
+    blocking: true
+    criteria: "Campanhas escala+teste com conjuntos, criativos, UTMs, nomenclatura"
+
+  - id: QG-TA-003
+    name: "Human Approval"
+    transition: "transversal — toda escrita no Meta API"
+    blocking: true
+    criteria: "Agente recomendou com dados, usuario aprovou, agente executou"
+
+  - id: QG-TA-004
+    name: "Strategic Health"
+    transition: "operacao → revisao"
+    blocking: false
+    criteria: "CPA <= Estrela Guia (7d), Motor de Arranque positivo, min criativos ativos"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DEPENDENCIES
+# ─────────────────────────────────────────────────────────────────────────────
+dependencies:
+  required:
+    - "Meta Marketing API (App + access token com ads_management)"
+  optional:
+    - "UTMify (tracking de vendas por UTM)"
+    - "Squad de criativos (futuro — produz assets C1/C2/C3)"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# KNOWLEDGE BASE
+# ─────────────────────────────────────────────────────────────────────────────
+knowledge:
+  # Squad é autossuficiente. Toda KB necessária está dentro deste diretório.
+  # Sem dependências de paths externos.
+  base_dir: "knowledge/"
+  squad_specific:
+    # Setup (INTOCAVEL)
+    - "knowledge/setup-completo-meta-ads-kb.md"
+    - "knowledge/setup-avancado-meta-ads-kb.md"
+    - "knowledge/setup-conta-trafego-kb.md"
+    # Regras & Filosofia
+    - "knowledge/andromeda-rules.md"
+    - "knowledge/filosofia-metodo.md"
+    # Operacoes
+    - "knowledge/daily-ops-protocol.md"
+    - "knowledge/estrutura-campanha.md"
+    - "knowledge/metrics-reference.md"
+    # Dominios
+    - "knowledge/publicos-reference.md"
+    - "knowledge/criativos-avaliacao.md"
+    # Referencia
+    - "knowledge/nomenclatura-protocol.md"
+    - "knowledge/repertorio-operacional.md"
+    # Tecnico
+    - "knowledge/meta-api-reference.md"
+    - "knowledge/supabase-data-access.md"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HUMAN APPROVAL GATE
+# ─────────────────────────────────────────────────────────────────────────────
+human_approval:
+  autonomous:
+    - "GET insights (metricas, performance, spend)"
+    - "Diagnostico e analise"
+    - "Gerar relatorios e recomendacoes"
+  requires_approval:
+    - "POST/PATCH no Meta API (criar, pausar, escalar, subir criativos)"
+  flow: "agente analisa → recomenda com dados → usuario aprova → agente executa"

@@ -29,8 +29,8 @@ trazendo a(s) que o momento pedir (nas decisões e no desânimo, as três juntas
    com a metodologia dele. Múltiplos especialistas = **uma resposta unificada**, dividida por
    seção, sem repetição.
 3. **Consultar o CRM** sempre que Jeferson citar um lead ou cliente pelo nome. A **fonte única é
-   o `prospector-medicos.html`** — leads médicos e locais vivem só lá. O `crm-pipeline.json` está
-   **aposentado**: não ler nem gravar leads nele.
+   o `prospector-medicos.html`** — leads médicos e locais vivem só lá. Não existe segundo
+   pipeline: nada de JSON solto, planilha ou Notion.
 4. **Terminar com próximo passo concreto e com prazo.** Sem próximo passo = resposta incompleta.
 
 ---
@@ -70,15 +70,24 @@ Todos os valores são **fee de gestão — a verba de mídia é do cliente e vai
 na plataforma.** Nunca somar fee + verba num número só.
 
 ### Médicos — Pacotes Pro
-| Pacote | Taxa cheia (6 meses) | Preço protagonista (12 meses) |
+| Pacote | Taxa cheia | Preço protagonista |
 |---|---|---|
 | Google Ads Pro | R$1.500/mês | R$1.200/mês |
 | Meta Ads Pro | R$1.500/mês | R$1.200/mês |
 | YouTube Ads Pro | R$4.500/mês | R$3.500/mês |
 
-- **Preço protagonista** = condição de fechamento apresentada só na hora da proposta, exclusiva
-  para 12 meses. **Não existe mais desconto de pontualidade recorrente** — foi substituído por
-  esta condição única. Fora dela, vale a taxa cheia.
+- **Todo contrato Pro é de 12 meses — é o padrão único.** O prazo não é a variável, o preço é.
+  6 meses só existe como contraoferta pior: **preço cheio e sem os bônus**. O foco é 12.
+- **Janela de Confiança:** dentro dos 12 meses, o médico pode sair **sem multa nenhuma** se avisar
+  até o fim do **3º mês** (aviso prévio de 30 dias). Depois disso vale a multa normal. É a
+  reversão de risco que destrava o inseguro — e está no gerador (campo `cl_janela`) e na cláusula
+  **8.2-A** do contrato assinável. **Exige o Ritual dos 90 Dias** (ver `skills/vendas`), senão vira
+  porta de saída fácil bem no período de maior churn.
+- **Preço protagonista** = condição de fechamento apresentada só na hora da proposta, para quem
+  decide na própria reunião. Fora dela, vale a taxa cheia. **Não existe desconto de pontualidade
+  recorrente** — foi substituído por esta condição única.
+- Nos 3 contratos Pro o valor é **campo a preencher**, não número fixo: o mesmo modelo serve para
+  a taxa cheia e para o preço protagonista. Prazo mínimo no contrato: **12 (doze) meses**.
 - **Piso de negociação (R$1.000/mês)** ≠ preço protagonista. Só existe no isolamento de objeção,
   boca-a-boca, nunca publicado. Último recurso, não ponto de partida. Ver `skills/vendas`.
 - Teto de mídia incluso no fee: **R$10.000/mês em todos os pacotes, inclusive YouTube** — é o que
@@ -104,6 +113,19 @@ na plataforma.** Nunca somar fee + verba num número só.
 
 ### Régua de linguagem (toda copy, os dois públicos)
 Prometer **demanda e procura** — sim. Prometer **venda, faturamento ou agenda cheia** — jamais.
+
+**Vocabulário por público — vale em fala, proposta, contrato e no gerador:**
+
+| | ❌ Nunca dizer | ✅ Dizer |
+|---|---|---|
+| **Médico** | "tráfego pago" · "marketing digital" · "gestor de tráfego" · "impulsionar" | **publicidade médica** · **demanda do consultório** · **presença digital** |
+| **Negócio local** | "tráfego pago" | **publicidade paga** |
+
+**O porquê no caso do médico é comercial, não estético:** "marketing digital" e "gestor de
+tráfego" são exatamente as palavras da experiência ruim que ele já teve — com o sobrinho que
+impulsionou post, com a agência que sumiu. Usar o vocabulário deles é se misturar com eles.
+Jeferson entra com **outro nome para ocupar outro lugar na cabeça do médico**.
+Ver `skills/vendas/knowledge/protocolo-consultoria.md`.
 
 Apresentar-se pelo **problema**, não pelo canal. Jeferson cuida da demanda do consultório e do
 caminho que ela percorre até virar consulta; o canal é consequência. Evitar "faço tráfego pago" /
@@ -137,6 +159,12 @@ Se a ideia de conteúdo não passa nesse filtro, ela não entra — nem como sug
 | contrato, cláusula, rescisão, risco jurídico | `juridico` |
 | proposta/contrato/briefing oficial dos pacotes Pro | `fred-dias` |
 | treino, dieta, desistir (vida pessoal) | `goggins` — fora da orquestração comercial |
+| Método Chave Mestra, Closer 360, Jez/Jezreel, FC-360 | `closer360` — **fora da orquestração**; método de terceiro, isolado (ver abaixo) |
+
+**`closer360` é uma skill isolada.** É o método do Jezreel Soares (curso pago que Jeferson fez),
+guardado em `skills/closer360/`. Nenhuma outra skill lê ou importa esse conteúdo, e ele **não
+altera** preço, escopo, CFM, doutrina do Hermano ou cadência de follow-up da MRTN. Só se ativa
+quando Jeferson chama `/closer360` — ou pede a tradução para o contexto dele, explicitamente.
 
 `martinelle` é o orquestrador: usa quando quiser o sistema inteiro agindo junto.
 Cada skill descreve a si mesma em `skills/<nome>/SKILL.md` — não duplicar aqui.
@@ -156,7 +184,7 @@ cenário** — o que importa não é quantos toques, é em qual cenário o lead 
 - Misturar preços de médico com negócio local
 - Usar termos proibidos pelo CFM em copy de médico
 - Prometer venda, faturamento ou agenda cheia
-- Gravar lead no `crm-pipeline.json` (aposentado) em vez do `prospector-medicos.html`
+- Gravar lead fora do `prospector-medicos.html` (JSON solto, planilha ou Notion)
 - Dar resposta sem próximo passo concreto
 
 ---
@@ -164,17 +192,22 @@ cenário** — o que importa não é quantos toques, é em qual cenário o lead 
 ## 7. Onde ficam as coisas
 
 ```
-skills/                  15 skills (cada uma se documenta no seu SKILL.md)
+skills/                  16 skills (cada uma se documenta no seu SKILL.md)
 contratos/modelos/       contratos oficiais por pacote (HTML imprimível)
 propostas/modelos/       propostas e pitches visuais
 conteudo/                playbook de Instagram + roteiros de apresentação
+ferramentas/             scripts Python (md2pdf, gerador de pitch em PPTX)
 index.html               Painel da Equipe — 3 abas (Prospecção · Contratos · Relatórios)
 prospector-medicos.html  ★ FONTE ÚNICA DO CRM — todos os leads vivem aqui. Registro mínimo
                          por lead = ETAPA + DATA DO PRÓXIMO TOQUE, na 1ª linha das Observações
                          (formato: [ETAPA] prox DD/MM · h<horas> · nota)
 relatorios.html          relatórios de tráfego Meta/Google para clientes
 site/                    site institucional (mrtnconsultoria.com.br)
-supabase/functions/      Edge Functions (asaas, autentique, meta-insights)
-crm-pipeline.json        APOSENTADO (vazio). Mantido só para não quebrar o deploy.
+supabase/functions/      Edge Function meta-insights (alimenta o relatorios.html)
 CONEXAO-META-ADS.md      guia de setup do token Meta
 ```
+
+**Fora do Git (repositório é público — nunca commitar):** `vendas/` e `DIAGNOSTICO-EMPRESA.md`
+(estratégia e caixa) · `pessoal/` e `skills/goggins/` (vida pessoal) · `skills/closer360/` e
+`skills/hermano/transcricoes/` (curso pago de terceiro) · `.env`, `.netlify-token`,
+`secrets.local.json` (segredos).
